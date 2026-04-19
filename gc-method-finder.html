@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GC条件提案 | 作業用ミニハブ</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/gc-finder.css">
+</head>
+<body>
+  <main class="wrap gc-finder-page">
+    <header class="card page-header">
+      <h1>GC条件提案（候補）</h1>
+      <p>対象: GC2014 / GC-17A / GC-14B。入力した溶剤に対して、候補条件を提案します。</p>
+      <p class="note">※ 本画面は「候補提案」です。最適条件を断定するものではありません。</p>
+      <a class="back-link" href="index.html">← トップへ戻る</a>
+    </header>
+
+    <section class="card section-block" aria-labelledby="solventSectionTitle">
+      <div class="section-head">
+        <h2 id="solventSectionTitle">1. 分析したい溶剤を選択</h2>
+        <button id="clearSolventsBtn" type="button" class="plain mini-btn">選択クリア</button>
+      </div>
+      <p class="hint">複数選択できます（タップでON/OFF）。</p>
+      <div id="solventSelector" class="chip-grid" role="listbox" aria-label="溶剤選択"></div>
+      <div class="selected-row">
+        <strong>選択中:</strong>
+        <div id="selectedSolvents" class="selected-chips">なし</div>
+      </div>
+      <button id="suggestBtn" type="button" class="primary suggest-btn">候補を提案する</button>
+    </section>
+
+    <section class="card section-block" aria-labelledby="resultSectionTitle">
+      <h2 id="resultSectionTitle">2. おすすめ条件（1位〜3位）</h2>
+      <p class="hint">カバー率、RT間隔、品質、総分析時間を仮スコア化して並び替えます。</p>
+      <div id="recommendations" class="recommend-list">
+        <p class="empty-text">溶剤を選んで「候補を提案する」を押してください。</p>
+      </div>
+    </section>
+
+    <section class="card section-block" aria-labelledby="rtSectionTitle">
+      <h2 id="rtSectionTitle">3. RT一覧と簡易グラフ</h2>
+      <p class="hint">おすすめ条件を選ぶと、下にRT一覧と位置図を表示します。</p>
+      <div id="rtSummary" class="rt-summary">候補が選択されていません。</div>
+      <div id="rtGraph" class="rt-graph" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>溶剤</th>
+              <th>RT(min)</th>
+              <th>quality</th>
+              <th>note</th>
+            </tr>
+          </thead>
+          <tbody id="rtTableBody">
+            <tr>
+              <td colspan="4" class="empty-cell">表示するデータがありません。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/gc-finder.js" defer></script>
+</body>
+</html>

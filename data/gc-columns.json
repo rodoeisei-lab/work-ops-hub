@@ -1,0 +1,22 @@
+{
+  "columns": [
+    {
+      "id": "col-wax-30m",
+      "label": "WAX 30m x 0.25mm x 0.25um",
+      "polarity": "polar",
+      "note": "極性カラム（サンプル）"
+    },
+    {
+      "id": "col-5ms-30m",
+      "label": "5MS 30m x 0.25mm x 0.25um",
+      "polarity": "low-polar",
+      "note": "汎用カラム（サンプル）"
+    },
+    {
+      "id": "col-624-30m",
+      "label": "624 30m x 0.32mm x 1.8um",
+      "polarity": "mid-polar",
+      "note": "揮発性向け（サンプル）"
+    }
+  ]
+}
