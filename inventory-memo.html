@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>在庫メモ</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/inventory.css">
+</head>
+<body>
+  <main class="wrap">
+    <section class="card top">
+      <h1>在庫メモ</h1>
+      <p class="sub">数量入力は箱数、期限切れメモは本数です。途中入力はこの端末に残ります。</p>
+      <details class="top-panel" open>
+        <summary>点検情報</summary>
+        <div class="field" style="padding: 0 12px 12px;">
+          <label for="checkDate">点検日</label>
+          <input id="checkDate" type="date">
+        </div>
+      </details>
+    </section>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="tube" type="button">検知管</button>
+      <button class="tab" data-tab="supplies" type="button">備品</button>
+      <button class="tab" data-tab="visual" type="button">目視確認</button>
+    </div>
+
+    <section class="section active" id="tube"></section>
+    <section class="section" id="supplies"></section>
+    <section class="section" id="visual"></section>
+
+    <div class="actions">
+      <button type="button" class="primary" id="buildSummary">コピー用テキスト作成</button>
+      <button type="button" class="success" id="downloadCsv">CSV保存</button>
+      <button type="button" class="plain" id="copySummary" disabled>コピー</button>
+      <button type="button" class="danger" id="resetForm">入力を消す</button>
+    </div>
+
+    <section class="card result hidden" id="resultCard">
+      <label for="summary">コピー用テキスト</label>
+      <textarea id="summary" placeholder="ここに作成されます"></textarea>
+      <div class="status" id="status"></div>
+    </section>
+  </main>
+
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/inventory.js"></script>
+</body>
+</html>
