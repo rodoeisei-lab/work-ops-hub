@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>在庫メモ</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root {
+      --bg:#f4f6fb; --card:#fff; --line:#d9e0ea; --text:#172033; --muted:#667085;
+      --accent:#1d4ed8; --accent-soft:#eaf1ff; --ok:#166534; --danger:#b91c1c;
+      --warn-bg:#fff4f4; --warn-line:#f1b2b2; --warn-text:#a61b1b;
+      --radius:14px; --shadow:0 6px 18px rgba(15,23,42,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Yu Gothic",sans-serif}
+    .wrap{max-width:760px;margin:0 auto;padding:10px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .top{padding:12px 12px 10px;margin-bottom:10px}
+    h1{margin:0 0 4px;font-size:1.12rem}
+    .sub{font-size:.84rem;color:var(--muted);margin:0}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .field{display:flex;flex-direction:column;gap:4px}
+    .field label,.result label{font-size:.8rem;font-weight:700;color:var(--muted)}
+    input,textarea,button{font:inherit}
+    input[type="date"],input[type="text"],input[type="number"],textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;background:#fff;color:var(--text)}
+    textarea{min-height:72px;resize:vertical}
+    .tabs{display:flex;gap:8px;position:sticky;top:0;padding:6px 0 8px;background:linear-gradient(var(--bg),var(--bg));z-index:10}
+    .tab{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 12px;font-weight:700;color:var(--text)}
+    .tab.active{background:var(--accent-soft);border-color:#bdd0ff;color:var(--accent)}
+    .section{display:none}
+    .section.active{display:block}
+    details.group, details.top-panel{margin-bottom:8px}
+    details.group summary, details.top-panel summary{list-style:none;cursor:pointer;padding:11px 12px;font-weight:700;border-radius:12px}
+    details.group[open] summary, details.top-panel[open] summary{border-bottom:1px solid var(--line);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    details.group summary::-webkit-details-marker, details.top-panel summary::-webkit-details-marker{display:none}
+    .rows{padding:8px 10px 10px}
+    .row{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #edf1f6;border-radius:10px}
+    .row:last-child{border-bottom:0}
+    .row.alert{background:var(--warn-bg);padding-left:8px;padding-right:8px;border:1px solid var(--warn-line)}
+    .row.alert .name{color:var(--warn-text);font-weight:700}
+    .row.alert .qty{border-color:var(--warn-line);background:#fff}
+    .name{font-size:.93rem;line-height:1.25}
+    .hint{display:inline-block;margin-top:3px;font-size:.75rem;color:#8a5a00;background:#fff7d6;border:1px solid #f1d78c;border-radius:999px;padding:1px 8px}
+    .warn-note{display:inline-block;margin-top:3px;font-size:.75rem;color:var(--warn-text);background:#ffe0e0;border:1px solid #f0b4b4;border-radius:999px;padding:1px 8px}
+    .qty{padding:8px 8px;text-align:center}
+    .memo-wrap{padding:8px 10px 10px;display:grid;gap:8px}
+    .check-wrap{padding:8px 10px 10px;display:grid;gap:0}
+    .check-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #edf1f6}
+    .check-row:last-child{border-bottom:0}
+    .order-flag{display:flex;align-items:center;gap:6px;font-size:.84rem;color:var(--muted);white-space:nowrap}
+    .order-flag input{width:18px;height:18px}
+    .visual-help{padding:8px 12px 4px;font-size:.82rem;color:var(--muted)}
+    .expired-box{padding:10px}
+    .expired-help{font-size:.82rem;color:var(--muted);margin-bottom:8px}
+    .expired-form{display:grid;grid-template-columns:minmax(0,1fr) 88px 88px;gap:8px;margin-bottom:10px}
+    .expired-list{display:grid;gap:8px}
+    .expired-item{display:grid;grid-template-columns:minmax(0,1fr) 64px 72px;gap:8px;align-items:center;padding:8px;border:1px solid #edf1f6;border-radius:10px;background:#fbfcff}
+    .expired-count{text-align:center;font-weight:700}
+    .tiny{padding:9px 10px;border-radius:10px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+    button{border:0;border-radius:12px;padding:11px 10px;font-weight:700}
+    .primary{background:var(--accent);color:#fff}
+    .success{background:#dcfce7;color:var(--ok)}
+    .plain{background:#eef2f7;color:var(--text)}
+    .danger{background:#fee2e2;color:var(--danger)}
+    button:disabled{opacity:.5}
+    .result{padding:10px;margin-bottom:8px}
+    .result.hidden{display:none}
+    .status{font-size:.82rem;color:var(--muted);margin-top:6px;min-height:1.2em}
+    .help{margin-top:8px}
+    .help summary{font-size:.84rem;color:var(--muted);font-weight:700}
+    .panel-body{padding:8px 12px 12px}
+    @media (max-width:520px){
+      .meta{grid-template-columns:1fr}
+      .actions{grid-template-columns:1fr 1fr}
+      .row{grid-template-columns:minmax(0,1fr) 68px}
+      .check-row{grid-template-columns:minmax(0,1fr) auto}
+      .expired-form{grid-template-columns:1fr 80px 80px}
+      .expired-item{grid-template-columns:minmax(0,1fr) 56px 64px}
+      .wrap{padding:8px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card top">
+      <h1>在庫メモ</h1>
+      <p class="sub">在庫管理は箱数、期限切れメモは本数で記録します。途中入力はこの端末に残ります。</p>
+
+      <details class="top-panel" id="metaPanel">
+        <summary>点検情報</summary>
+        <div class="panel-body">
+          <div class="meta">
+            <div class="field">
+              <label for="checkDate">点検日</label>
+              <input id="checkDate" type="date">
+            </div>
+            <div class="field">
+              <label for="inspector">入力者</label>
+              <input id="inspector" type="text" placeholder="任意">
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="help">
+        <summary>使い方</summary>
+        <div class="sub">数量入力は検知管・備品のみ。目視確認は少なければ「注文」にチェック。発注目安以下は赤く表示。</div>
+      </details>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="tube" type="button">検知管</button>
+      <button class="tab" data-tab="supplies" type="button">備品</button>
+      <button class="tab" data-tab="visual" type="button">目視確認</button>
+    </div>
+
+    <section class="section active" id="tube"></section>
+    <section class="section" id="supplies"></section>
+    <section class="section" id="visual"></section>
+
+    <div class="actions">
+      <button type="button" class="primary" id="buildSummary">コピー用テキスト作成</button>
+      <button type="button" class="success" id="downloadCsv">CSV保存</button>
+      <button type="button" class="plain" id="copySummary" disabled>コピー</button>
+      <button type="button" class="danger" id="resetForm">入力を消す</button>
+    </div>
+
+    <div class="card result hidden" id="resultCard">
+      <label for="summary">コピー用テキスト</label>
+      <textarea id="summary" placeholder="ここに作成されます"></textarea>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'inventory-memo-compact-v6';
+    const reorderPoints = {
+      'アセトン': { limit: 20, label: '発注目安 20箱' },
+      'イソプロピルアルコール': { limit: 20, label: '発注目安 20箱' },
+      'エチレンオキシド（5本）': { limit: 10, label: '発注目安 10箱' }
+    };
+    const defs = {
+      tube: [
+        {title:'ガステック', open:true, items:['アセトン','フッ化水素','シアン化水素','スチレン','キシレン','酢酸ブチル','アミン類','硝酸','2-ブタノール','クロロホルム（5本）','メチルエチルケトン（5本）']},
+        {title:'北川', items:['イソプロピルアルコール','エチレンオキシド（5本）','トルエン','酢酸エチル','硫化水素','N,N-ジメチルホルムアミド','ベンゼン（5本）','ホルマリン（20本）']},
+        {title:'期限切れメモ（本数）', expiredMemo:true},
+        {title:'メモ', textareas:['補充が必要なもの','廃棄したもの','期限が近いもの・気づいたこと']}
+      ],
+      supplies: [
+        {title:'準備室', open:true, items:['発煙管','カーボンビーズ（活性炭）','シリカゲルチューブ','アルカリ乾電池 単3','アルカリ乾電池 単1','ガラス繊維ろ紙 GA-55（金属 大）','ワットマン定量ろ紙 No.41 φ55（Be用）','ユニパック マークA（Be用）','捕集板用グリス','ヒドラジンカートリッジ','石綿用吸収缶']},
+        {title:'検査室', items:['メンブランフィルター AAWP04700 φ25mm（Mn）','メンブランフィルター AAWP-02500 φ47mm（Co・Ni・Pb）','アドバンテック 定量ろ紙 No.6']},
+        {title:'メモ', textareas:['準備室メモ','検査室メモ','事務所メモ','倉庫メモ','補充が必要なもの']}
+      ],
+      visual: [
+        {title:'準備室', open:true, checklist:['ティッシュ','ウェットティッシュ','ガムテープ','袋 小','袋（マスキング用）','有機バッグ','有機溶剤用吸収缶','粉じん用フィルタ LAS-51','Be・RCF用マスクフィルタ','耳栓','ゴム球','アルカリ乾電池 単4','アルカリ乾電池 9V','タイベック M','タイベック L','タイベック LL']},
+        {title:'検査室', checklist:['硝酸','塩酸','苛性ソーダ','パラフィルム','手袋 S','手袋 M','手袋 L','シール','ガスクロプリンタ用インク']},
+        {title:'事務所', checklist:['製本テープ（倉庫にもある）','カプラテープ','クリアファイル']},
+        {title:'倉庫', checklist:['浅黄色 紙','クリーンペーパー']}
+      ]
+    };
+    const state = (()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch{return {}}})();
+    if (!Array.isArray(state.expiredEntries)) state.expiredEntries = [];
+    const id = (t)=>t.replace(/[^\w\u3040-\u30ff\u3400-\u9fff]+/g,'_');
+    const setStatus = (m)=>document.getElementById('status').textContent=m;
+    const save=()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));setStatus('この端末に保存しました。');};
+
+    function itemRow(section, group, name){
+      const key=`${section}__${group}__${name}`;
+      const point = reorderPoints[name];
+      const hint = point ? `<div class="hint">${point.label}</div>` : '';
+      const warn = point ? `<div class="warn-note">${point.limit}箱以下で注意</div>` : '';
+      const rowClass = point && state[key] !== '' && state[key] !== undefined && Number(state[key]) <= point.limit ? 'row alert' : 'row';
+      return `<div class="${rowClass}" data-row-key="${key}"><div class="name">${name}${hint}${point ? warn : ''}</div><input class="qty" id="${id(key)}" type="number" min="0" step="1" inputmode="numeric" value="${state[key]??''}" placeholder="0"></div>`;
+    }
+    function memoField(section, group, name){
+      const key=`${section}__${group}__${name}`;
+      return `<div><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${state[key]??''}</textarea></div>`;
+    }
+    function checkRow(section, group, name){
+      const key=`${section}__${group}__${name}__order`;
+      const checked = state[key] ? 'checked' : '';
+      return `<div class="check-row"><div class="name">${name}</div><label class="order-flag"><input id="${id(key)}" type="checkbox" ${checked}>注文</label></div>`;
+    }
+    function expiredMemoBody(){
+      return `<div class="expired-box">
+        <div class="expired-help">期限切れになった検知管の種類と本数を記録します。在庫は箱数ですが、ここは本数です。</div>
+        <div class="expired-form">
+          <input id="expiredType" type="text" placeholder="種類">
+          <input id="expiredCount" type="number" min="1" step="1" inputmode="numeric" placeholder="本数">
+          <button type="button" class="plain tiny" id="addExpired">追加</button>
+        </div>
+        <div class="expired-list" id="expiredList"></div>
+      </div>`;
+    }
+    function render(section){
+      const groups = defs[section];
+      document.getElementById(section).innerHTML = groups.map(group=>{
+        let body = '';
+        if (group.items) body = `<div class="rows">${group.items.map(x=>itemRow(section,group.title,x)).join('')}</div>`;
+        else if (group.textareas) body = `<div class="memo-wrap">${group.textareas.map(x=>memoField(section,group.title,x)).join('')}</div>`;
+        else if (group.checklist) body = `<div class="visual-help">数値入力なし。少なければ右側の「注文」にチェック。</div><div class="check-wrap">${group.checklist.map(x=>checkRow(section,group.title,x)).join('')}</div>`;
+        else if (group.expiredMemo) body = expiredMemoBody();
+        return `<details class="card group" data-section="${section}" ${group.open?'open':''}><summary>${group.title}</summary>${body}</details>`;
+      }).join('');
+    }
+    function renderExpiredList(){
+      const el = document.getElementById('expiredList');
+      if (!el) return;
+      if (!state.expiredEntries.length) {
+        el.innerHTML = `<div class="sub">まだ登録はありません。</div>`;
+        return;
+      }
+      el.innerHTML = state.expiredEntries.map((entry, idx) => `
+        <div class="expired-item">
+          <div class="name">${entry.type}</div>
+          <div class="expired-count">${entry.count}本</div>
+          <button type="button" class="danger tiny" data-remove-expired="${idx}">削除</button>
+        </div>
+      `).join('');
+      el.querySelectorAll('[data-remove-expired]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const i = Number(btn.dataset.removeExpired);
+          state.expiredEntries.splice(i,1);
+          save();
+          renderExpiredList();
+        });
+      });
+    }
+    function bindAccordions(){
+      document.querySelectorAll('details.group').forEach(detail=>{
+        detail.addEventListener('toggle',()=>{
+          if(!detail.open) return;
+          const section=detail.dataset.section;
+          document.querySelectorAll(`details.group[data-section="${section}"]`).forEach(other=>{
+            if(other!==detail) other.open=false;
+          });
+        });
+      });
+    }
+    function refreshReorderWarnings(){
+      Object.keys(reorderPoints).forEach(name=>{
+        const matches = Object.keys(defs).flatMap(section => defs[section].flatMap(group => (group.items||[]).includes(name) ? [`${section}__${group.title}__${name}`] : []));
+        matches.forEach(key=>{
+          const row = document.querySelector(`[data-row-key="${key}"]`);
+          const val = state[key];
+          const point = reorderPoints[name];
+          if (!row || !point) return;
+          const warn = val !== '' && val !== undefined && Number(val) <= point.limit;
+          row.classList.toggle('alert', warn);
+        });
+      });
+    }
+    function bind(){
+      Object.keys(defs).forEach(section=>defs[section].forEach(group=>{
+        (group.items||[]).forEach(name=>{
+          const key=`${section}__${group.title}__${name}`;
+          document.getElementById(id(key)).addEventListener('input',e=>{state[key]=e.target.value;save();refreshReorderWarnings();});
+        });
+        (group.textareas||[]).forEach(name=>{
+          const key=`${section}__${group.title}__${name}`;
+          document.getElementById(id(key)).addEventListener('input',e=>{state[key]=e.target.value;save();});
+        });
+        (group.checklist||[]).forEach(name=>{
+          const key=`${section}__${group.title}__${name}__order`;
+          document.getElementById(id(key)).addEventListener('change',e=>{state[key]=e.target.checked;save();});
+        });
+      }));
+      document.getElementById('checkDate').addEventListener('input',e=>{state.checkDate=e.target.value;save();});
+      document.getElementById('inspector').addEventListener('input',e=>{state.inspector=e.target.value;save();});
+      document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        window.scrollTo({top:0,behavior:'smooth'});
+      }));
+      const addBtn = document.getElementById('addExpired');
+      if (addBtn) {
+        addBtn.addEventListener('click',()=>{
+          const typeEl = document.getElementById('expiredType');
+          const countEl = document.getElementById('expiredCount');
+          const type = (typeEl.value || '').trim();
+          const count = Number(countEl.value || '');
+          if (!type || !count || count < 1) {
+            setStatus('期限切れメモは種類と本数を入力してください。');
+            return;
+          }
+          state.expiredEntries.push({ type, count });
+          typeEl.value = '';
+          countEl.value = '';
+          save();
+          renderExpiredList();
+        });
+      }
+    }
+    function initMeta(){
+      const d=new Date();
+      const today=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      document.getElementById('checkDate').value=state.checkDate||today;
+      document.getElementById('inspector').value=state.inspector||'';
+      if(!state.checkDate) state.checkDate=today;
+    }
+    function summaryText(){
+      const lines=[`点検日: ${state.checkDate||''}`,`入力者: ${state.inspector||''}`,''];
+      const labels={tube:'【検知管】',supplies:'【備品】',visual:'【目視確認】'};
+      Object.keys(defs).forEach(section=>{
+        lines.push(labels[section]);
+        defs[section].forEach(group=>{
+          let added=false;
+          (group.items||[]).forEach(name=>{
+            const key=`${section}__${group.title}__${name}`; const val=state[key];
+            if(val!==undefined&&val!==''){ if(!added){lines.push(`■ ${group.title}`); added=true;} lines.push(`${name}: ${val}箱`); }
+          });
+          if (group.expiredMemo && state.expiredEntries.length) {
+            if(!added){lines.push(`■ ${group.title}`); added=true;}
+            state.expiredEntries.forEach(entry=>lines.push(`${entry.type}: ${entry.count}本`));
+          }
+          (group.textareas||[]).forEach(name=>{
+            const key=`${section}__${group.title}__${name}`; const val=(state[key]||'').trim();
+            if(val){ if(!added){lines.push(`■ ${group.title}`); added=true;} lines.push(`${name}: ${val}`); }
+          });
+          (group.checklist||[]).forEach(name=>{
+            const key=`${section}__${group.title}__${name}__order`;
+            if(state[key]){ if(!added){lines.push(`■ ${group.title}`); added=true;} lines.push(`${name}: 注文`); }
+          });
+          if(added) lines.push('');
+        });
+      });
+      return lines.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    }
+    function csvText(){
+      const rows=[['点検日','入力者','区分','分類','品目','数量または内容']];
+      const q=(v)=>'"'+String(v??'').replaceAll('"','""')+'"';
+      Object.keys(defs).forEach(section=>{
+        const sectionLabel=section==='tube'?'検知管':section==='supplies'?'備品':'目視確認';
+        defs[section].forEach(group=>{
+          (group.items||[]).forEach(name=>{
+            const key=`${section}__${group.title}__${name}`; const val=state[key];
+            if(val!==undefined&&val!=='') rows.push([state.checkDate||'',state.inspector||'',sectionLabel,group.title,name,`${val}箱`]);
+          });
+          if (group.expiredMemo) {
+            state.expiredEntries.forEach(entry=>rows.push([state.checkDate||'',state.inspector||'','期限切れ検知管',group.title,entry.type,`${entry.count}本`]));
+          }
+          (group.textareas||[]).forEach(name=>{
+            const key=`${section}__${group.title}__${name}`; const val=(state[key]||'').trim();
+            if(val) rows.push([state.checkDate||'',state.inspector||'',sectionLabel,group.title,name,val]);
+          });
+          (group.checklist||[]).forEach(name=>{
+            const key=`${section}__${group.title}__${name}__order`;
+            if(state[key]) rows.push([state.checkDate||'',state.inspector||'',sectionLabel,group.title,name,'注文']);
+          });
+        });
+      });
+      return rows.map(r=>r.map(q).join(',')).join('\r\n');
+    }
+    function downloadCsv(){
+      const blob=new Blob([csvText()],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download=`inventory-memo-${state.checkDate||'data'}.csv`; a.click(); URL.revokeObjectURL(url); setStatus('CSVを保存しました。');
+    }
+    function copySummary(){
+      const area=document.getElementById('summary');
+      if(!area.value.trim()){setStatus('先にコピー用テキスト作成を押してください。'); return;}
+      area.select(); area.setSelectionRange(0,99999);
+      navigator.clipboard.writeText(area.value).then(()=>setStatus('コピーしました。')).catch(()=>setStatus('手動でコピーしてください。'));
+    }
+    function resetForm(){ if(confirm('この端末の入力を消します。よろしいですか。')){ localStorage.removeItem(STORAGE_KEY); location.reload(); } }
+
+    render('tube'); render('supplies'); render('visual'); initMeta(); bind(); bindAccordions(); renderExpiredList(); refreshReorderWarnings();
+    document.getElementById('buildSummary').addEventListener('click',()=>{
+      document.getElementById('summary').value=summaryText();
+      document.getElementById('resultCard').classList.remove('hidden');
+      document.getElementById('copySummary').disabled=false;
+      setStatus('コピー用テキストを作成しました。');
+      document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+    document.getElementById('downloadCsv').addEventListener('click',downloadCsv);
+    document.getElementById('copySummary').addEventListener('click',copySummary);
+    document.getElementById('resetForm').addEventListener('click',resetForm);
+  </script>
+</body>
+</html>
