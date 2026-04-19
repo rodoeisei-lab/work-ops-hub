@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>QR印刷</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <style>
+    .sheet { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; }
+    .title { margin:0 0 6px; font-size:1.3rem; }
+    .desc { margin:0 0 14px; color:var(--muted); }
+    .qr-box { display:grid; grid-template-columns: 1fr 240px; gap:16px; align-items:center; }
+    .qr-canvas-wrap { border:2px solid #111; padding:10px; width:max-content; background:#fff; }
+    #qrCanvas { width:220px; height:220px; image-rendering: pixelated; }
+    .url { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap:anywhere; border:1px dashed var(--line); padding:8px; border-radius:8px; }
+    .print-btn { margin-top: 12px; width: 100%; }
+    @media (max-width: 720px) {
+      .qr-box { grid-template-columns: 1fr; }
+      .qr-canvas-wrap { margin: 0 auto; }
+    }
+    @media print {
+      @page { size: A4 landscape; margin: 10mm; }
+      .sheet { border:2px solid #000; box-shadow:none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="sheet">
+      <h1 class="title">在庫メモ QR（掲示用）</h1>
+      <p class="desc">スマホで読み取り、在庫メモ画面を開きます。</p>
+      <div class="qr-box">
+        <div>
+          <p class="url" id="targetUrl"></p>
+          <p style="margin:.5rem 0 0; color:var(--muted); font-size:.85rem;">白黒印刷向けの高コントラスト表示です。</p>
+        </div>
+        <div class="qr-canvas-wrap" aria-label="QRコード">
+          <canvas id="qrCanvas" width="220" height="220"></canvas>
+        </div>
+      </div>
+      <button type="button" class="primary print-btn no-print" id="printBtn">印刷する</button>
+    </section>
+  </main>
+  <script src="assets/js/qr-print.js"></script>
+</body>
+</html>

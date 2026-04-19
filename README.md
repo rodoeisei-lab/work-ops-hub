@@ -1,2 +1,26 @@
 # work-ops-hub
-Mobile web hub for work manuals and QR-linked inventory entry
+
+GitHub Pages でそのまま公開できる、モバイル向け「作業用ミニハブ」です。
+
+## 構成（root 配置）
+- `index.html` : トップページ（在庫メモ / QR印刷 / 更新手順）
+- `inventory-memo.html` : 在庫メモ本体（localStorage 保存）
+- `qr-print.html` : 掲示・印刷用ページ
+- `docs/update-guide.md` : 更新手順
+- `data/*.json` : 品目と発注目安の設定
+- `assets/css/*.css` : 画面スタイル
+- `assets/js/*.js` : 画面ロジック
+
+## 変更時の目安
+- 品目を増やす: `data/inventory-items.json`
+- 発注目安を変える: `data/reorder-rules.json`
+- 在庫メモの動き変更: `assets/js/inventory.js`
+- トップ画面変更: `index.html`
+- 印刷画面変更: `qr-print.html`, `assets/js/qr-print.js`
+
+## GitHub Pages 公開
+1. このリポジトリを GitHub に push
+2. `Settings > Pages` で Branch を選択（例: `main` / `/ (root)`）
+3. 数分後に公開URLへアクセス
+
+※ サーバー/API なし、ビルド不要の静的サイトです。
