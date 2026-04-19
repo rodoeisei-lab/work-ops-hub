@@ -1,0 +1,22 @@
+{
+  "tempPrograms": [
+    {
+      "id": "tp-a",
+      "label": "50C(2min)→10C/min→200C(3min)",
+      "totalTimeMin": 20,
+      "note": "標準スキャン"
+    },
+    {
+      "id": "tp-b",
+      "label": "40C(3min)→8C/min→180C(5min)",
+      "totalTimeMin": 24,
+      "note": "分離優先"
+    },
+    {
+      "id": "tp-c",
+      "label": "60C(1min)→15C/min→220C(2min)",
+      "totalTimeMin": 14,
+      "note": "時短優先"
+    }
+  ]
+}

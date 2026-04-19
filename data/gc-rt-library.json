@@ -1,0 +1,15 @@
+{
+  "records": [
+    { "machineId": "gc2014", "columnId": "col-wax-30m", "tempProgramId": "tp-a", "solventId": "acetone", "solventLabel": "アセトン", "rt": 2.6, "quality": "good", "note": "サンプル" },
+    { "machineId": "gc2014", "columnId": "col-wax-30m", "tempProgramId": "tp-a", "solventId": "methanol", "solventLabel": "メタノール", "rt": 3.4, "quality": "ok", "note": "サンプル" },
+    { "machineId": "gc2014", "columnId": "col-wax-30m", "tempProgramId": "tp-a", "solventId": "ethanol", "solventLabel": "エタノール", "rt": 4.7, "quality": "good", "note": "サンプル" },
+
+    { "machineId": "gc17a", "columnId": "col-5ms-30m", "tempProgramId": "tp-b", "solventId": "acetone", "solventLabel": "アセトン", "rt": 2.2, "quality": "ok", "note": "サンプル" },
+    { "machineId": "gc17a", "columnId": "col-5ms-30m", "tempProgramId": "tp-b", "solventId": "toluene", "solventLabel": "トルエン", "rt": 6.1, "quality": "good", "note": "サンプル" },
+    { "machineId": "gc17a", "columnId": "col-5ms-30m", "tempProgramId": "tp-b", "solventId": "xylene", "solventLabel": "キシレン", "rt": 7.4, "quality": "ok", "note": "サンプル" },
+
+    { "machineId": "gc14b", "columnId": "col-624-30m", "tempProgramId": "tp-c", "solventId": "methanol", "solventLabel": "メタノール", "rt": 1.8, "quality": "bad", "note": "サンプル" },
+    { "machineId": "gc14b", "columnId": "col-624-30m", "tempProgramId": "tp-c", "solventId": "ethanol", "solventLabel": "エタノール", "rt": 2.5, "quality": "ok", "note": "サンプル" },
+    { "machineId": "gc14b", "columnId": "col-624-30m", "tempProgramId": "tp-c", "solventId": "toluene", "solventLabel": "トルエン", "rt": 4.2, "quality": "good", "note": "サンプル" }
+  ]
+}
