@@ -1,5 +1,6 @@
 (function () {
   const PATHS = {
+    workplaces: 'data/gc-workplaces.json',
     machines: 'data/gc-machines.json',
     columns: 'data/gc-columns.json',
     tempPrograms: 'data/gc-temp-programs.json',
@@ -10,6 +11,9 @@
   };
 
   const el = {
+    workplaceCodeSelect: document.getElementById('workplaceCodeSelect'),
+    applyWorkplaceConditionBtn: document.getElementById('applyWorkplaceConditionBtn'),
+    applyWorkplaceAllBtn: document.getElementById('applyWorkplaceAllBtn'),
     machineFilter: document.getElementById('machineFilter'),
     columnFilter: document.getElementById('columnFilter'),
     tempFilter: document.getElementById('tempFilter'),
@@ -32,7 +36,8 @@
   const state = {
     data: null,
     selectedAnalytes: new Map(),
-    ranked: []
+    ranked: [],
+    workplaceMap: new Map()
   };
 
   init();
@@ -51,7 +56,8 @@
   }
 
   async function loadData() {
-    const [machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, rules] = await Promise.all([
+    const [workplaces, machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, rules] = await Promise.all([
+      fetchJson(PATHS.workplaces),
       fetchJson(PATHS.machines),
       fetchJson(PATHS.columns),
       fetchJson(PATHS.tempPrograms),
@@ -68,6 +74,7 @@
     const methods = buildMethods(machines, columns, tempPrograms, normalizedRtLibrary);
 
     return {
+      workplaces,
       machines,
       columns,
       tempPrograms,
@@ -280,6 +287,16 @@
   }
 
   function bindEvents() {
+    if (el.workplaceCodeSelect) {
+      el.workplaceCodeSelect.addEventListener('change', () => applyWorkplacePreset(false));
+    }
+    if (el.applyWorkplaceConditionBtn) {
+      el.applyWorkplaceConditionBtn.addEventListener('click', () => applyWorkplacePreset(false));
+    }
+    if (el.applyWorkplaceAllBtn) {
+      el.applyWorkplaceAllBtn.addEventListener('click', () => applyWorkplacePreset(true));
+    }
+
     el.addAnalyteBtn.addEventListener('click', addAnalyteFromInput);
     el.analyteInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
@@ -331,9 +348,24 @@
   }
 
   function fillFilterOptions() {
+    fillWorkplaceOptions();
     fillSelect(el.machineFilter, state.data.machines, 'name');
     fillSelect(el.columnFilter, state.data.columns, 'name');
     fillSelect(el.tempFilter, state.data.tempPrograms, 'display_name');
+  }
+
+  function fillWorkplaceOptions() {
+    if (!el.workplaceCodeSelect) return;
+    el.workplaceCodeSelect.innerHTML = '<option value="">選択してください</option>';
+    state.workplaceMap = new Map();
+    (state.data.workplaces || []).forEach((row) => {
+      if (!row || !row.id) return;
+      const option = document.createElement('option');
+      option.value = row.id;
+      option.textContent = row.display_label || row.id;
+      el.workplaceCodeSelect.appendChild(option);
+      state.workplaceMap.set(row.id, row);
+    });
   }
 
   function fillSelect(selectEl, list, labelKey) {
@@ -429,6 +461,34 @@
     Array.from(el.quickAnalytes.children).forEach((chip) => {
       chip.classList.toggle('active', state.selectedAnalytes.has(chip.dataset.analyteId));
     });
+  }
+
+  function applyWorkplacePreset(includeAnalytes) {
+    const code = el.workplaceCodeSelect?.value || '';
+    if (!code || !state.workplaceMap.has(code)) return;
+
+    const workplace = state.workplaceMap.get(code);
+    el.machineFilter.value = workplace.machine_id || '';
+    el.columnFilter.value = workplace.column_id || '';
+    el.tempFilter.value = workplace.temp_program_id || '';
+    fillAnalyteOptions();
+    syncQuickChipState();
+
+    if (includeAnalytes) {
+      applyWorkplaceAnalytes(workplace.default_analytes || []);
+    }
+
+    clearOutputs();
+  }
+
+  function applyWorkplaceAnalytes(analyteIds) {
+    (analyteIds || []).forEach((analyteId) => {
+      const resolved = resolveAnalyte(String(analyteId || ''));
+      if (!resolved.id || !resolved.known) return;
+      state.selectedAnalytes.set(resolved.id, resolved);
+    });
+    renderSelectedAnalytes();
+    syncQuickChipState();
   }
 
   function rankMethods(selectedEntries) {
