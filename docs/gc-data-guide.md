@@ -1,100 +1,168 @@
-# GC条件提案 データ投入ガイド
+# GC条件提案 データ投入ガイド（実務向け）
 
-`gc-method-finder.html` は静的JSONだけで動きます。  
-GitHub Pagesのルート配下にそのまま配置し、`data/*.json` を更新すれば提案候補に反映されます。
+`gc-method-finder.html` は静的JSONのみで動作します。  
+GitHub Pagesにそのまま置ける構成のため、**`data/*.json` の更新だけで反映**できます。
 
-## 1. ファイル構成
+---
+
+## 1. 目的と運用方針
+
+- 現在は **GC2014 / CBP** の投入を先行し、将来 **GC-17A / GC-14B** を段階追加する。
+- 候補表示は常に「候補提案」であり、確定条件ではない。
+- 表記ゆれ吸収・後編集容易性を最優先にし、CSV→JSON変換しやすい列設計にしている。
+
+---
+
+## 2. 編集対象ファイル
 
 - `data/gc-machines.json` : 機械マスター
 - `data/gc-columns.json` : カラムマスター
-- `data/gc-temp-programs.json` : 温度条件マスター
+- `data/gc-temp-programs.json` : 温度条件マスター（IDと表示名を分離）
+- `data/gc-analyte-aliases.json` : analyte表記ゆれ辞書
 - `data/gc-rt-library.json` : RTライブラリ本体
-- `data/gc-method-rules.json` : 提案ロジックの重み・閾値・certainty点数・溶剤別名
+- `data/gc-method-rules.json` : 提案ロジック重み・閾値・certainty点数
 
-## 2. 各JSONの最小スキーマ
+---
 
-### `gc-machines.json`
+## 3. RTライブラリの必須スキーマ
 
-```json
-[
-  { "id": "gc2014", "name": "GC2014" }
-]
-```
-
-### `gc-columns.json`
-
-```json
-[
-  { "id": "cbp", "name": "CBP" }
-]
-```
-
-### `gc-temp-programs.json`
-
-```json
-[
-  { "id": "cbp_80c", "label": "80℃", "type": "isothermal", "runtime_min": 10 }
-]
-```
-
-- `type` は将来の昇温条件対応のために保持（`isothermal` / `program` など）
-- `runtime_min` は候補スコア用（短いほどわずかに加点）
-
-### `gc-rt-library.json`
-
-```json
-[
-  {
-    "machine_id": "gc2014",
-    "column_id": "cbp",
-    "temp_program_id": "cbp_80c",
-    "analyte_id": "acetone",
-    "analyte": "アセトン",
-    "rt_min": 2.033,
-    "certainty": "high",
-    "note": "サンプル"
-  }
-]
-```
-
-- 1行 = 1溶剤のRT
-- `analyte_id` は内部ID
-- `analyte` は表示名
-- `certainty` は `high` / `medium` / `low` を推奨
-
-### `gc-method-rules.json`
+`data/gc-rt-library.json` は1レコード1溶剤RTで、以下を必須にします。
 
 ```json
 {
-  "weights": { "coverage": 50, "separation": 30, "runtime": 10, "certainty": 10 },
-  "thresholds": { "good_rt_gap_min": 0.30, "warn_rt_gap_min": 0.15 },
-  "runtime_reference_min": 20,
-  "certainty_score": { "high": 1.0, "medium": 0.65, "low": 0.35 },
-  "analytes": [
-    { "id": "acetone", "label": "アセトン", "aliases": ["acetone", "アセトン"] }
-  ]
+  "machine_id": "gc2014",
+  "column_id": "cbp",
+  "temp_program_id": "80c",
+  "analyte_original": "IPA",
+  "analyte_normalized": "IPA",
+  "rt_min": 2.378,
+  "certainty": "high",
+  "source": "manual_scan",
+  "note": "sample"
 }
 ```
 
-## 3. データ投入ルール
+### 各項目の意味
 
-1. **IDは固定、表示名は可変**にする（表記変更に強くするため）
-2. 溶剤の表記ゆれは `analytes[].aliases` に追加する
-3. RTは `rt_min` に数値で入力する（単位は分）
-4. データが未登録の溶剤があっても画面は動作し、UIに不足警告を表示する
-5. 出力はあくまで「候補提案」であり、確定条件ではない
+- `machine_id` : `gc-machines.json` の `id` を参照
+- `column_id` : `gc-columns.json` の `id` を参照
+- `temp_program_id` : `gc-temp-programs.json` の `id` を参照
+- `analyte_original` : 元データに記載されていた文字列をそのまま保持（監査用）
+- `analyte_normalized` : 集計・照合に使う正規化名（同義語はここで統一）
+- `rt_min` : RT（分）数値
+- `certainty` : `high` / `medium` / `low`
+- `source` : 取得元 (`manual_scan`, `verified_note`, `instrument_export`)
+- `note` : 補足（例: `sample`, 手書き不鮮明、再確認予定）
 
-## 4. 候補提案ロジック（現状）
+---
 
-- 入力溶剤の**カバー率**を優先
-- RT差が狭すぎる条件を減点（`thresholds`使用）
-- `certainty` の平均点を加味
-- 総分析時間（`runtime_min`）が短い条件をわずかに加点
+## 4. analyte_original と analyte_normalized の使い分け
 
-## 5. 追加時のチェックポイント
+- `analyte_original`
+  - 元帳票や手書きメモ表記を保持
+  - 後から原文照合するときに使う
+- `analyte_normalized`
+  - ロジック照合用の主キー
+  - 表記ゆれ・言語差（英語/日本語）を吸収した値にする
 
-- `machine_id` / `column_id` / `temp_program_id` がマスターJSONに存在するか
-- `analyte_id` が `gc-method-rules.json` の `analytes` と整合しているか
-- 同一条件で同一溶剤の重複登録がないか
-- RTの桁（小数点）を揃えるか
+例:
+- original: `イソプロピルアルコール` / normalized: `IPA`
+- original: `isopropyl alcohol` / normalized: `IPA`
 
+---
+
+## 5. 表記ゆれの直し方（alias辞書運用）
+
+`data/gc-analyte-aliases.json` に正規化キーごとに別名を列挙します。
+
+```json
+{
+  "IPA": ["IPA", "イソプロピルアルコール", "isopropyl alcohol"],
+  "MEK": ["MEK", "メチルエチルケトン"]
+}
+```
+
+### 実務手順
+
+1. まず `analyte_normalized` に統一したいキーを決める（例: `IPA`）。
+2. 現場で見つかった揺れ表記を alias に追記。
+3. 既存RTデータの `analyte_normalized` を同キーに揃える。
+4. UIで「未登録」が減ることを確認。
+
+---
+
+## 6. 温度条件マスター（IDと表示名分離）
+
+`data/gc-temp-programs.json` では以下を持たせます。
+
+- `id` : 機械可読ID（`80c`, `70c_isothermal` など）
+- `code` : 人が管理しやすいコード（`80C`, `70C_isothermal`）
+- `display_name` : 画面表示名（`80℃` など）
+
+この分離により、表示名変更があっても参照IDは固定化できます。
+
+---
+
+## 7. certainty の使い分け
+
+- `high`
+  - 装置出力や十分な検証で確度高
+- `medium`
+  - 一次確認済みだが再確認余地あり
+- `low`
+  - 手書き読取不鮮明、転記差分懸念など
+
+ロジック側は certainty 平均が低い候補を少し下げるため、低確度データを混ぜても候補全体が過度に上位化しにくい設計です。
+
+---
+
+## 8. source の使い分け
+
+- `manual_scan`
+  - 手書きやPDF目視転記
+- `verified_note`
+  - 人手で照合済みメモ
+- `instrument_export`
+  - 装置エクスポート値
+
+後で監査・再投入する際、`source` で優先再確認対象を絞れます。
+
+---
+
+## 9. 手書き読取で不確かなデータの扱い
+
+1. `certainty` は `low` にする。
+2. `source` は `manual_scan` を使う。
+3. `note` に不確実理由を短文で残す（例: `桁が不鮮明`）。
+4. 確認後に `certainty` / `source` / `note` を更新する。
+
+---
+
+## 10. データ投入手順（推奨）
+
+1. `gc-machines.json` / `gc-columns.json` / `gc-temp-programs.json` を先に確定。
+2. `gc-analyte-aliases.json` に正規化キーと別名を準備。
+3. `gc-rt-library.json` にRTを追加入力。
+4. 画面で候補提案を実行し、警告（未登録・データ不足・検証エラー）を確認。
+5. 必要なら alias 追記または `analyte_normalized` 修正。
+
+---
+
+## 11. 投入前チェックリスト
+
+- `machine_id` がマスター存在値か
+- `column_id` がマスター存在値か
+- `temp_program_id` がマスター存在値か
+- `analyte_normalized` が空でないか
+- `rt_min` が数値か
+- 同一条件・同一analyteの重複がないか
+- `note` に `sample` / 仮投入などの識別を付けたか
+
+---
+
+## 12. 将来拡張（17A / 14B）
+
+- まず `gc-machines.json` に機械IDを追加
+- 既存と同じ `temp_program_id` を再利用可能（必要なら機械別ID新設）
+- RTは `machine_id` ごとに追加してもUI構造変更は不要
+- 段階投入中は警告表示を維持しつつ運用可能

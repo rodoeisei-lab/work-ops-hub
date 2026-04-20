@@ -4,6 +4,7 @@
     columns: 'data/gc-columns.json',
     tempPrograms: 'data/gc-temp-programs.json',
     rtLibrary: 'data/gc-rt-library.json',
+    analyteAliases: 'data/gc-analyte-aliases.json',
     rules: 'data/gc-method-rules.json'
   };
 
@@ -39,6 +40,7 @@
       fillFilterOptions();
       fillAnalyteOptions();
       bindEvents();
+      showInitialWarnings();
     } catch (error) {
       console.error(error);
       el.recommendations.innerHTML = '<p class="empty-text">データ読み込みに失敗しました。JSON形式を確認してください。</p>';
@@ -46,39 +48,127 @@
   }
 
   async function loadData() {
-    const [machines, columns, tempPrograms, rtLibrary, rules] = await Promise.all([
+    const [machines, columns, tempPrograms, rtLibrary, analyteAliases, rules] = await Promise.all([
       fetchJson(PATHS.machines),
       fetchJson(PATHS.columns),
       fetchJson(PATHS.tempPrograms),
       fetchJson(PATHS.rtLibrary),
+      fetchJson(PATHS.analyteAliases),
       fetchJson(PATHS.rules)
     ]);
 
-    const analyteCatalog = buildAnalyteCatalog(rtLibrary, rules);
-    const methods = buildMethods(machines, columns, tempPrograms, rtLibrary);
+    const aliasBundle = buildAliasBundle(analyteAliases, rules);
+    const normalizedRtLibrary = normalizeRtLibrary(rtLibrary, aliasBundle.aliasLookup);
+    const validationReport = validateRtLibrary(normalizedRtLibrary);
+    const analyteCatalog = buildAnalyteCatalog(aliasBundle, normalizedRtLibrary);
+    const methods = buildMethods(machines, columns, tempPrograms, normalizedRtLibrary);
 
-    return { machines, columns, tempPrograms, rtLibrary, rules, analyteCatalog, methods };
+    return {
+      machines,
+      columns,
+      tempPrograms,
+      rtLibrary: normalizedRtLibrary,
+      rules,
+      aliasBundle,
+      analyteCatalog,
+      methods,
+      validationReport,
+      dataDensityLow: normalizedRtLibrary.length < 30
+    };
   }
 
-  function buildAnalyteCatalog(rtLibrary, rules) {
+  function buildAliasBundle(analyteAliases, rules) {
+    const canonicalToAliases = new Map();
+    const aliasLookup = new Map();
+
+    Object.entries(analyteAliases || {}).forEach(([canonical, aliases]) => {
+      const list = [canonical].concat(Array.isArray(aliases) ? aliases : []).map((n) => String(n || '')).filter(Boolean);
+      canonicalToAliases.set(canonical, list);
+      list.forEach((name) => {
+        aliasLookup.set(normalizeName(name), canonical);
+      });
+    });
+
+    (rules?.analytes || []).forEach((row) => {
+      const canonical = row.id;
+      if (!canonical) return;
+      if (!canonicalToAliases.has(canonical)) {
+        canonicalToAliases.set(canonical, [row.label || canonical]);
+      }
+      [row.id, row.label].concat(row.aliases || []).forEach((name) => {
+        if (!name) return;
+        aliasLookup.set(normalizeName(name), canonical);
+        const list = canonicalToAliases.get(canonical) || [];
+        if (!list.includes(name)) list.push(name);
+        canonicalToAliases.set(canonical, list);
+      });
+    });
+
+    return { canonicalToAliases, aliasLookup };
+  }
+
+  function normalizeRtLibrary(rtLibrary, aliasLookup) {
+    return (rtLibrary || []).map((row) => {
+      const analyteNormalizedRaw = String(row.analyte_normalized || '').trim();
+      const resolvedFromAlias = aliasLookup.get(normalizeName(analyteNormalizedRaw || row.analyte_original || ''));
+      const analyteNormalized = resolvedFromAlias || analyteNormalizedRaw;
+
+      return {
+        machine_id: row.machine_id,
+        column_id: row.column_id,
+        temp_program_id: row.temp_program_id,
+        analyte_original: row.analyte_original || analyteNormalized || '-',
+        analyte_normalized: analyteNormalized,
+        rt_min: Number(row.rt_min),
+        certainty: String(row.certainty || 'medium').toLowerCase(),
+        source: row.source || 'manual_scan',
+        note: row.note || ''
+      };
+    });
+  }
+
+  function validateRtLibrary(rtLibrary) {
+    const errors = [];
+    const duplicateMap = new Map();
+
+    (rtLibrary || []).forEach((row, idx) => {
+      const line = idx + 1;
+      if (!row.machine_id) errors.push('line ' + line + ': machine_id が未定義');
+      if (!row.column_id) errors.push('line ' + line + ': column_id が未定義');
+      if (!row.temp_program_id) errors.push('line ' + line + ': temp_program_id が未定義');
+      if (!String(row.analyte_normalized || '').trim()) errors.push('line ' + line + ': analyte_normalized が空');
+      if (!Number.isFinite(row.rt_min)) errors.push('line ' + line + ': rt_min が数値ではない');
+
+      const dupKey = [row.machine_id, row.column_id, row.temp_program_id, normalizeName(row.analyte_normalized)].join('__');
+      if (duplicateMap.has(dupKey)) {
+        errors.push('line ' + line + ': 重複候補 (' + dupKey + ')');
+      } else {
+        duplicateMap.set(dupKey, true);
+      }
+    });
+
+    return { errors };
+  }
+
+  function buildAnalyteCatalog(aliasBundle, rtLibrary) {
     const map = new Map();
 
-    (rules.analytes || []).forEach((row) => {
-      map.set(row.id, {
-        id: row.id,
-        label: row.label || row.id,
-        aliases: (row.aliases || []).map(normalizeName)
+    aliasBundle.canonicalToAliases.forEach((aliases, canonical) => {
+      map.set(canonical, {
+        id: canonical,
+        label: aliases[0] || canonical,
+        aliases: aliases.map(normalizeName)
       });
     });
 
     (rtLibrary || []).forEach((row) => {
-      const id = row.analyte_id || normalizeName(row.analyte || '');
+      const id = row.analyte_normalized;
       if (!id) return;
       if (!map.has(id)) {
         map.set(id, {
           id,
-          label: row.analyte || row.analyte_id,
-          aliases: [normalizeName(row.analyte || ''), normalizeName(row.analyte_id || '')].filter(Boolean)
+          label: row.analyte_original || id,
+          aliases: [normalizeName(row.analyte_original), normalizeName(id)].filter(Boolean)
         });
       }
     });
@@ -130,7 +220,7 @@
     });
 
     el.suggestBtn.addEventListener('click', () => {
-      const selected = Array.from(state.selectedAnalytes.keys());
+      const selected = Array.from(state.selectedAnalytes.values());
       if (!selected.length) {
         el.recommendations.innerHTML = '<p class="empty-text">先に溶剤を1つ以上追加してください。</p>';
         return;
@@ -143,7 +233,7 @@
     [el.machineFilter, el.columnFilter, el.tempFilter].forEach((node) => {
       node.addEventListener('change', () => {
         if (state.ranked.length) {
-          state.ranked = rankMethods(Array.from(state.selectedAnalytes.keys()));
+          state.ranked = rankMethods(Array.from(state.selectedAnalytes.values()));
           renderRecommendations();
           if (state.ranked[0]) showMethodDetails(state.ranked[0]);
         }
@@ -151,17 +241,28 @@
     });
   }
 
+  function showInitialWarnings() {
+    const warnings = [];
+    if (state.data.validationReport.errors.length) {
+      warnings.push('RTデータ検証エラー: ' + state.data.validationReport.errors.slice(0, 3).join(' / '));
+    }
+    if (state.data.dataDensityLow) {
+      warnings.push('候補精度は暫定です（データ件数が少ないため）。');
+    }
+    showWarning(warnings.join(' '));
+  }
+
   function fillFilterOptions() {
     fillSelect(el.machineFilter, state.data.machines, 'name');
     fillSelect(el.columnFilter, state.data.columns, 'name');
-    fillSelect(el.tempFilter, state.data.tempPrograms, 'label');
+    fillSelect(el.tempFilter, state.data.tempPrograms, 'display_name');
   }
 
   function fillSelect(selectEl, list, labelKey) {
     (list || []).forEach((row) => {
       const option = document.createElement('option');
       option.value = row.id;
-      option.textContent = row[labelKey] || row.id;
+      option.textContent = row[labelKey] || row.label || row.id;
       selectEl.appendChild(option);
     });
   }
@@ -184,7 +285,7 @@
         if (state.selectedAnalytes.has(item.id)) {
           state.selectedAnalytes.delete(item.id);
         } else {
-          state.selectedAnalytes.set(item.id, item.label);
+          state.selectedAnalytes.set(item.id, { id: item.id, label: item.label, known: true });
         }
         renderSelectedAnalytes();
         syncQuickChipState();
@@ -198,7 +299,7 @@
     if (!raw) return;
 
     const resolved = resolveAnalyte(raw);
-    state.selectedAnalytes.set(resolved.id, resolved.label);
+    state.selectedAnalytes.set(resolved.id, resolved);
 
     el.analyteInput.value = '';
     renderSelectedAnalytes();
@@ -212,12 +313,14 @@
       return item.aliases.includes(norm);
     });
 
-    if (fromCatalog) return fromCatalog;
+    if (fromCatalog) {
+      return { id: fromCatalog.id, label: fromCatalog.label, known: true };
+    }
 
     return {
-      id: norm || raw,
+      id: 'unknown__' + norm,
       label: raw,
-      aliases: [norm]
+      known: false
     };
   }
 
@@ -227,8 +330,10 @@
       return;
     }
 
-    el.selectedAnalytes.innerHTML = Array.from(state.selectedAnalytes.entries()).map(([id, label]) => {
-      return '<span class="selected-tag">' + escapeHtml(label) +
+    el.selectedAnalytes.innerHTML = Array.from(state.selectedAnalytes.entries()).map(([id, item]) => {
+      const className = item.known ? 'selected-tag' : 'selected-tag unregistered';
+      const suffix = item.known ? '' : '（未登録）';
+      return '<span class="' + className + '">' + escapeHtml(item.label + suffix) +
         '<button type="button" data-remove-id="' + escapeHtml(id) + '">×</button></span>';
     }).join('');
 
@@ -247,7 +352,9 @@
     });
   }
 
-  function rankMethods(selectedIds) {
+  function rankMethods(selectedEntries) {
+    const selectedKnownIds = selectedEntries.filter((item) => item.known).map((item) => item.id);
+    const unknownItems = selectedEntries.filter((item) => !item.known);
     const candidateMethods = state.data.methods.filter(matchFilters);
     const weights = state.data.rules.weights || {};
     const thresholds = state.data.rules.thresholds || {};
@@ -255,21 +362,28 @@
 
     return candidateMethods
       .map((method) => {
-        const matches = method.records.filter((row) => selectedIds.includes(row.analyte_id));
+        const matches = method.records.filter((row) => selectedKnownIds.includes(row.analyte_normalized));
         if (!matches.length) return null;
 
-        const coverageRate = matches.length / selectedIds.length;
+        const coverageRate = selectedKnownIds.length ? matches.length / selectedKnownIds.length : 0;
         const minGap = calcMinGap(matches);
         const separationScore = calcSeparationScore(minGap, thresholds);
         const certaintyAvg = average(matches.map((row) => certaintyScore[String(row.certainty || 'medium').toLowerCase()] ?? 0.4));
         const runtime = Number(method.tempProgram?.runtime_min || method.tempProgram?.estimated_runtime_min || 0);
         const runtimeScore = runtime > 0 ? Math.max(0, 1 - runtime / (state.data.rules.runtime_reference_min || 30)) : 0.2;
+        const rtGapPenalty = minGap < (thresholds.warn_rt_gap_min || 0.15) ? 5 : 0;
 
         const score =
           coverageRate * (weights.coverage || 0) +
           separationScore * (weights.separation || 0) +
           runtimeScore * (weights.runtime || 0) +
-          certaintyAvg * (weights.certainty || 0);
+          certaintyAvg * (weights.certainty || 0) -
+          rtGapPenalty;
+
+        const missingKnown = selectedKnownIds.filter((id) => !matches.some((row) => row.analyte_normalized === id));
+        const missing = missingKnown.concat(unknownItems.map((item) => item.label));
+        const dataCount = method.records.length;
+        const provisional = missing.length > 0 || matches.length < 2 || dataCount < 4;
 
         return {
           method,
@@ -280,7 +394,13 @@
           certaintyAvg,
           runtime,
           rtRange: calcRtRange(matches),
-          missing: selectedIds.filter((id) => !matches.some((row) => row.analyte_id === id))
+          missing,
+          unknownItems,
+          matchCount: matches.length,
+          selectedCount: selectedEntries.length,
+          dataCount,
+          provisional,
+          confidenceLabel: toConfidenceLabel(certaintyAvg)
         };
       })
       .filter(Boolean)
@@ -305,7 +425,14 @@
 
     el.recommendations.innerHTML = '';
     const hasMissing = state.ranked.some((item) => item.missing.length);
-    showWarning(hasMissing ? '一部の溶剤でRTデータ不足があります。結果は暫定候補です。' : '');
+    const hasProvisional = state.ranked.some((item) => item.provisional);
+    const hasUnknown = state.ranked.some((item) => item.unknownItems.length);
+
+    const warnings = [];
+    if (hasMissing || hasUnknown) warnings.push('未登録またはデータ不足の溶剤があります。');
+    if (state.data.dataDensityLow || hasProvisional) warnings.push('候補精度は暫定です。');
+    if (state.data.validationReport.errors.length) warnings.push('RTデータ検証エラーあり。');
+    showWarning(warnings.join(' '));
 
     state.ranked.forEach((item, idx) => {
       const card = document.createElement('article');
@@ -315,14 +442,17 @@
 
       card.innerHTML = [
         '<div class="rank-row">',
-        '<p><strong>' + (idx + 1) + '位</strong> ' + escapeHtml(item.method.machine?.name || item.method.machine?.id || '-') + '</p>',
-        '<p>スコア ' + item.score.toFixed(1) + '</p>',
+        '<p><strong>', (idx + 1), '位 候補提案</strong> ', escapeHtml(item.method.machine?.name || item.method.machine?.id || '-'), '</p>',
+        '<p>スコア ', item.score.toFixed(1), '</p>',
         '</div>',
         '<p class="reason">',
         'カラム: ', escapeHtml(item.method.column?.name || '-'), '<br>',
-        '温度条件: ', escapeHtml(item.method.tempProgram?.label || '-'), '<br>',
+        '温度条件: ', escapeHtml(item.method.tempProgram?.display_name || item.method.tempProgram?.label || '-'), '（', escapeHtml(item.method.tempProgram?.code || item.method.tempProgram?.id || '-'), '）<br>',
+        '一致件数: ', item.matchCount, ' / ', item.selectedCount, '<br>',
+        'データ信頼度の目安: ', escapeHtml(item.confidenceLabel), '<br>',
         '理由: ', escapeHtml(reason), '<br>',
         '想定RT範囲: ', item.rtRange || '-',
+        item.provisional ? '<br><span class="provisional-badge">暫定候補</span>' : '',
         '</p>',
         '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">この条件のRT一覧を表示</button>'
       ].join('');
@@ -336,8 +466,9 @@
     el.rtSummary.innerHTML = [
       '<strong>', escapeHtml(item.method.machine?.name || '-'), '</strong> × ',
       '<strong>', escapeHtml(item.method.column?.name || '-'), '</strong> × ',
-      '<strong>', escapeHtml(item.method.tempProgram?.label || '-'), '</strong>',
-      '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '%'
+      '<strong>', escapeHtml(item.method.tempProgram?.display_name || '-'), '</strong>',
+      '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致件数: ', item.matchCount, ' / ', item.selectedCount,
+      item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : ''
     ].join('');
 
     renderGraph(item.matches, item.runtime);
@@ -365,7 +496,7 @@
       const label = document.createElement('span');
       label.className = 'graph-label';
       label.style.left = Math.min(left, 100) + '%';
-      label.textContent = (row.analyte || row.analyte_id) + ' (' + Number(row.rt_min).toFixed(2) + ')';
+      label.textContent = (row.analyte_original || row.analyte_normalized) + ' (' + Number(row.rt_min).toFixed(2) + ')';
       track.appendChild(label);
     });
 
@@ -387,7 +518,7 @@
     el.rtTableBody.innerHTML = rows.slice().sort((a, b) => a.rt_min - b.rt_min).map((row) => {
       return [
         '<tr>',
-        '<td>', escapeHtml(row.analyte || row.analyte_id), '</td>',
+        '<td>', escapeHtml(row.analyte_original || row.analyte_normalized), '</td>',
         '<td>', Number(row.rt_min).toFixed(3), '</td>',
         '<td>', escapeHtml(row.certainty || '-'), '</td>',
         '<td>', escapeHtml(row.note || '-'), '</td>',
@@ -399,7 +530,7 @@
   function clearOutputs() {
     el.recommendations.innerHTML = '<p class="empty-text">溶剤を追加して「候補を提案する」を押してください。</p>';
     clearDetails();
-    showWarning('');
+    showInitialWarnings();
     state.ranked = [];
   }
 
@@ -432,7 +563,7 @@
   function calcSeparationScore(minGap, thresholds) {
     if (minGap >= (thresholds.good_rt_gap_min || 0.3)) return 1;
     if (minGap >= (thresholds.warn_rt_gap_min || 0.15)) return 0.55;
-    return 0.2;
+    return 0.15;
   }
 
   function calcRtRange(rows) {
@@ -448,8 +579,14 @@
     parts.push('最小RT差 ' + item.minGap.toFixed(2) + ' min');
     parts.push('certainty平均 ' + Math.round(item.certaintyAvg * 100) + '%');
     if (item.runtime) parts.push('推定分析時間 ' + item.runtime.toFixed(1) + ' min');
-    if (item.missing.length) parts.push('未登録溶剤あり');
+    if (item.missing.length) parts.push('未登録/不足あり');
     return parts.join(' / ');
+  }
+
+  function toConfidenceLabel(certaintyAvg) {
+    if (certaintyAvg >= 0.8) return '高め';
+    if (certaintyAvg >= 0.6) return '中程度';
+    return '低め';
   }
 
   function average(arr) {

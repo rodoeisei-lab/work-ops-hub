@@ -1,23 +1,22 @@
 [
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_60c", "analyte_id": "acetone", "analyte": "アセトン", "rt_min": 2.430, "certainty": "high", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_60c", "analyte_id": "methanol", "analyte": "メタノール", "rt_min": 3.180, "certainty": "medium", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_60c", "analyte_id": "ethanol", "analyte": "エタノール", "rt_min": 4.020, "certainty": "high", "note": "サンプル" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "60c", "analyte_original": "アセトン", "analyte_normalized": "acetone", "rt_min": 2.430, "certainty": "high", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "60c", "analyte_original": "メタノール", "analyte_normalized": "methanol", "rt_min": 3.180, "certainty": "medium", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "60c", "analyte_original": "エタノール", "analyte_normalized": "ethanol", "rt_min": 4.020, "certainty": "high", "source": "manual_scan", "note": "sample" },
 
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_80c", "analyte_id": "acetone", "analyte": "アセトン", "rt_min": 2.033, "certainty": "high", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_80c", "analyte_id": "methanol", "analyte": "メタノール", "rt_min": 2.612, "certainty": "high", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_80c", "analyte_id": "ethanol", "analyte": "エタノール", "rt_min": 3.221, "certainty": "high", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_80c", "analyte_id": "toluene", "analyte": "トルエン", "rt_min": 5.801, "certainty": "medium", "note": "サンプル" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "80c", "analyte_original": "IPA", "analyte_normalized": "IPA", "rt_min": 2.378, "certainty": "high", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "80c", "analyte_original": "アセトン", "analyte_normalized": "acetone", "rt_min": 2.033, "certainty": "high", "source": "instrument_export", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "80c", "analyte_original": "メタノール", "analyte_normalized": "methanol", "rt_min": 2.612, "certainty": "high", "source": "verified_note", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "80c", "analyte_original": "トルエン", "analyte_normalized": "toluene", "rt_min": 5.801, "certainty": "medium", "source": "manual_scan", "note": "sample" },
 
-  { "machine_id": "gc17a", "column_id": "cbp", "temp_program_id": "cbp_90c_2", "analyte_id": "acetone", "analyte": "アセトン", "rt_min": 1.933, "certainty": "medium", "note": "サンプル" },
-  { "machine_id": "gc17a", "column_id": "cbp", "temp_program_id": "cbp_90c_2", "analyte_id": "ethanol", "analyte": "エタノール", "rt_min": 2.711, "certainty": "medium", "note": "サンプル" },
-  { "machine_id": "gc17a", "column_id": "cbp", "temp_program_id": "cbp_90c_2", "analyte_id": "toluene", "analyte": "トルエン", "rt_min": 4.902, "certainty": "high", "note": "サンプル" },
-  { "machine_id": "gc17a", "column_id": "cbp", "temp_program_id": "cbp_90c_2", "analyte_id": "xylene", "analyte": "キシレン", "rt_min": 6.030, "certainty": "high", "note": "サンプル" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "90c_2", "analyte_original": "アセトン", "analyte_normalized": "acetone", "rt_min": 1.933, "certainty": "medium", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "90c_2", "analyte_original": "エタノール", "analyte_normalized": "ethanol", "rt_min": 2.711, "certainty": "medium", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "90c_2", "analyte_original": "トルエン", "analyte_normalized": "toluene", "rt_min": 4.902, "certainty": "high", "source": "manual_scan", "note": "sample" },
 
-  { "machine_id": "gc14b", "column_id": "cbp", "temp_program_id": "cbp_120c", "analyte_id": "methanol", "analyte": "メタノール", "rt_min": 1.490, "certainty": "low", "note": "サンプル" },
-  { "machine_id": "gc14b", "column_id": "cbp", "temp_program_id": "cbp_120c", "analyte_id": "ethanol", "analyte": "エタノール", "rt_min": 1.920, "certainty": "medium", "note": "サンプル" },
-  { "machine_id": "gc14b", "column_id": "cbp", "temp_program_id": "cbp_120c", "analyte_id": "nhexane", "analyte": "n-ヘキサン", "rt_min": 2.870, "certainty": "high", "note": "サンプル" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "120c", "analyte_original": "メタノール", "analyte_normalized": "methanol", "rt_min": 1.490, "certainty": "low", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "120c", "analyte_original": "エタノール", "analyte_normalized": "ethanol", "rt_min": 1.920, "certainty": "medium", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "120c", "analyte_original": "n-ヘキサン", "analyte_normalized": "n-ヘキサン", "rt_min": 2.870, "certainty": "high", "source": "verified_note", "note": "sample" },
 
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_70c_iso", "analyte_id": "acetone", "analyte": "アセトン", "rt_min": 2.240, "certainty": "medium", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_70c_iso", "analyte_id": "methanol", "analyte": "メタノール", "rt_min": 2.980, "certainty": "medium", "note": "サンプル" },
-  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "cbp_70c_iso", "analyte_id": "toluene", "analyte": "トルエン", "rt_min": 5.210, "certainty": "medium", "note": "サンプル" }
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "70c_isothermal", "analyte_original": "アセトン", "analyte_normalized": "acetone", "rt_min": 2.240, "certainty": "medium", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "70c_isothermal", "analyte_original": "メタノール", "analyte_normalized": "methanol", "rt_min": 2.980, "certainty": "medium", "source": "manual_scan", "note": "sample" },
+  { "machine_id": "gc2014", "column_id": "cbp", "temp_program_id": "70c_isothermal", "analyte_original": "トルエン", "analyte_normalized": "toluene", "rt_min": 5.210, "certainty": "medium", "source": "manual_scan", "note": "sample" }
 ]

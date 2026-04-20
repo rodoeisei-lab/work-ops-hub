@@ -1,0 +1,11 @@
+{
+  "acetone": ["acetone", "アセトン"],
+  "methanol": ["methanol", "meoh", "メタノール"],
+  "ethanol": ["ethanol", "etoh", "エタノール"],
+  "toluene": ["toluene", "トルエン"],
+  "xylene": ["xylene", "キシレン"],
+  "n-ヘキサン": ["n-ヘキサン", "ノルマルヘキサン", "nhx", "n-hexane", "hexane"],
+  "IPA": ["IPA", "イソプロピルアルコール", "isopropyl alcohol"],
+  "MEK": ["MEK", "メチルエチルケトン"],
+  "MIBK": ["MIBK", "メチルイソブチルケトン"]
+}
