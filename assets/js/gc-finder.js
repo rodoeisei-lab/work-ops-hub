@@ -364,6 +364,8 @@
       .map((method) => {
         const matches = method.records.filter((row) => selectedKnownIds.includes(row.analyte_normalized));
         if (!matches.length) return null;
+        const undeterminedMatchCount = matches.filter(isUndeterminedRow).length;
+        const hasUndeterminedInMethod = method.records.some(isUndeterminedRow);
 
         const coverageRate = selectedKnownIds.length ? matches.length / selectedKnownIds.length : 0;
         const minGap = calcMinGap(matches);
@@ -372,13 +374,15 @@
         const runtime = Number(method.tempProgram?.runtime_min || method.tempProgram?.estimated_runtime_min || 0);
         const runtimeScore = runtime > 0 ? Math.max(0, 1 - runtime / (state.data.rules.runtime_reference_min || 30)) : 0.2;
         const rtGapPenalty = minGap < (thresholds.warn_rt_gap_min || 0.15) ? 5 : 0;
+        const undeterminedPenalty = undeterminedMatchCount * 3;
 
         const score =
           coverageRate * (weights.coverage || 0) +
           separationScore * (weights.separation || 0) +
           runtimeScore * (weights.runtime || 0) +
           certaintyAvg * (weights.certainty || 0) -
-          rtGapPenalty;
+          rtGapPenalty -
+          undeterminedPenalty;
 
         const missingKnown = selectedKnownIds.filter((id) => !matches.some((row) => row.analyte_normalized === id));
         const missing = missingKnown.concat(unknownItems.map((item) => item.label));
@@ -400,7 +404,9 @@
           selectedCount: selectedEntries.length,
           dataCount,
           provisional,
-          confidenceLabel: toConfidenceLabel(certaintyAvg)
+          confidenceLabel: toConfidenceLabel(certaintyAvg),
+          hasUndeterminedInMethod,
+          undeterminedMatchCount
         };
       })
       .filter(Boolean)
@@ -417,9 +423,14 @@
 
   function renderRecommendations() {
     if (!state.ranked.length) {
-      el.recommendations.innerHTML = '<p class="empty-text">候補が見つかりません。フィルタ緩和かRTデータ追加を行ってください。</p>';
+      const selected = Array.from(state.selectedAnalytes.values());
+      const hasKnown = selected.some((item) => item.known);
+      const emptyReason = hasKnown
+        ? '候補が0件です。対象条件のRTデータが不足しているか未登録の可能性があります。'
+        : '候補が0件です。入力溶剤が未登録のため提案できません。';
+      el.recommendations.innerHTML = '<p class="empty-text">' + escapeHtml(emptyReason) + '</p>';
       clearDetails();
-      showWarning('入力した溶剤のRTデータが不足しています。JSONを追加入力してください。');
+      showWarning('データ不足または未登録により候補提案できません。フィルタ緩和、溶剤名見直し、RT JSON追加入力を確認してください。');
       return;
     }
 
@@ -427,9 +438,11 @@
     const hasMissing = state.ranked.some((item) => item.missing.length);
     const hasProvisional = state.ranked.some((item) => item.provisional);
     const hasUnknown = state.ranked.some((item) => item.unknownItems.length);
+    const hasUndetermined = state.ranked.some((item) => item.hasUndeterminedInMethod || item.undeterminedMatchCount > 0);
 
     const warnings = [];
     if (hasMissing || hasUnknown) warnings.push('未登録またはデータ不足の溶剤があります。');
+    if (hasUndetermined) warnings.push('「未確定」を含むデータがあるため、候補は要注意です。');
     if (state.data.dataDensityLow || hasProvisional) warnings.push('候補精度は暫定です。');
     if (state.data.validationReport.errors.length) warnings.push('RTデータ検証エラーあり。');
     showWarning(warnings.join(' '));
@@ -452,6 +465,7 @@
         'データ信頼度の目安: ', escapeHtml(item.confidenceLabel), '<br>',
         '理由: ', escapeHtml(reason), '<br>',
         '想定RT範囲: ', item.rtRange || '-',
+        item.hasUndeterminedInMethod ? '<br><span class="provisional-badge">未確定データを含むため要注意</span>' : '',
         item.provisional ? '<br><span class="provisional-badge">暫定候補</span>' : '',
         '</p>',
         '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">この条件のRT一覧を表示</button>'
@@ -468,7 +482,8 @@
       '<strong>', escapeHtml(item.method.column?.name || '-'), '</strong> × ',
       '<strong>', escapeHtml(item.method.tempProgram?.display_name || '-'), '</strong>',
       '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致件数: ', item.matchCount, ' / ', item.selectedCount,
-      item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : ''
+      item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : '',
+      item.hasUndeterminedInMethod ? '<br>注意: RT一覧に「未確定」データを含みます。' : ''
     ].join('');
 
     renderGraph(item.matches, item.runtime);
@@ -516,11 +531,13 @@
     }
 
     el.rtTableBody.innerHTML = rows.slice().sort((a, b) => a.rt_min - b.rt_min).map((row) => {
+      const certainty = String(row.certainty || '-').toLowerCase();
+      const certaintyLabel = certainty === 'low' ? 'low ⚠' : certainty;
       return [
         '<tr>',
         '<td>', escapeHtml(row.analyte_original || row.analyte_normalized), '</td>',
         '<td>', Number(row.rt_min).toFixed(3), '</td>',
-        '<td>', escapeHtml(row.certainty || '-'), '</td>',
+        '<td>', escapeHtml(certaintyLabel), '</td>',
         '<td>', escapeHtml(row.note || '-'), '</td>',
         '</tr>'
       ].join('');
@@ -587,6 +604,10 @@
     if (certaintyAvg >= 0.8) return '高め';
     if (certaintyAvg >= 0.6) return '中程度';
     return '低め';
+  }
+
+  function isUndeterminedRow(row) {
+    return normalizeName(row?.analyte_normalized) === normalizeName('未確定');
   }
 
   function average(arr) {
