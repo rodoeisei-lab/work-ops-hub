@@ -18,6 +18,19 @@
 
     <section class="card section-block" aria-labelledby="filterSectionTitle">
       <h2 id="filterSectionTitle">1. 絞り込みと分析対象の入力</h2>
+      <div class="workplace-box" aria-label="単位作業場所コード設定">
+        <label>
+          単位作業場所コード
+          <select id="workplaceCodeSelect">
+            <option value="">選択してください</option>
+          </select>
+        </label>
+        <p class="hint">コードを選ぶと標準条件を反映します</p>
+        <div class="workplace-action-row">
+          <button id="applyWorkplaceConditionBtn" type="button" class="plain">条件を反映</button>
+          <button id="applyWorkplaceAllBtn" type="button" class="plain">条件＋溶剤を反映</button>
+        </div>
+      </div>
       <div class="filter-grid">
         <label>
           機械（任意）
