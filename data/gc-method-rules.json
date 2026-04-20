@@ -1,24 +1,26 @@
 {
-  "solvents": [
-    { "id": "acetone", "label": "アセトン", "aliases": ["Acetone", "アセトン"] },
-    { "id": "methanol", "label": "メタノール", "aliases": ["MeOH", "Methanol", "メタノール"] },
-    { "id": "ethanol", "label": "エタノール", "aliases": ["EtOH", "Ethanol", "エタノール"] },
-    { "id": "toluene", "label": "トルエン", "aliases": ["Toluene", "トルエン"] },
-    { "id": "xylene", "label": "キシレン", "aliases": ["Xylene", "キシレン"] }
-  ],
-  "scoreSettings": {
-    "coverageWeight": 55,
-    "gapWeight": 20,
-    "qualityScoreWeight": 15,
-    "timeWeight": 10,
-    "gapIdealMin": 0.8,
-    "maxPreferredTimeMin": 25,
-    "qualityWeight": {
-      "good": 1.0,
-      "ok": 0.65,
-      "bad": 0.25
-    }
+  "weights": {
+    "coverage": 50,
+    "separation": 30,
+    "runtime": 10,
+    "certainty": 10
   },
-  "qualityOptions": ["good", "ok", "bad"],
-  "note": "初期の仮ルール。実データ投入後に重みを調整してください。"
+  "thresholds": {
+    "good_rt_gap_min": 0.30,
+    "warn_rt_gap_min": 0.15
+  },
+  "runtime_reference_min": 20,
+  "certainty_score": {
+    "high": 1.0,
+    "medium": 0.65,
+    "low": 0.35
+  },
+  "analytes": [
+    { "id": "acetone", "label": "アセトン", "aliases": ["acetone", "アセトン"] },
+    { "id": "methanol", "label": "メタノール", "aliases": ["methanol", "meoh", "メタノール"] },
+    { "id": "ethanol", "label": "エタノール", "aliases": ["ethanol", "etoh", "エタノール"] },
+    { "id": "toluene", "label": "トルエン", "aliases": ["toluene", "トルエン"] },
+    { "id": "xylene", "label": "キシレン", "aliases": ["xylene", "キシレン"] },
+    { "id": "nhexane", "label": "n-ヘキサン", "aliases": ["n-hexane", "hexane", "nヘキサン", "n-ヘキサン"] }
+  ]
 }

@@ -1,19 +1,5 @@
-{
-  "machines": [
-    {
-      "id": "gc2014",
-      "label": "GC2014",
-      "note": "標準機（サンプル）"
-    },
-    {
-      "id": "gc17a",
-      "label": "GC-17A",
-      "note": "旧型機（サンプル）"
-    },
-    {
-      "id": "gc14b",
-      "label": "GC-14B",
-      "note": "保守機（サンプル）"
-    }
-  ]
-}
+[
+  { "id": "gc2014", "name": "GC2014" },
+  { "id": "gc17a", "name": "GC-17A" },
+  { "id": "gc14b", "name": "GC-14B" }
+]
