@@ -1,7 +1,7 @@
 [
-  { "id": "cbp_60c", "label": "60℃", "type": "isothermal", "runtime_min": 12 },
-  { "id": "cbp_80c", "label": "80℃", "type": "isothermal", "runtime_min": 10 },
-  { "id": "cbp_90c_2", "label": "90℃(2)", "type": "isothermal", "runtime_min": 9 },
-  { "id": "cbp_120c", "label": "120℃", "type": "isothermal", "runtime_min": 7 },
-  { "id": "cbp_70c_iso", "label": "70℃ isothermal", "type": "isothermal", "runtime_min": 11 }
+  { "id": "60c", "display_name": "60℃", "code": "60C", "type": "isothermal", "runtime_min": 12 },
+  { "id": "80c", "display_name": "80℃", "code": "80C", "type": "isothermal", "runtime_min": 10 },
+  { "id": "90c_2", "display_name": "90℃(2)", "code": "90C_2", "type": "isothermal", "runtime_min": 9 },
+  { "id": "120c", "display_name": "120℃", "code": "120C", "type": "isothermal", "runtime_min": 7 },
+  { "id": "70c_isothermal", "display_name": "70℃ isothermal", "code": "70C_isothermal", "type": "isothermal", "runtime_min": 11 }
 ]
