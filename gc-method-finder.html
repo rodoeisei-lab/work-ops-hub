@@ -10,53 +10,80 @@
 <body>
   <main class="wrap gc-finder-page">
     <header class="card page-header">
-      <h1>GC条件提案（候補）</h1>
-      <p>対象: GC2014 / GC-17A / GC-14B。入力した溶剤に対して、候補条件を提案します。</p>
-      <p class="note">※ 本画面は「候補提案」です。最適条件を断定するものではありません。</p>
+      <h1>GC条件提案（骨組み）</h1>
+      <p>対象機: GC2014 / GC-17A / GC-14B。実データ投入前の候補提案UIです。</p>
+      <p class="note">※ 本機能は「候補提案」です。最適条件を断定しません。</p>
       <a class="back-link" href="index.html">← トップへ戻る</a>
     </header>
 
-    <section class="card section-block" aria-labelledby="solventSectionTitle">
-      <div class="section-head">
-        <h2 id="solventSectionTitle">1. 分析したい溶剤を選択</h2>
-        <button id="clearSolventsBtn" type="button" class="plain mini-btn">選択クリア</button>
+    <section class="card section-block" aria-labelledby="filterSectionTitle">
+      <h2 id="filterSectionTitle">1. 絞り込みと分析対象の入力</h2>
+      <div class="filter-grid">
+        <label>
+          機械（任意）
+          <select id="machineFilter">
+            <option value="">すべて</option>
+          </select>
+        </label>
+        <label>
+          カラム（任意）
+          <select id="columnFilter">
+            <option value="">すべて</option>
+          </select>
+        </label>
+        <label>
+          温度条件（任意）
+          <select id="tempFilter">
+            <option value="">すべて</option>
+          </select>
+        </label>
       </div>
-      <p class="hint">複数選択できます（タップでON/OFF）。</p>
-      <div id="solventSelector" class="chip-grid" role="listbox" aria-label="溶剤選択"></div>
-      <div class="selected-row">
-        <strong>選択中:</strong>
-        <div id="selectedSolvents" class="selected-chips">なし</div>
+
+      <div class="analyte-box">
+        <p class="hint">分析したい溶剤を複数追加してください（候補選択または自由入力）。</p>
+        <div class="input-row">
+          <input id="analyteInput" type="text" list="analyteList" placeholder="例: アセトン / トルエン">
+          <datalist id="analyteList"></datalist>
+          <button id="addAnalyteBtn" type="button" class="plain">追加</button>
+        </div>
+        <div id="quickAnalytes" class="quick-chips" aria-label="溶剤候補"></div>
+        <div class="selected-row">
+          <strong>入力済み:</strong>
+          <div id="selectedAnalytes" class="selected-chips">なし</div>
+        </div>
       </div>
-      <button id="suggestBtn" type="button" class="primary suggest-btn">候補を提案する</button>
+
+      <div class="action-row">
+        <button id="clearAnalytesBtn" type="button" class="plain">入力クリア</button>
+        <button id="suggestBtn" type="button" class="primary">候補を提案する</button>
+      </div>
     </section>
 
     <section class="card section-block" aria-labelledby="resultSectionTitle">
-      <h2 id="resultSectionTitle">2. おすすめ条件（1位〜3位）</h2>
-      <p class="hint">カバー率、RT間隔、品質、総分析時間を仮スコア化して並び替えます。</p>
+      <h2 id="resultSectionTitle">2. おすすめ候補（1位〜3位）</h2>
+      <p class="hint">表示: 機械名 / カラム名 / 温度条件 / 理由 / 想定RT範囲</p>
+      <div id="dataWarning" class="data-warning" hidden></div>
       <div id="recommendations" class="recommend-list">
-        <p class="empty-text">溶剤を選んで「候補を提案する」を押してください。</p>
+        <p class="empty-text">溶剤を追加して「候補を提案する」を押してください。</p>
       </div>
     </section>
 
     <section class="card section-block" aria-labelledby="rtSectionTitle">
-      <h2 id="rtSectionTitle">3. RT一覧と簡易グラフ</h2>
-      <p class="hint">おすすめ条件を選ぶと、下にRT一覧と位置図を表示します。</p>
+      <h2 id="rtSectionTitle">3. 対象条件のRT一覧とRT位置図</h2>
       <div id="rtSummary" class="rt-summary">候補が選択されていません。</div>
-      <div id="rtGraph" class="rt-graph" aria-live="polite"></div>
+      <div id="rtGraph" class="rt-graph"></div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>溶剤</th>
               <th>RT(min)</th>
-              <th>quality</th>
+              <th>certainty</th>
               <th>note</th>
             </tr>
           </thead>
           <tbody id="rtTableBody">
-            <tr>
-              <td colspan="4" class="empty-cell">表示するデータがありません。</td>
-            </tr>
+            <tr><td colspan="4" class="empty-cell">表示するデータがありません。</td></tr>
           </tbody>
         </table>
       </div>

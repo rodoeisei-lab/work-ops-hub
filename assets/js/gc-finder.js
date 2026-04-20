@@ -1,5 +1,5 @@
 (function () {
-  const DATA_FILES = {
+  const PATHS = {
     machines: 'data/gc-machines.json',
     columns: 'data/gc-columns.json',
     tempPrograms: 'data/gc-temp-programs.json',
@@ -8,10 +8,17 @@
   };
 
   const el = {
-    solventSelector: document.getElementById('solventSelector'),
-    selectedSolvents: document.getElementById('selectedSolvents'),
-    clearSolventsBtn: document.getElementById('clearSolventsBtn'),
+    machineFilter: document.getElementById('machineFilter'),
+    columnFilter: document.getElementById('columnFilter'),
+    tempFilter: document.getElementById('tempFilter'),
+    analyteInput: document.getElementById('analyteInput'),
+    analyteList: document.getElementById('analyteList'),
+    quickAnalytes: document.getElementById('quickAnalytes'),
+    selectedAnalytes: document.getElementById('selectedAnalytes'),
+    addAnalyteBtn: document.getElementById('addAnalyteBtn'),
+    clearAnalytesBtn: document.getElementById('clearAnalytesBtn'),
     suggestBtn: document.getElementById('suggestBtn'),
+    dataWarning: document.getElementById('dataWarning'),
     recommendations: document.getElementById('recommendations'),
     rtSummary: document.getElementById('rtSummary'),
     rtGraph: document.getElementById('rtGraph'),
@@ -20,331 +27,438 @@
 
   const state = {
     data: null,
-    selectedSolventIds: new Set(),
-    rankedMethods: [],
-    selectedMethodId: ''
+    selectedAnalytes: new Map(),
+    ranked: []
   };
 
   init();
 
   async function init() {
     try {
-      const data = await loadData();
-      state.data = data;
-      renderSolventSelector(data.solvents);
-      bindActions();
-    } catch (err) {
-      console.error(err);
-      el.recommendations.innerHTML = '<p class="empty-text">データ読込に失敗しました。JSON形式を確認してください。</p>';
+      state.data = await loadData();
+      fillFilterOptions();
+      fillAnalyteOptions();
+      bindEvents();
+    } catch (error) {
+      console.error(error);
+      el.recommendations.innerHTML = '<p class="empty-text">データ読み込みに失敗しました。JSON形式を確認してください。</p>';
     }
   }
 
   async function loadData() {
-    const [machines, columns, tempPrograms, rtLibrary, rules] = await Promise.all(
-      Object.values(DATA_FILES).map(fetchJson)
-    );
+    const [machines, columns, tempPrograms, rtLibrary, rules] = await Promise.all([
+      fetchJson(PATHS.machines),
+      fetchJson(PATHS.columns),
+      fetchJson(PATHS.tempPrograms),
+      fetchJson(PATHS.rtLibrary),
+      fetchJson(PATHS.rules)
+    ]);
 
-    const solventMap = new Map();
-    (rules.solvents || []).forEach((solvent) => {
-      solventMap.set(solvent.id, solvent);
+    const analyteCatalog = buildAnalyteCatalog(rtLibrary, rules);
+    const methods = buildMethods(machines, columns, tempPrograms, rtLibrary);
+
+    return { machines, columns, tempPrograms, rtLibrary, rules, analyteCatalog, methods };
+  }
+
+  function buildAnalyteCatalog(rtLibrary, rules) {
+    const map = new Map();
+
+    (rules.analytes || []).forEach((row) => {
+      map.set(row.id, {
+        id: row.id,
+        label: row.label || row.id,
+        aliases: (row.aliases || []).map(normalizeName)
+      });
     });
 
-    (rtLibrary.records || []).forEach((record) => {
-      if (!solventMap.has(record.solventId)) {
-        solventMap.set(record.solventId, {
-          id: record.solventId,
-          label: record.solventLabel || record.solventId,
-          aliases: []
+    (rtLibrary || []).forEach((row) => {
+      const id = row.analyte_id || normalizeName(row.analyte || '');
+      if (!id) return;
+      if (!map.has(id)) {
+        map.set(id, {
+          id,
+          label: row.analyte || row.analyte_id,
+          aliases: [normalizeName(row.analyte || ''), normalizeName(row.analyte_id || '')].filter(Boolean)
         });
       }
     });
 
-    const methods = makeMethodCatalog({ machines, columns, tempPrograms, rtLibrary });
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+  }
 
-    return {
-      machines,
-      columns,
-      tempPrograms,
-      rtLibrary,
-      rules,
-      methods,
-      solvents: Array.from(solventMap.values()).sort((a, b) => a.label.localeCompare(b.label, 'ja'))
-    };
+  function buildMethods(machines, columns, tempPrograms, rtLibrary) {
+    const machineMap = new Map((machines || []).map((m) => [m.id, m]));
+    const columnMap = new Map((columns || []).map((c) => [c.id, c]));
+    const tempMap = new Map((tempPrograms || []).map((t) => [t.id, t]));
+    const grouped = new Map();
+
+    (rtLibrary || []).forEach((row) => {
+      const key = [row.machine_id, row.column_id, row.temp_program_id].join('__');
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(row);
+    });
+
+    return Array.from(grouped.entries()).map(([id, records]) => ({
+      id,
+      machine: machineMap.get(records[0].machine_id),
+      column: columnMap.get(records[0].column_id),
+      tempProgram: tempMap.get(records[0].temp_program_id),
+      records: records.slice().sort((a, b) => a.rt_min - b.rt_min)
+    }));
   }
 
   async function fetchJson(path) {
     const res = await fetch(path);
-    if (!res.ok) throw new Error(`${path} の取得に失敗`);
+    if (!res.ok) throw new Error(path + ' の読み込みに失敗');
     return res.json();
   }
 
-  function makeMethodCatalog({ machines, columns, tempPrograms, rtLibrary }) {
-    const machineMap = indexById(machines.machines);
-    const columnMap = indexById(columns.columns);
-    const tempProgramMap = indexById(tempPrograms.tempPrograms);
-
-    const grouped = new Map();
-    (rtLibrary.records || []).forEach((record) => {
-      const methodKey = `${record.machineId}__${record.columnId}__${record.tempProgramId}`;
-      if (!grouped.has(methodKey)) grouped.set(methodKey, []);
-      grouped.get(methodKey).push(record);
+  function bindEvents() {
+    el.addAnalyteBtn.addEventListener('click', addAnalyteFromInput);
+    el.analyteInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addAnalyteFromInput();
+      }
     });
 
-    return Array.from(grouped.entries()).map(([methodId, records]) => ({
-      methodId,
-      machine: machineMap.get(records[0].machineId),
-      column: columnMap.get(records[0].columnId),
-      tempProgram: tempProgramMap.get(records[0].tempProgramId),
-      records: records.slice().sort((a, b) => a.rt - b.rt)
-    }));
-  }
-
-  function indexById(items) {
-    return new Map((items || []).map((item) => [item.id, item]));
-  }
-
-  function bindActions() {
-    el.clearSolventsBtn.addEventListener('click', () => {
-      state.selectedSolventIds.clear();
-      renderSolventSelector(state.data.solvents);
-      renderSelectedSolvents();
-      resetResultPanels();
+    el.clearAnalytesBtn.addEventListener('click', () => {
+      state.selectedAnalytes.clear();
+      renderSelectedAnalytes();
+      clearOutputs();
+      syncQuickChipState();
     });
 
     el.suggestBtn.addEventListener('click', () => {
-      if (!state.selectedSolventIds.size) {
-        el.recommendations.innerHTML = '<p class="empty-text">先に溶剤を1つ以上選択してください。</p>';
+      const selected = Array.from(state.selectedAnalytes.keys());
+      if (!selected.length) {
+        el.recommendations.innerHTML = '<p class="empty-text">先に溶剤を1つ以上追加してください。</p>';
         return;
       }
-      state.rankedMethods = rankMethods();
+      state.ranked = rankMethods(selected);
       renderRecommendations();
-      if (state.rankedMethods[0]) {
-        selectMethod(state.rankedMethods[0].method.methodId);
-      }
+      if (state.ranked[0]) showMethodDetails(state.ranked[0]);
     });
-  }
 
-  function renderSolventSelector(solvents) {
-    el.solventSelector.innerHTML = '';
-    solvents.forEach((solvent) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'solvent-chip';
-      btn.textContent = solvent.label;
-      if (state.selectedSolventIds.has(solvent.id)) {
-        btn.classList.add('active');
-      }
-      btn.addEventListener('click', () => {
-        if (state.selectedSolventIds.has(solvent.id)) {
-          state.selectedSolventIds.delete(solvent.id);
-        } else {
-          state.selectedSolventIds.add(solvent.id);
+    [el.machineFilter, el.columnFilter, el.tempFilter].forEach((node) => {
+      node.addEventListener('change', () => {
+        if (state.ranked.length) {
+          state.ranked = rankMethods(Array.from(state.selectedAnalytes.keys()));
+          renderRecommendations();
+          if (state.ranked[0]) showMethodDetails(state.ranked[0]);
         }
-        btn.classList.toggle('active');
-        renderSelectedSolvents();
       });
-      el.solventSelector.appendChild(btn);
     });
-    renderSelectedSolvents();
   }
 
-  function renderSelectedSolvents() {
-    const list = Array.from(state.selectedSolventIds)
-      .map((id) => state.data.solvents.find((s) => s.id === id)?.label || id);
-    if (!list.length) {
-      el.selectedSolvents.textContent = 'なし';
+  function fillFilterOptions() {
+    fillSelect(el.machineFilter, state.data.machines, 'name');
+    fillSelect(el.columnFilter, state.data.columns, 'name');
+    fillSelect(el.tempFilter, state.data.tempPrograms, 'label');
+  }
+
+  function fillSelect(selectEl, list, labelKey) {
+    (list || []).forEach((row) => {
+      const option = document.createElement('option');
+      option.value = row.id;
+      option.textContent = row[labelKey] || row.id;
+      selectEl.appendChild(option);
+    });
+  }
+
+  function fillAnalyteOptions() {
+    el.analyteList.innerHTML = '';
+    el.quickAnalytes.innerHTML = '';
+
+    state.data.analyteCatalog.forEach((item) => {
+      const option = document.createElement('option');
+      option.value = item.label;
+      el.analyteList.appendChild(option);
+
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'quick-chip';
+      chip.dataset.analyteId = item.id;
+      chip.textContent = item.label;
+      chip.addEventListener('click', () => {
+        if (state.selectedAnalytes.has(item.id)) {
+          state.selectedAnalytes.delete(item.id);
+        } else {
+          state.selectedAnalytes.set(item.id, item.label);
+        }
+        renderSelectedAnalytes();
+        syncQuickChipState();
+      });
+      el.quickAnalytes.appendChild(chip);
+    });
+  }
+
+  function addAnalyteFromInput() {
+    const raw = el.analyteInput.value.trim();
+    if (!raw) return;
+
+    const resolved = resolveAnalyte(raw);
+    state.selectedAnalytes.set(resolved.id, resolved.label);
+
+    el.analyteInput.value = '';
+    renderSelectedAnalytes();
+    syncQuickChipState();
+  }
+
+  function resolveAnalyte(raw) {
+    const norm = normalizeName(raw);
+    const fromCatalog = state.data.analyteCatalog.find((item) => {
+      if (normalizeName(item.label) === norm || normalizeName(item.id) === norm) return true;
+      return item.aliases.includes(norm);
+    });
+
+    if (fromCatalog) return fromCatalog;
+
+    return {
+      id: norm || raw,
+      label: raw,
+      aliases: [norm]
+    };
+  }
+
+  function renderSelectedAnalytes() {
+    if (!state.selectedAnalytes.size) {
+      el.selectedAnalytes.textContent = 'なし';
       return;
     }
-    el.selectedSolvents.innerHTML = list.map((name) => `<span class="selected-tag">${escapeHtml(name)}</span>`).join('');
+
+    el.selectedAnalytes.innerHTML = Array.from(state.selectedAnalytes.entries()).map(([id, label]) => {
+      return '<span class="selected-tag">' + escapeHtml(label) +
+        '<button type="button" data-remove-id="' + escapeHtml(id) + '">×</button></span>';
+    }).join('');
+
+    Array.from(el.selectedAnalytes.querySelectorAll('button[data-remove-id]')).forEach((button) => {
+      button.addEventListener('click', () => {
+        state.selectedAnalytes.delete(button.dataset.removeId);
+        renderSelectedAnalytes();
+        syncQuickChipState();
+      });
+    });
   }
 
-  function rankMethods() {
-    const settings = state.data.rules.scoreSettings || {};
-    const selected = Array.from(state.selectedSolventIds);
+  function syncQuickChipState() {
+    Array.from(el.quickAnalytes.children).forEach((chip) => {
+      chip.classList.toggle('active', state.selectedAnalytes.has(chip.dataset.analyteId));
+    });
+  }
 
-    return state.data.methods
+  function rankMethods(selectedIds) {
+    const candidateMethods = state.data.methods.filter(matchFilters);
+    const weights = state.data.rules.weights || {};
+    const thresholds = state.data.rules.thresholds || {};
+    const certaintyScore = state.data.rules.certainty_score || { high: 1, medium: 0.6, low: 0.3 };
+
+    return candidateMethods
       .map((method) => {
-        const coverage = method.records.filter((r) => selected.includes(r.solventId));
-        const coverageRate = coverage.length / selected.length;
-        const minGap = getMinGap(coverage);
-        const avgQualityWeight = getAvgQualityWeight(coverage, settings.qualityWeight || {});
-        const totalTime = method.tempProgram?.totalTimeMin || 0;
+        const matches = method.records.filter((row) => selectedIds.includes(row.analyte_id));
+        if (!matches.length) return null;
+
+        const coverageRate = matches.length / selectedIds.length;
+        const minGap = calcMinGap(matches);
+        const separationScore = calcSeparationScore(minGap, thresholds);
+        const certaintyAvg = average(matches.map((row) => certaintyScore[String(row.certainty || 'medium').toLowerCase()] ?? 0.4));
+        const runtime = Number(method.tempProgram?.runtime_min || method.tempProgram?.estimated_runtime_min || 0);
+        const runtimeScore = runtime > 0 ? Math.max(0, 1 - runtime / (state.data.rules.runtime_reference_min || 30)) : 0.2;
 
         const score =
-          coverageRate * (settings.coverageWeight || 0) +
-          normalizeGap(minGap, settings.gapIdealMin || 0.8) * (settings.gapWeight || 0) +
-          avgQualityWeight * (settings.qualityScoreWeight || 0) +
-          normalizeTime(totalTime, settings.maxPreferredTimeMin || 25) * (settings.timeWeight || 0);
+          coverageRate * (weights.coverage || 0) +
+          separationScore * (weights.separation || 0) +
+          runtimeScore * (weights.runtime || 0) +
+          certaintyAvg * (weights.certainty || 0);
 
         return {
           method,
-          coverage,
+          matches,
           score,
-          details: {
-            coverageRate,
-            minGap,
-            avgQualityWeight,
-            totalTime
-          }
+          coverageRate,
+          minGap,
+          certaintyAvg,
+          runtime,
+          rtRange: calcRtRange(matches),
+          missing: selectedIds.filter((id) => !matches.some((row) => row.analyte_id === id))
         };
       })
-      .filter((item) => item.coverage.length)
+      .filter(Boolean)
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
   }
 
-  function getMinGap(records) {
-    if (records.length <= 1) return 9.9;
-    let min = Number.POSITIVE_INFINITY;
-    for (let i = 1; i < records.length; i += 1) {
-      min = Math.min(min, records[i].rt - records[i - 1].rt);
-    }
-    return Number.isFinite(min) ? min : 0;
-  }
-
-  function getAvgQualityWeight(records, qualityWeightMap) {
-    if (!records.length) return 0;
-    const sum = records.reduce((acc, r) => {
-      const key = String(r.quality || '').toLowerCase();
-      return acc + (qualityWeightMap[key] ?? 0.2);
-    }, 0);
-    return sum / records.length;
-  }
-
-  function normalizeGap(minGap, idealGap) {
-    if (!idealGap) return 0;
-    return Math.min(minGap / idealGap, 1);
-  }
-
-  function normalizeTime(totalTime, maxPreferred) {
-    if (!maxPreferred) return 0;
-    const ratio = Math.max(0, 1 - totalTime / maxPreferred);
-    return Math.min(ratio, 1);
+  function matchFilters(method) {
+    if (el.machineFilter.value && method.machine?.id !== el.machineFilter.value) return false;
+    if (el.columnFilter.value && method.column?.id !== el.columnFilter.value) return false;
+    if (el.tempFilter.value && method.tempProgram?.id !== el.tempFilter.value) return false;
+    return true;
   }
 
   function renderRecommendations() {
-    if (!state.rankedMethods.length) {
-      el.recommendations.innerHTML = '<p class="empty-text">該当候補がありません。RTライブラリを追加してください。</p>';
-      resetRtPanels();
+    if (!state.ranked.length) {
+      el.recommendations.innerHTML = '<p class="empty-text">候補が見つかりません。フィルタ緩和かRTデータ追加を行ってください。</p>';
+      clearDetails();
+      showWarning('入力した溶剤のRTデータが不足しています。JSONを追加入力してください。');
       return;
     }
 
     el.recommendations.innerHTML = '';
-    state.rankedMethods.forEach((item, idx) => {
+    const hasMissing = state.ranked.some((item) => item.missing.length);
+    showWarning(hasMissing ? '一部の溶剤でRTデータ不足があります。結果は暫定候補です。' : '');
+
+    state.ranked.forEach((item, idx) => {
       const card = document.createElement('article');
-      card.className = `rec-card ${idx === 0 ? 'top-rank' : ''}`;
-      const quality = Math.round(item.details.avgQualityWeight * 100);
+      card.className = 'rec-card' + (idx === 0 ? ' top' : '');
 
-      card.innerHTML = `
-        <div class="rank-row">
-          <p class="rank-label">${idx + 1}位: ${escapeHtml(item.method.machine?.label || item.method.machine?.id || '-')}</p>
-          <p class="score">スコア ${item.score.toFixed(1)}</p>
-        </div>
-        <ul class="meta-list">
-          <li>カラム: ${escapeHtml(item.method.column?.label || '-')}</li>
-          <li>温度条件: ${escapeHtml(item.method.tempProgram?.label || '-')}</li>
-          <li>入力溶剤カバー率: ${(item.details.coverageRate * 100).toFixed(0)}%</li>
-          <li>最小RT差: ${item.details.minGap.toFixed(2)} min</li>
-          <li>quality平均: ${quality}% 相当</li>
-          <li>総分析時間: ${item.details.totalTime.toFixed(1)} min</li>
-        </ul>
-        <button type="button" class="rec-select-btn" data-method-id="${item.method.methodId}">この候補をRT表示</button>
-      `;
+      const reason = buildReasonText(item);
 
-      card.querySelector('.rec-select-btn').addEventListener('click', () => selectMethod(item.method.methodId));
+      card.innerHTML = [
+        '<div class="rank-row">',
+        '<p><strong>' + (idx + 1) + '位</strong> ' + escapeHtml(item.method.machine?.name || item.method.machine?.id || '-') + '</p>',
+        '<p>スコア ' + item.score.toFixed(1) + '</p>',
+        '</div>',
+        '<p class="reason">',
+        'カラム: ', escapeHtml(item.method.column?.name || '-'), '<br>',
+        '温度条件: ', escapeHtml(item.method.tempProgram?.label || '-'), '<br>',
+        '理由: ', escapeHtml(reason), '<br>',
+        '想定RT範囲: ', item.rtRange || '-',
+        '</p>',
+        '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">この条件のRT一覧を表示</button>'
+      ].join('');
+
+      card.querySelector('.rec-select-btn').addEventListener('click', () => showMethodDetails(item));
       el.recommendations.appendChild(card);
     });
   }
 
-  function selectMethod(methodId) {
-    state.selectedMethodId = methodId;
-    const item = state.rankedMethods.find((r) => r.method.methodId === methodId);
-    if (!item) return;
+  function showMethodDetails(item) {
+    el.rtSummary.innerHTML = [
+      '<strong>', escapeHtml(item.method.machine?.name || '-'), '</strong> × ',
+      '<strong>', escapeHtml(item.method.column?.name || '-'), '</strong> × ',
+      '<strong>', escapeHtml(item.method.tempProgram?.label || '-'), '</strong>',
+      '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '%'
+    ].join('');
 
-    renderRtSummary(item);
-    renderRtGraph(item);
-    renderRtTable(item);
+    renderGraph(item.matches, item.runtime);
+    renderTable(item.matches);
   }
 
-  function renderRtSummary(item) {
-    const selectedLabels = Array.from(state.selectedSolventIds)
-      .map((id) => state.data.solvents.find((s) => s.id === id)?.label || id)
-      .join(' / ');
-
-    el.rtSummary.innerHTML = `
-      <strong>${escapeHtml(item.method.machine?.label || '')}</strong> ×
-      <strong>${escapeHtml(item.method.column?.label || '')}</strong> ×
-      <strong>${escapeHtml(item.method.tempProgram?.label || '')}</strong><br>
-      対象溶剤: ${escapeHtml(selectedLabels)}
-    `;
-  }
-
-  function renderRtGraph(item) {
-    const targets = item.method.records.filter((r) => state.selectedSolventIds.has(r.solventId));
-    if (!targets.length) {
-      el.rtGraph.innerHTML = '<p class="empty-text">グラフ表示対象がありません。</p>';
+  function renderGraph(rows, runtime) {
+    if (!rows.length) {
+      el.rtGraph.innerHTML = '<p class="empty-text">表示データがありません。</p>';
       return;
     }
 
-    const total = item.method.tempProgram?.totalTimeMin || Math.max(...targets.map((r) => r.rt));
-    el.rtGraph.innerHTML = '';
-
+    const maxRt = Math.max(runtime || 0, ...rows.map((r) => Number(r.rt_min) || 0), 1);
     const track = document.createElement('div');
-    track.className = 'rt-track';
+    track.className = 'graph-track';
 
-    targets.forEach((record) => {
-      const ratio = total ? (record.rt / total) * 100 : 0;
-      const dot = document.createElement('span');
-      dot.className = 'rt-dot';
-      dot.style.left = `${Math.min(ratio, 100)}%`;
+    rows.slice().sort((a, b) => a.rt_min - b.rt_min).forEach((row) => {
+      const left = ((Number(row.rt_min) || 0) / maxRt) * 100;
+
+      const marker = document.createElement('span');
+      marker.className = 'graph-marker';
+      marker.style.left = Math.min(left, 100) + '%';
+      track.appendChild(marker);
 
       const label = document.createElement('span');
-      label.className = 'rt-label';
-      label.style.left = `${Math.min(ratio, 100)}%`;
-      label.textContent = `${record.solventLabel || record.solventId} (${record.rt})`;
-
-      track.appendChild(dot);
+      label.className = 'graph-label';
+      label.style.left = Math.min(left, 100) + '%';
+      label.textContent = (row.analyte || row.analyte_id) + ' (' + Number(row.rt_min).toFixed(2) + ')';
       track.appendChild(label);
     });
 
+    el.rtGraph.innerHTML = '';
     el.rtGraph.appendChild(track);
+
     const axis = document.createElement('p');
-    axis.className = 'hint';
-    axis.textContent = `0 min 〜 ${total.toFixed(1)} min`;
+    axis.className = 'axis-label';
+    axis.textContent = 'RT(min): 0 〜 ' + maxRt.toFixed(1);
     el.rtGraph.appendChild(axis);
   }
 
-  function renderRtTable(item) {
-    const targets = item.method.records
-      .filter((r) => state.selectedSolventIds.has(r.solventId))
-      .sort((a, b) => a.rt - b.rt);
-
-    if (!targets.length) {
+  function renderTable(rows) {
+    if (!rows.length) {
       el.rtTableBody.innerHTML = '<tr><td colspan="4" class="empty-cell">表示するデータがありません。</td></tr>';
       return;
     }
 
-    el.rtTableBody.innerHTML = targets.map((record) => `
-      <tr>
-        <td>${escapeHtml(record.solventLabel || record.solventId)}</td>
-        <td>${Number(record.rt).toFixed(2)}</td>
-        <td>${escapeHtml(record.quality || '-')}</td>
-        <td>${escapeHtml(record.note || '-')}</td>
-      </tr>
-    `).join('');
+    el.rtTableBody.innerHTML = rows.slice().sort((a, b) => a.rt_min - b.rt_min).map((row) => {
+      return [
+        '<tr>',
+        '<td>', escapeHtml(row.analyte || row.analyte_id), '</td>',
+        '<td>', Number(row.rt_min).toFixed(3), '</td>',
+        '<td>', escapeHtml(row.certainty || '-'), '</td>',
+        '<td>', escapeHtml(row.note || '-'), '</td>',
+        '</tr>'
+      ].join('');
+    }).join('');
   }
 
-  function resetResultPanels() {
-    state.rankedMethods = [];
-    state.selectedMethodId = '';
-    el.recommendations.innerHTML = '<p class="empty-text">溶剤を選んで「候補を提案する」を押してください。</p>';
-    resetRtPanels();
+  function clearOutputs() {
+    el.recommendations.innerHTML = '<p class="empty-text">溶剤を追加して「候補を提案する」を押してください。</p>';
+    clearDetails();
+    showWarning('');
+    state.ranked = [];
   }
 
-  function resetRtPanels() {
+  function clearDetails() {
     el.rtSummary.textContent = '候補が選択されていません。';
     el.rtGraph.innerHTML = '';
     el.rtTableBody.innerHTML = '<tr><td colspan="4" class="empty-cell">表示するデータがありません。</td></tr>';
+  }
+
+  function showWarning(text) {
+    if (!text) {
+      el.dataWarning.hidden = true;
+      el.dataWarning.textContent = '';
+      return;
+    }
+    el.dataWarning.hidden = false;
+    el.dataWarning.textContent = text;
+  }
+
+  function calcMinGap(rows) {
+    if (rows.length <= 1) return 999;
+    const sorted = rows.slice().sort((a, b) => a.rt_min - b.rt_min);
+    let min = Number.POSITIVE_INFINITY;
+    for (let i = 1; i < sorted.length; i += 1) {
+      min = Math.min(min, sorted[i].rt_min - sorted[i - 1].rt_min);
+    }
+    return Number.isFinite(min) ? min : 0;
+  }
+
+  function calcSeparationScore(minGap, thresholds) {
+    if (minGap >= (thresholds.good_rt_gap_min || 0.3)) return 1;
+    if (minGap >= (thresholds.warn_rt_gap_min || 0.15)) return 0.55;
+    return 0.2;
+  }
+
+  function calcRtRange(rows) {
+    if (!rows.length) return null;
+    const values = rows.map((r) => Number(r.rt_min)).filter(Number.isFinite);
+    if (!values.length) return null;
+    return Math.min(...values).toFixed(2) + '〜' + Math.max(...values).toFixed(2) + ' min';
+  }
+
+  function buildReasonText(item) {
+    const parts = [];
+    parts.push('入力溶剤カバー率 ' + (item.coverageRate * 100).toFixed(0) + '%');
+    parts.push('最小RT差 ' + item.minGap.toFixed(2) + ' min');
+    parts.push('certainty平均 ' + Math.round(item.certaintyAvg * 100) + '%');
+    if (item.runtime) parts.push('推定分析時間 ' + item.runtime.toFixed(1) + ' min');
+    if (item.missing.length) parts.push('未登録溶剤あり');
+    return parts.join(' / ');
+  }
+
+  function average(arr) {
+    if (!arr.length) return 0;
+    return arr.reduce((sum, n) => sum + n, 0) / arr.length;
+  }
+
+  function normalizeName(text) {
+    return String(text || '').trim().toLowerCase().replace(/\s+/g, '');
   }
 
   function escapeHtml(text) {
