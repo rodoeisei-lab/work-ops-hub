@@ -5,6 +5,7 @@
     tempPrograms: 'data/gc-temp-programs.json',
     rtLibrary: 'data/gc-rt-library.json',
     analyteAliases: 'data/gc-analyte-aliases.json',
+    analyteDisplay: 'data/gc-analyte-display.json',
     rules: 'data/gc-method-rules.json'
   };
 
@@ -50,16 +51,17 @@
   }
 
   async function loadData() {
-    const [machines, columns, tempPrograms, rtLibrary, analyteAliases, rules] = await Promise.all([
+    const [machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, rules] = await Promise.all([
       fetchJson(PATHS.machines),
       fetchJson(PATHS.columns),
       fetchJson(PATHS.tempPrograms),
       fetchJson(PATHS.rtLibrary),
       fetchJson(PATHS.analyteAliases),
+      fetchJson(PATHS.analyteDisplay),
       fetchJson(PATHS.rules)
     ]);
 
-    const aliasBundle = buildAliasBundle(analyteAliases, rules);
+    const aliasBundle = buildAliasBundle(analyteAliases, rules, analyteDisplay);
     const normalizedRtLibrary = normalizeRtLibrary(rtLibrary, aliasBundle.aliasLookup);
     const validationReport = validateRtLibrary(normalizedRtLibrary);
     const analyteCatalog = buildAnalyteCatalog(aliasBundle, normalizedRtLibrary);
@@ -79,9 +81,16 @@
     };
   }
 
-  function buildAliasBundle(analyteAliases, rules) {
+  function buildAliasBundle(analyteAliases, rules, analyteDisplay) {
     const canonicalToAliases = new Map();
     const aliasLookup = new Map();
+    const displayNames = new Map();
+
+    Object.entries(analyteDisplay || {}).forEach(([id, label]) => {
+      if (!id || !label) return;
+      displayNames.set(id, String(label));
+      aliasLookup.set(normalizeName(id), id);
+    });
 
     Object.entries(analyteAliases || {}).forEach(([canonical, aliases]) => {
       const list = [canonical].concat(Array.isArray(aliases) ? aliases : []).map((n) => String(n || '')).filter(Boolean);
@@ -92,7 +101,7 @@
     });
 
     (rules?.analytes || []).forEach((row) => {
-      const canonical = row.id;
+      const canonical = resolveCanonicalFromRule(row, aliasLookup);
       if (!canonical) return;
       if (!canonicalToAliases.has(canonical)) {
         canonicalToAliases.set(canonical, [row.label || canonical]);
@@ -106,7 +115,13 @@
       });
     });
 
-    return { canonicalToAliases, aliasLookup };
+    canonicalToAliases.forEach((aliases, canonical) => {
+      if (!displayNames.has(canonical)) {
+        displayNames.set(canonical, aliases[0] || canonical);
+      }
+    });
+
+    return { canonicalToAliases, aliasLookup, displayNames };
   }
 
   function normalizeRtLibrary(rtLibrary, aliasLookup) {
@@ -156,9 +171,10 @@
     const map = new Map();
 
     aliasBundle.canonicalToAliases.forEach((aliases, canonical) => {
+      const displayName = getDisplayName(canonical, aliasBundle.displayNames, aliases[0] || canonical);
       map.set(canonical, {
         id: canonical,
-        label: aliases[0] || canonical,
+        label: displayName,
         aliases: aliases.map(normalizeName)
       });
     });
@@ -167,15 +183,18 @@
       const id = row.analyte_normalized;
       if (!id) return;
       if (!map.has(id)) {
+        const displayName = getDisplayName(id, aliasBundle.displayNames, row.analyte_original || id);
         map.set(id, {
           id,
-          label: row.analyte_original || id,
+          label: displayName,
           aliases: [normalizeName(row.analyte_original), normalizeName(id)].filter(Boolean)
         });
       }
     });
 
-    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+    return Array.from(map.values())
+      .filter((item, idx, list) => list.findIndex((x) => normalizeName(x.id) === normalizeName(item.id)) === idx)
+      .sort((a, b) => a.label.localeCompare(b.label, 'ja'));
   }
 
   function buildMethods(machines, columns, tempPrograms, rtLibrary) {
@@ -463,7 +482,7 @@
 
     const warnings = [];
     if (hasMissing || hasUnknown) warnings.push('未登録またはデータ不足の溶剤があります。');
-    if (hasUndetermined) warnings.push('「未確定」データを含む条件は低優先で評価しています。');
+    if (hasUndetermined) warnings.push('「名称未確定」データを含む条件は低優先で評価しています。');
     if (hasLowCertainty) warnings.push('certainty=low を含む候補は注意表示しています。');
     if (state.data.dataDensityLow || hasProvisional) warnings.push('候補精度は暫定です。');
     if (state.data.validationReport.errors.length) warnings.push('RTデータ検証エラーあり。');
@@ -489,7 +508,7 @@
         'データ信頼度の目安: ', escapeHtml(item.confidenceLabel), '<br>',
         '理由: ', escapeHtml(reason),
         item.lowCertaintyMatchCount > 0 ? '<br><span class="provisional-badge">注意: certainty=low のデータを含む</span>' : '',
-        item.hasUndeterminedInMethod ? '<br><span class="provisional-badge">未確定データ含む</span>' : '',
+        item.hasUndeterminedInMethod ? '<br><span class="provisional-badge">名称未確定データ含む</span>' : '',
         item.dataShortage ? '<br><span class="provisional-badge">データ不足</span>' : '',
         item.provisional ? '<br><span class="provisional-badge">暫定候補</span>' : '',
         '</p>',
@@ -508,7 +527,7 @@
       '<strong>', escapeHtml(item.method.tempProgram?.display_name || '-'), '</strong>',
       '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致件数: ', item.matchCount, ' / ', item.selectedCount,
       item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : '',
-      item.hasUndeterminedInMethod ? '<br>注意: RT一覧に「未確定」データを含みます。' : ''
+      item.hasUndeterminedInMethod ? '<br>注意: RT一覧に「名称未確定」データを含みます。' : ''
     ].join('');
 
     renderUnknownAnalytes(item.unknownItems);
@@ -541,7 +560,7 @@
       const label = document.createElement('span');
       label.className = 'graph-label';
       label.style.left = Math.min(left, 100) + '%';
-      label.textContent = (idx + 1) + '. ' + (row.analyte_original || row.analyte_normalized) + ' (' + Number(row.rt_min).toFixed(2) + ')';
+      label.textContent = (idx + 1) + '. ' + toAnalyteLabel(row.analyte_normalized, row.analyte_original) + ' (' + Number(row.rt_min).toFixed(2) + ')';
       track.appendChild(label);
     });
 
@@ -557,7 +576,7 @@
       const certainty = String(row.certainty || '-').toLowerCase();
       const lowClass = certainty === 'low' ? ' low' : '';
       return '<span class="legend-item">[' + (idx + 1) + '] ' +
-        escapeHtml(row.analyte_original || row.analyte_normalized) +
+        escapeHtml(toAnalyteLabel(row.analyte_normalized, row.analyte_original)) +
         ' <span class="legend-certainty' + lowClass + '">' + escapeHtml(certainty) + '</span></span>';
     }).join('');
   }
@@ -574,7 +593,7 @@
       const rowClass = selectedIds.includes(row.analyte_normalized) ? ' class="highlighted-row"' : '';
       return [
         '<tr' + rowClass + '>',
-        '<td><span class="rt-index">', (idx + 1), '</span> ', escapeHtml(row.analyte_original || row.analyte_normalized), '</td>',
+        '<td><span class="rt-index">', (idx + 1), '</span> ', escapeHtml(toAnalyteLabel(row.analyte_normalized, row.analyte_original)), '</td>',
         '<td>', Number(row.rt_min).toFixed(3), '</td>',
         '<td>', certaintyLabel, '</td>',
         '<td>', escapeHtml(row.note || '-'), '</td>',
@@ -670,6 +689,22 @@
   function average(arr) {
     if (!arr.length) return 0;
     return arr.reduce((sum, n) => sum + n, 0) / arr.length;
+  }
+
+  function resolveCanonicalFromRule(ruleRow, aliasLookup) {
+    const names = [ruleRow?.id, ruleRow?.label].concat(ruleRow?.aliases || []);
+    const matched = names.find((name) => aliasLookup.has(normalizeName(name)));
+    if (matched) return aliasLookup.get(normalizeName(matched));
+    return ruleRow?.id || '';
+  }
+
+  function getDisplayName(id, displayNames, fallback) {
+    return displayNames.get(id) || fallback || id;
+  }
+
+  function toAnalyteLabel(normalizedId, fallbackOriginal) {
+    if (!state.data?.aliasBundle?.displayNames) return fallbackOriginal || normalizedId;
+    return getDisplayName(normalizedId, state.data.aliasBundle.displayNames, fallbackOriginal || normalizedId);
   }
 
   function normalizeName(text) {

@@ -40,15 +40,16 @@
       </div>
 
       <div class="analyte-box">
-        <p class="hint">分析したい溶剤を複数追加してください（候補選択または自由入力）。</p>
+        <p class="hint">分析したい溶剤を追加してください。候補から選ぶことも、名称を入力することもできます。</p>
         <div class="input-row">
-          <input id="analyteInput" type="text" list="analyteList" placeholder="例: アセトン / トルエン">
+          <input id="analyteInput" type="text" list="analyteList" placeholder="例: アセトン、トルエン">
           <datalist id="analyteList"></datalist>
           <button id="addAnalyteBtn" type="button" class="plain">追加</button>
         </div>
+        <p class="hint">よく使う候補</p>
         <div id="quickAnalytes" class="quick-chips" aria-label="溶剤候補"></div>
         <div class="selected-row">
-          <strong>入力済み:</strong>
+          <strong>選択中:</strong>
           <div id="selectedAnalytes" class="selected-chips">なし</div>
         </div>
       </div>
