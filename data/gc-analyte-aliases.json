@@ -1,23 +1,130 @@
 {
-  "n-ヘキサン": ["n-ヘキサン", "nhx", "n-hexane", "hexane", "ノルマルヘキサン"],
-  "acetone": ["acetone", "アセトン"],
-  "methanol": ["methanol", "メタノール", "meoh"],
-  "ethyl_acetate": ["ethyl_acetate", "酢酸エチル"],
-  "IPA": ["IPA", "イソプロピルアルコール", "isopropyl alcohol"],
-  "MIBK": ["MIBK", "メチルイソブチルケトン"],
-  "MEK": ["MEK", "メチルエチルケトン"],
-  "toluene": ["toluene", "トルエン"],
-  "isobutyl_acetate": ["isobutyl_acetate", "酢酸イソブチル"],
-  "butyl_acetate": ["butyl_acetate", "酢酸ブチル"],
-  "isobutanol": ["isobutanol", "イソブタノール", "イソブタノール?"],
-  "1-butanol": ["1-butanol", "1-ブタノール", "n-butanol"],
-  "ethylbenzene": ["ethylbenzene", "エチルベンゼン"],
-  "p-xylene": ["p-xylene", "p-キシレン"],
-  "o-xylene": ["o-xylene", "o-キシレン"],
-  "dcm": ["dcm", "DCM", "ジクロロメタン", "dichloromethane"],
-  "styrene": ["styrene", "スチレン"],
-  "cyclohexanone": ["cyclohexanone", "シクロヘキサノン"],
-  "cyclohexane": ["cyclohexane", "シクロヘキサン"],
-  "ブチセロ": ["ブチセロ"],
-  "未確定": ["未確定", "名称未確定"]
+  "n-ヘキサン": [
+    "n-ヘキサン",
+    "nhx",
+    "n-hexane",
+    "hexane",
+    "ノルマルヘキサン"
+  ],
+  "acetone": [
+    "acetone",
+    "アセトン"
+  ],
+  "methanol": [
+    "methanol",
+    "メタノール",
+    "meoh"
+  ],
+  "ethyl_acetate": [
+    "ethyl_acetate",
+    "酢酸エチル"
+  ],
+  "IPA": [
+    "IPA",
+    "イソプロピルアルコール",
+    "isopropyl alcohol"
+  ],
+  "MIBK": [
+    "MIBK",
+    "メチルイソブチルケトン"
+  ],
+  "MEK": [
+    "MEK",
+    "メチルエチルケトン"
+  ],
+  "toluene": [
+    "toluene",
+    "トルエン"
+  ],
+  "isobutyl_acetate": [
+    "isobutyl_acetate",
+    "酢酸イソブチル"
+  ],
+  "butyl_acetate": [
+    "butyl_acetate",
+    "酢酸ブチル"
+  ],
+  "isobutanol": [
+    "isobutanol",
+    "イソブタノール",
+    "イソブタノール?"
+  ],
+  "1-butanol": [
+    "1-butanol",
+    "1-ブタノール",
+    "n-butanol"
+  ],
+  "ethylbenzene": [
+    "ethylbenzene",
+    "エチルベンゼン"
+  ],
+  "p-xylene": [
+    "p-xylene",
+    "p-キシレン"
+  ],
+  "o-xylene": [
+    "o-xylene",
+    "o-キシレン"
+  ],
+  "dcm": [
+    "dcm",
+    "DCM",
+    "ジクロロメタン",
+    "dichloromethane"
+  ],
+  "styrene": [
+    "styrene",
+    "スチレン"
+  ],
+  "cyclohexanone": [
+    "cyclohexanone",
+    "シクロヘキサノン"
+  ],
+  "cyclohexane": [
+    "cyclohexane",
+    "シクロヘキサン"
+  ],
+  "ブチセロ": [
+    "ブチセロ"
+  ],
+  "未確定": [
+    "未確定",
+    "名称未確定"
+  ],
+  "methyl_acetate": [
+    "methyl_acetate",
+    "酢酸メチル"
+  ],
+  "2-butanol": [
+    "2-butanol",
+    "2-ブタノール",
+    "sec-butanol"
+  ],
+  "isobutyl_alcohol": [
+    "isobutyl_alcohol",
+    "イソブチルアルコール"
+  ],
+  "THF": [
+    "THF",
+    "thf",
+    "THF(液)",
+    "テトラヒドロフラン"
+  ],
+  "DMF": [
+    "DMF",
+    "dmf",
+    "DMF(液)"
+  ],
+  "メチセロ": [
+    "メチセロ",
+    "メチセロ(液)"
+  ],
+  "エチセロ": [
+    "エチセロ",
+    "エチセロ(液)"
+  ],
+  "セロアセ": [
+    "セロアセ",
+    "セロアセ(液)"
+  ]
 }
