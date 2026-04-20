@@ -61,7 +61,7 @@
 
     <section class="card section-block" aria-labelledby="resultSectionTitle">
       <h2 id="resultSectionTitle">2. 候補提案（1位〜3位）</h2>
-      <p class="hint">表示: 機械名 / カラム名 / 温度条件 / 一致件数 / データ信頼度 / 想定RT範囲</p>
+      <p class="hint">表示: 機械名 / カラム名 / 温度条件 / 一致件数 / 想定RT範囲 / 最小RT差 / certainty目安</p>
       <div id="dataWarning" class="data-warning" hidden></div>
       <div id="recommendations" class="recommend-list">
         <p class="empty-text">溶剤を追加して「候補を提案する」を押してください。</p>
@@ -72,6 +72,8 @@
       <h2 id="rtSectionTitle">3. 対象条件のRT一覧とRT位置図</h2>
       <div id="rtSummary" class="rt-summary">候補が選択されていません。</div>
       <div id="rtGraph" class="rt-graph"></div>
+      <div id="graphLegend" class="graph-legend"></div>
+      <div id="unknownAnalytesPanel" class="unknown-panel" hidden></div>
       <div class="table-wrap">
         <table>
           <thead>
