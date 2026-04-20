@@ -193,8 +193,63 @@
     });
 
     return Array.from(map.values())
-      .filter((item, idx, list) => list.findIndex((x) => normalizeName(x.id) === normalizeName(item.id)) === idx)
-      .sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+      .filter((item, idx, list) => list.findIndex((x) => normalizeName(x.id) === normalizeName(item.id)) === idx);
+  }
+
+  function getSortedAnalyteCatalog() {
+    return state.data.analyteCatalog
+      .map((item) => ({ item, rtOrder: getAnalyteRtOrder(item.id) }))
+      .sort((a, b) => compareRtOrder(a.rtOrder, b.rtOrder, a.item, b.item))
+      .map((entry) => entry.item);
+  }
+
+  function getAnalyteRtOrder(analyteId) {
+    const rows = (state.data.rtLibrary || []).filter((row) => row.analyte_normalized === analyteId);
+    if (!rows.length) {
+      return {
+        priority: 2,
+        rt: Number.POSITIVE_INFINITY,
+        fallbackRt: Number.POSITIVE_INFINITY
+      };
+    }
+
+    const matchedRows = rows.filter((row) => matchesCurrentFilters(row));
+    const matchedRt = getMinRt(matchedRows);
+    const fallbackRt = getMinRt(rows);
+
+    if (Number.isFinite(matchedRt)) {
+      return {
+        priority: 0,
+        rt: matchedRt,
+        fallbackRt
+      };
+    }
+
+    return {
+      priority: 1,
+      rt: fallbackRt,
+      fallbackRt
+    };
+  }
+
+  function matchesCurrentFilters(row) {
+    if (el.machineFilter.value && row.machine_id !== el.machineFilter.value) return false;
+    if (el.columnFilter.value && row.column_id !== el.columnFilter.value) return false;
+    if (el.tempFilter.value && row.temp_program_id !== el.tempFilter.value) return false;
+    return true;
+  }
+
+  function getMinRt(rows) {
+    const rtValues = (rows || []).map((row) => Number(row.rt_min)).filter(Number.isFinite);
+    if (!rtValues.length) return Number.POSITIVE_INFINITY;
+    return Math.min(...rtValues);
+  }
+
+  function compareRtOrder(orderA, orderB, itemA, itemB) {
+    if (orderA.priority !== orderB.priority) return orderA.priority - orderB.priority;
+    if (orderA.rt !== orderB.rt) return orderA.rt - orderB.rt;
+    if (orderA.fallbackRt !== orderB.fallbackRt) return orderA.fallbackRt - orderB.fallbackRt;
+    return itemA.label.localeCompare(itemB.label, 'ja');
   }
 
   function buildMethods(machines, columns, tempPrograms, rtLibrary) {
@@ -253,6 +308,8 @@
 
     [el.machineFilter, el.columnFilter, el.tempFilter].forEach((node) => {
       node.addEventListener('change', () => {
+        fillAnalyteOptions();
+        syncQuickChipState();
         if (state.ranked.length) {
           state.ranked = rankMethods(Array.from(state.selectedAnalytes.values()));
           renderRecommendations();
@@ -289,10 +346,11 @@
   }
 
   function fillAnalyteOptions() {
+    const sortedCatalog = getSortedAnalyteCatalog();
     el.analyteList.innerHTML = '';
     el.quickAnalytes.innerHTML = '';
 
-    state.data.analyteCatalog.forEach((item) => {
+    sortedCatalog.forEach((item) => {
       const option = document.createElement('option');
       option.value = item.label;
       el.analyteList.appendChild(option);
@@ -329,7 +387,7 @@
 
   function resolveAnalyte(raw) {
     const norm = normalizeName(raw);
-    const fromCatalog = state.data.analyteCatalog.find((item) => {
+    const fromCatalog = getSortedAnalyteCatalog().find((item) => {
       if (normalizeName(item.label) === norm || normalizeName(item.id) === norm) return true;
       return item.aliases.includes(norm);
     });
