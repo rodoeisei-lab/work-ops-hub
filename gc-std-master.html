@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GC標準液マスタ | 作業用ミニハブ</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/gc-std-master.css">
+</head>
+<body>
+  <main class="wrap gc-std-page">
+    <header class="card page-header">
+      <h1>GC標準液マスタ</h1>
+      <p>画像読取ベースの標準液（STD）一覧です。未確定データも保持し、後で更新しやすい構成にしています。</p>
+      <a class="back-link" href="index.html">← トップへ戻る</a>
+    </header>
+
+    <section class="card section-block" aria-labelledby="filterTitle">
+      <h2 id="filterTitle">絞り込み</h2>
+      <div class="filter-row">
+        <label>
+          検索
+          <input id="searchInput" type="text" placeholder="元表記 / 正式名称候補 / メモを検索">
+        </label>
+        <label class="checkbox-label">
+          <input id="needsReviewOnly" type="checkbox">
+          要確認のみ表示
+        </label>
+      </div>
+      <p id="summaryText" class="hint">読み込み中...</p>
+    </section>
+
+    <section class="card section-block" aria-labelledby="tableTitle">
+      <h2 id="tableTitle">標準液一覧</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>元表記</th>
+              <th>正式名称候補</th>
+              <th>STD</th>
+              <th>確からしさ</th>
+              <th>状態</th>
+              <th>メモ</th>
+            </tr>
+          </thead>
+          <tbody id="stdTableBody">
+            <tr>
+              <td colspan="6" class="empty-cell">読み込み中...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/gc-std-master.js" defer></script>
+</body>
+</html>
