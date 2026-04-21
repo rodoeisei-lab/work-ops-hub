@@ -185,7 +185,8 @@ input[type="number"] {
 
 .reason {
   margin: 8px 0 0;
-  font-size: .82rem;
+  font-size: .84rem;
+  line-height: 1.55;
   color: #1f2a44;
 }
 
@@ -213,8 +214,9 @@ input[type="number"] {
   border: 1px solid var(--line);
   border-radius: 10px;
   min-height: 160px;
-  padding: 10px 8px 8px;
+  padding: 10px 8px 10px;
   background: linear-gradient(to right, #f7f9fd 0%, #fff 100%);
+  overflow-x: auto;
 }
 
 .graph-track {
@@ -222,6 +224,7 @@ input[type="number"] {
   border-top: 2px solid #cdd8ea;
   margin: 42px 4px 8px;
   height: calc(32px + (var(--label-levels, 2) * 16px));
+  min-width: 560px;
 }
 
 .graph-ticks {
@@ -237,7 +240,7 @@ input[type="number"] {
   position: absolute;
   bottom: 0;
   transform: translateX(-50%);
-  font-size: .66rem;
+  font-size: .64rem;
   color: #506180;
 }
 
@@ -264,10 +267,10 @@ input[type="number"] {
 .graph-guide {
   position: absolute;
   top: -1px;
-  height: 24px;
+  height: calc(28px + (var(--label-levels, 2) * 16px));
   width: 1px;
   background: #9cb2d6;
-  opacity: .65;
+  opacity: .5;
 }
 
 .graph-guide.highlighted {
@@ -276,7 +279,7 @@ input[type="number"] {
 }
 
 .graph-guide.low-certainty {
-  opacity: .35;
+  opacity: .22;
 }
 
 .graph-marker {
@@ -299,7 +302,7 @@ input[type="number"] {
 }
 
 .graph-marker.low-certainty {
-  opacity: .45;
+  opacity: .3;
 }
 
 .graph-label {
@@ -309,6 +312,9 @@ input[type="number"] {
   font-size: .68rem;
   white-space: nowrap;
   color: #2a3856;
+  background: rgba(255, 255, 255, .74);
+  padding: 0 2px;
+  border-radius: 4px;
 }
 
 .graph-label.highlighted {
@@ -323,7 +329,7 @@ input[type="number"] {
 .axis-label {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: .76rem;
+  font-size: .78rem;
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -379,6 +385,10 @@ input[type="number"] {
 .legend-certainty.low {
   color: #a54100;
   font-weight: 700;
+}
+
+.legend-certainty:not(.low) {
+  color: #236037;
 }
 
 .unknown-panel {
@@ -463,6 +473,7 @@ th, td {
   .graph-track {
     margin: 36px 2px 8px;
     height: calc(38px + (var(--label-levels, 2) * 17px));
+    min-width: 520px;
   }
 
   .graph-label {

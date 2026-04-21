@@ -656,7 +656,7 @@
     const warnings = [];
     if (hasMissing || hasUnknown) warnings.push('未登録またはデータ不足の溶剤があります。');
     if (hasUndetermined) warnings.push('「名称未確定」データを含む条件は低優先で評価しています。');
-    if (hasLowCertainty) warnings.push('certainty=low を含む候補は注意表示しています。');
+    if (hasLowCertainty) warnings.push('信頼度「低」を含む候補は注意表示しています。');
     if (state.lastFilterReport?.excludedByAnalysisTime > 0) {
       warnings.push('分析時間上限で ' + state.lastFilterReport.excludedByAnalysisTime + ' 件除外しました。');
     }
@@ -668,28 +668,29 @@
       const card = document.createElement('article');
       card.className = 'rec-card' + (idx === 0 ? ' top' : '');
 
-      const reason = buildReasonText(item);
+      const memo = buildJudgementMemo(item);
+      const tempLabel = getTempProgramDisplay(item.method.tempProgram);
 
       card.innerHTML = [
         '<div class="rank-row">',
-        '<p><strong>', (idx + 1), '位 候補提案</strong> ', escapeHtml(item.method.machine?.name || item.method.machine?.id || '-'), '</p>',
+        '<p><strong>第', (idx + 1), '候補</strong> ', escapeHtml(item.method.machine?.name || item.method.machine?.id || '-'), '</p>',
         '<p>スコア ', item.score.toFixed(1), '</p>',
         '</div>',
         '<p class="reason">',
         'カラム: ', escapeHtml(item.method.column?.name || '-'), '<br>',
-        '温度条件: ', escapeHtml(item.method.tempProgram?.display_name || item.method.tempProgram?.label || '-'), '（', escapeHtml(item.method.tempProgram?.code || item.method.tempProgram?.id || '-'), '）<br>',
-        '一致件数: ', item.matchCount, ' / ', item.selectedCount, '<br>',
-        '想定RT範囲: ', item.rtRange || '-', '<br>',
+        '温度条件: ', escapeHtml(tempLabel), '<br>',
+        '一致: ', item.matchCount, '/', item.selectedCount, '<br>',
+        'RT範囲: ', item.rtRange || '-', '<br>',
         '分析時間: ', formatAnalysisTime(item.analysisTime), '<br>',
         '最小RT差: ', item.minGap.toFixed(2), ' min<br>',
-        'データ信頼度の目安: ', escapeHtml(item.confidenceLabel), '<br>',
-        '理由: ', escapeHtml(reason),
-        item.lowCertaintyMatchCount > 0 ? '<br><span class="provisional-badge">注意: certainty=low のデータを含む</span>' : '',
+        '信頼度: ', escapeHtml(item.confidenceLabel), '<br>',
+        '判定メモ: ', escapeHtml(memo),
+        item.lowCertaintyMatchCount > 0 ? '<br><span class="provisional-badge">注意: 信頼度「低」のデータを含む</span>' : '',
         item.hasUndeterminedInMethod ? '<br><span class="provisional-badge">名称未確定データ含む</span>' : '',
         item.dataShortage ? '<br><span class="provisional-badge">データ不足</span>' : '',
         item.provisional ? '<br><span class="provisional-badge">暫定候補</span>' : '',
         '</p>',
-        '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">この条件のRT一覧を表示</button>'
+        '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">RT一覧を見る</button>'
       ].join('');
 
       card.querySelector('.rec-select-btn').addEventListener('click', () => showMethodDetails(item));
@@ -698,12 +699,13 @@
   }
 
   function showMethodDetails(item) {
+    const tempLabel = getTempProgramDisplay(item.method.tempProgram);
     el.rtSummary.innerHTML = [
       '<strong>', escapeHtml(item.method.machine?.name || '-'), '</strong> × ',
       '<strong>', escapeHtml(item.method.column?.name || '-'), '</strong> × ',
-      '<strong>', escapeHtml(item.method.tempProgram?.display_name || '-'), '</strong>',
-      '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致件数: ', item.matchCount, ' / ', item.selectedCount,
-      '<br>想定RT範囲: ', item.rtRange || '-',
+      '<strong>', escapeHtml(tempLabel), '</strong>',
+      '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致: ', item.matchCount, '/', item.selectedCount,
+      '<br>RT範囲: ', item.rtRange || '-',
       '<br>分析時間: ', formatAnalysisTime(item.analysisTime),
       item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : '',
       item.hasUndeterminedInMethod ? '<br>注意: RT一覧に「名称未確定」データを含みます。' : ''
@@ -786,16 +788,16 @@
 
     const axis = document.createElement('div');
     axis.className = 'axis-label';
-    axis.innerHTML = 'RT(min): <strong>0 〜 ' + axisMax.toFixed(1) + '</strong>' +
-      (runtimeValue > 0 ? '<span class="runtime-axis-note">分析時間ライン: ' + runtimeValue.toFixed(3) + ' min</span>' : '');
+    axis.innerHTML = 'RT(min): <strong>0 〜 ' + formatAxisValue(axisMax) + '</strong>' +
+      (runtimeValue > 0 ? '<span class="runtime-axis-note">分析時間: ' + formatCompactNumber(runtimeValue, 2, 3) + ' min</span>' : '');
     el.rtGraph.appendChild(axis);
 
     const minGap = getMinimumRtGap(rtValues);
     const selectedCount = sortedRows.filter((row) => selectedIds.includes(row.analyte_normalized)).length;
     const compactFlag = axisMax <= 4 ? '<span class="meta-chip">短時間レンジ最適化</span>' : '';
     el.graphMeta.innerHTML = [
-      '<span class="meta-chip strong">分析時間: ', runtimeValue > 0 ? runtimeValue.toFixed(3) : '-', ' min</span>',
-      minGap !== null ? '<span class="meta-chip">最小RT差: ' + minGap.toFixed(3) + ' min</span>' : '',
+      '<span class="meta-chip strong">分析時間: ', runtimeValue > 0 ? formatCompactNumber(runtimeValue, 2, 3) : '-', ' min</span>',
+      minGap !== null ? '<span class="meta-chip">最小RT差: ' + formatCompactNumber(minGap, 2, 3) + ' min</span>' : '',
       selectedCount > 0 ? '<span class="meta-chip">対象溶剤のみ強調: ' + selectedCount + '件</span>' : '',
       compactFlag
     ].join('');
@@ -805,34 +807,34 @@
       const lowClass = certainty === 'low' ? ' low' : '';
       return '<span class="legend-item">[' + (idx + 1) + '] ' +
         escapeHtml(toAnalyteLabel(row.analyte_normalized, row.analyte_original)) +
-        ' / RT: ' + Number(row.rt_min).toFixed(3) +
-        ' <span class="legend-certainty' + lowClass + '">' + escapeHtml(certainty) + '</span></span>';
+        ' / RT: ' + formatCompactNumber(Number(row.rt_min), 2, 3) +
+        ' <span class="legend-certainty' + lowClass + '">' + escapeHtml(toCertaintyLabel(certainty)) + '</span></span>';
     }).join('');
   }
 
   function getGraphAxisMax(maxRtObserved, runtimeValue) {
     const basis = Math.max(maxRtObserved, runtimeValue, 0.6);
-    const withMargin = basis * 1.08;
+    const withMargin = basis * 1.04;
     return roundUpAxis(withMargin);
   }
 
   function roundUpAxis(value) {
-    if (value <= 1.2) return 1.2;
     if (value <= 3) return Math.ceil(value * 2) / 2;
-    if (value <= 10) return Math.ceil(value);
-    return Math.ceil(value / 2) * 2;
+    if (value <= 12) return Math.ceil(value * 2) / 2;
+    return Math.ceil(value);
   }
 
   function getTickStep(axisMax) {
-    if (axisMax <= 2) return 0.2;
-    if (axisMax <= 4) return 0.5;
-    if (axisMax <= 8) return 1;
-    if (axisMax <= 16) return 2;
+    if (axisMax <= 1.5) return 0.1;
+    if (axisMax <= 3) return 0.25;
+    if (axisMax <= 6) return 0.5;
+    if (axisMax <= 10) return 1;
+    if (axisMax <= 20) return 2;
     return 5;
   }
 
   function formatTickLabel(value, tickStep) {
-    const decimal = tickStep < 1 ? 1 : 0;
+    const decimal = tickStep < 0.2 ? 2 : tickStep < 1 ? 1 : 0;
     return value.toFixed(decimal);
   }
 
@@ -873,12 +875,12 @@
 
     el.rtTableBody.innerHTML = rows.slice().sort((a, b) => a.rt_min - b.rt_min).map((row, idx) => {
       const certainty = String(row.certainty || '-').toLowerCase();
-      const certaintyLabel = '<span class="certainty-badge ' + (certainty === 'low' ? 'low' : '') + '">' + escapeHtml(certainty) + '</span>';
+      const certaintyLabel = '<span class="certainty-badge ' + (certainty === 'low' ? 'low' : '') + '">' + escapeHtml(toCertaintyLabel(certainty)) + '</span>';
       const rowClass = selectedIds.includes(row.analyte_normalized) ? ' class="highlighted-row"' : '';
       return [
         '<tr' + rowClass + '>',
         '<td><span class="rt-index">', (idx + 1), '</span> ', escapeHtml(toAnalyteLabel(row.analyte_normalized, row.analyte_original)), '</td>',
-        '<td>', Number(row.rt_min).toFixed(3), '</td>',
+        '<td>', formatCompactNumber(Number(row.rt_min), 2, 3), '</td>',
         '<td>', certaintyLabel, '</td>',
         '<td>', escapeHtml(row.note || '-'), '</td>',
         '</tr>'
@@ -990,28 +992,61 @@
 
   function formatAnalysisTime(analysisTime) {
     if (!Number.isFinite(analysisTime)) return '算出不可';
-    const fixed2 = Number(analysisTime.toFixed(2));
-    if (Math.abs(analysisTime - fixed2) < 0.000001) {
-      return fixed2.toString() + ' min';
-    }
-    return Number(analysisTime.toFixed(3)).toString() + ' min';
+    return formatCompactNumber(analysisTime, 2, 3) + ' min';
   }
 
-  function buildReasonText(item) {
+  function buildJudgementMemo(item) {
     const parts = [];
-    parts.push('入力溶剤カバー率 ' + (item.coverageRate * 100).toFixed(0) + '%');
-    parts.push('最小RT差 ' + item.minGap.toFixed(2) + ' min');
-    parts.push('certainty平均 ' + Math.round(item.certaintyAvg * 100) + '%');
-    parts.push('分析時間 ' + formatAnalysisTime(item.analysisTime));
-    if (item.runtime) parts.push('推定分析時間 ' + item.runtime.toFixed(1) + ' min');
-    if (item.missing.length) parts.push('未登録/不足あり');
-    return parts.join(' / ');
+    const coverage = Math.round(item.coverageRate * 100);
+    parts.push('一致率' + coverage + '%');
+    if (item.minGap >= 0.3) {
+      parts.push('分離良好');
+    } else if (item.minGap >= 0.15) {
+      parts.push('分離やや接近');
+    } else {
+      parts.push('RT接近に注意');
+    }
+    if (item.confidenceLabel === '高') {
+      parts.push('信頼度高');
+    } else if (item.confidenceLabel === '中') {
+      parts.push('信頼度中');
+    } else {
+      parts.push('信頼度低');
+    }
+    if (item.missing.length) parts.push('一部データ不足');
+    return parts.join('・');
   }
 
   function toConfidenceLabel(certaintyAvg) {
-    if (certaintyAvg >= 0.8) return '高め';
-    if (certaintyAvg >= 0.6) return '中程度';
-    return '低め';
+    if (certaintyAvg >= 0.8) return '高';
+    if (certaintyAvg >= 0.6) return '中';
+    return '低';
+  }
+
+  function toCertaintyLabel(certainty) {
+    if (certainty === 'high') return '高';
+    if (certainty === 'medium') return '中';
+    if (certainty === 'low') return '低';
+    return '-';
+  }
+
+  function getTempProgramDisplay(tempProgram) {
+    if (!tempProgram) return '-';
+    return tempProgram.display_name || tempProgram.label || tempProgram.id || '-';
+  }
+
+  function formatCompactNumber(value, minDigits, maxDigits) {
+    if (!Number.isFinite(value)) return '-';
+    const fixed = Number(value).toFixed(maxDigits);
+    const trimmed = fixed.replace(/(\.\d*?[1-9])0+$/u, '$1').replace(/\.0+$/u, '');
+    if (!trimmed.includes('.')) return trimmed;
+    const decimal = trimmed.split('.')[1].length;
+    if (decimal >= minDigits) return trimmed;
+    return Number(value).toFixed(minDigits);
+  }
+
+  function formatAxisValue(value) {
+    return formatCompactNumber(value, 1, 2);
   }
 
   function isUndeterminedRow(row) {
