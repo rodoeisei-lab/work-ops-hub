@@ -516,6 +516,9 @@
         const certaintyAvg = average(matches.map((row) => certaintyScore[String(row.certainty || 'medium').toLowerCase()] ?? 0.4));
         const runtime = Number(method.tempProgram?.runtime_min || method.tempProgram?.estimated_runtime_min || 0);
         const runtimeScore = runtime > 0 ? Math.max(0, 1 - runtime / (state.data.rules.runtime_reference_min || 30)) : 0.2;
+        const analysisTime = calcAnalysisTime(matches);
+        const analysisTimeScore = calcAnalysisTimeScore(analysisTime, state.data.rules);
+        const analysisTimeWeight = Number(weights.analysis_time ?? 4);
         const rtGapPenalty = minGap < (thresholds.warn_rt_gap_min || 0.15) ? 8 : 0;
         const undeterminedPenalty = hasUndeterminedInMethod ? 4 : 0;
         const lowCertaintyPenalty = lowCertaintyMatchCount * 2;
@@ -525,6 +528,7 @@
           coverageRate * (weights.coverage || 0) +
           separationScore * (weights.separation || 0) +
           runtimeScore * (weights.runtime || 0) +
+          analysisTimeScore * analysisTimeWeight +
           certaintyAvg * (weights.certainty || 0) -
           rtGapPenalty -
           undeterminedPenalty -
@@ -545,6 +549,7 @@
           minGap,
           certaintyAvg,
           runtime,
+          analysisTime,
           rtRange: calcRtRange(matches),
           missing,
           unknownItems,
@@ -622,6 +627,7 @@
         '温度条件: ', escapeHtml(item.method.tempProgram?.display_name || item.method.tempProgram?.label || '-'), '（', escapeHtml(item.method.tempProgram?.code || item.method.tempProgram?.id || '-'), '）<br>',
         '一致件数: ', item.matchCount, ' / ', item.selectedCount, '<br>',
         '想定RT範囲: ', item.rtRange || '-', '<br>',
+        '分析時間: ', formatAnalysisTime(item.analysisTime), '<br>',
         '最小RT差: ', item.minGap.toFixed(2), ' min<br>',
         'データ信頼度の目安: ', escapeHtml(item.confidenceLabel), '<br>',
         '理由: ', escapeHtml(reason),
@@ -644,6 +650,8 @@
       '<strong>', escapeHtml(item.method.column?.name || '-'), '</strong> × ',
       '<strong>', escapeHtml(item.method.tempProgram?.display_name || '-'), '</strong>',
       '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致件数: ', item.matchCount, ' / ', item.selectedCount,
+      '<br>想定RT範囲: ', item.rtRange || '-',
+      '<br>分析時間: ', formatAnalysisTime(item.analysisTime),
       item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : '',
       item.hasUndeterminedInMethod ? '<br>注意: RT一覧に「名称未確定」データを含みます。' : ''
     ].join('');
@@ -780,11 +788,33 @@
     return Math.min(...values).toFixed(2) + '〜' + Math.max(...values).toFixed(2) + ' min';
   }
 
+  function calcAnalysisTime(rows) {
+    const values = (rows || []).map((row) => Number(row.rt_min)).filter(Number.isFinite);
+    if (!values.length) return null;
+    return Math.max(...values) + 0.4;
+  }
+
+  function calcAnalysisTimeScore(analysisTime, rules) {
+    if (!Number.isFinite(analysisTime)) return 0;
+    const referenceMin = Number(rules?.analysis_time_reference_min || rules?.runtime_reference_min || 20);
+    return Math.max(0, 1 - analysisTime / referenceMin);
+  }
+
+  function formatAnalysisTime(analysisTime) {
+    if (!Number.isFinite(analysisTime)) return '算出不可';
+    const fixed2 = Number(analysisTime.toFixed(2));
+    if (Math.abs(analysisTime - fixed2) < 0.000001) {
+      return fixed2.toString() + ' min';
+    }
+    return Number(analysisTime.toFixed(3)).toString() + ' min';
+  }
+
   function buildReasonText(item) {
     const parts = [];
     parts.push('入力溶剤カバー率 ' + (item.coverageRate * 100).toFixed(0) + '%');
     parts.push('最小RT差 ' + item.minGap.toFixed(2) + ' min');
     parts.push('certainty平均 ' + Math.round(item.certaintyAvg * 100) + '%');
+    parts.push('分析時間 ' + formatAnalysisTime(item.analysisTime));
     if (item.runtime) parts.push('推定分析時間 ' + item.runtime.toFixed(1) + ' min');
     if (item.missing.length) parts.push('未登録/不足あり');
     return parts.join(' / ');
