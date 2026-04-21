@@ -10,14 +10,14 @@
 <body>
   <main class="wrap gc-finder-page">
     <header class="card page-header">
-      <h1>GC条件 候補提案</h1>
-      <p>対象機: GC2014 / GC-17A / GC-14B。GC2014実データを反映した候補提案UIです。</p>
-      <p class="note">※ 本機能は「候補提案」です。最適条件を断定しません。</p>
+      <h1>GC条件提案</h1>
+      <p>条件を選び、溶剤を追加すると第1〜第3候補を表示します。</p>
+      <p class="note">※ 候補提案です。最終判断は実測結果で確認してください。</p>
       <a class="back-link" href="index.html">← トップへ戻る</a>
     </header>
 
     <section class="card section-block" aria-labelledby="filterSectionTitle">
-      <h2 id="filterSectionTitle">1. 絞り込みと分析対象の入力</h2>
+      <h2 id="filterSectionTitle">1. 条件入力</h2>
       <div class="workplace-box" aria-label="単位作業場所コード設定">
         <label>
           単位作業場所コード
@@ -25,7 +25,7 @@
             <option value="">選択してください</option>
           </select>
         </label>
-        <p class="hint">コードを選ぶと標準条件を反映します</p>
+        <p class="hint">コード選択後に下のボタンで条件を反映します。</p>
         <div class="workplace-action-row">
           <button id="applyWorkplaceConditionBtn" type="button" class="plain">条件を反映</button>
           <button id="applyWorkplaceAllBtn" type="button" class="plain">条件＋溶剤を反映</button>
@@ -58,32 +58,32 @@
       <p id="analysisTimeFilterStatus" class="hint">分析時間上限: 未指定（全候補を対象）</p>
 
       <div class="analyte-box">
-        <p class="hint">分析したい溶剤を追加してください。候補から選ぶことも、名称を入力することもできます。</p>
+        <p class="hint">分析対象の溶剤を追加してください。</p>
         <div class="input-row">
           <input id="analyteInput" type="text" list="analyteList" placeholder="例: アセトン、トルエン">
           <datalist id="analyteList"></datalist>
           <button id="addAnalyteBtn" type="button" class="plain">追加</button>
         </div>
-        <p class="hint">よく使う候補</p>
+        <p class="hint">よく使う溶剤</p>
         <div id="quickAnalytes" class="quick-chips" aria-label="溶剤候補"></div>
         <div class="selected-row">
-          <strong>選択中:</strong>
+          <strong>選択中</strong>
           <div id="selectedAnalytes" class="selected-chips">なし</div>
         </div>
       </div>
 
       <div class="action-row">
-        <button id="clearAnalytesBtn" type="button" class="plain">入力クリア</button>
-        <button id="suggestBtn" type="button" class="primary">候補を提案する</button>
+        <button id="clearAnalytesBtn" type="button" class="plain">入力を消す</button>
+        <button id="suggestBtn" type="button" class="primary">候補を表示</button>
       </div>
     </section>
 
     <section class="card section-block" aria-labelledby="resultSectionTitle">
-      <h2 id="resultSectionTitle">2. 候補提案（第1〜第3候補）</h2>
-      <p class="hint">表示: 機械名 / カラム / 温度条件 / 一致 / RT範囲 / 分析時間 / 最小RT差 / 信頼度</p>
+      <h2 id="resultSectionTitle">2. 候補一覧</h2>
+      <p class="hint">候補順位 / 一致件数 / RT範囲 / 分析時間 / 最小RT差 / 信頼度</p>
       <div id="dataWarning" class="data-warning" hidden></div>
       <div id="recommendations" class="recommend-list">
-        <p class="empty-text">溶剤を追加して「候補を提案する」を押してください。</p>
+        <p class="empty-text">溶剤を追加して「候補を表示」を押してください。</p>
       </div>
     </section>
 

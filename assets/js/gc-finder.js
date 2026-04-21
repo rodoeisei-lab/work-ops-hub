@@ -319,7 +319,7 @@
     el.suggestBtn.addEventListener('click', () => {
       const selected = Array.from(state.selectedAnalytes.values());
       if (!selected.length) {
-        el.recommendations.innerHTML = '<p class="empty-text">先に溶剤を1つ以上追加してください。</p>';
+      el.recommendations.innerHTML = '<p class="empty-text">先に溶剤を1つ以上追加してください。</p>';
         return;
       }
       state.ranked = rankMethods(selected);
@@ -673,13 +673,13 @@
 
       card.innerHTML = [
         '<div class="rank-row">',
-        '<p><strong>第', (idx + 1), '候補</strong> ', escapeHtml(item.method.machine?.name || item.method.machine?.id || '-'), '</p>',
-        '<p>スコア ', item.score.toFixed(1), '</p>',
+        '<p><span class="rank-badge">第', (idx + 1), '候補</span><strong>', escapeHtml(item.method.machine?.name || item.method.machine?.id || '-'), '</strong></p>',
+        '<p>評価 ', item.score.toFixed(1), '</p>',
         '</div>',
         '<p class="reason">',
         'カラム: ', escapeHtml(item.method.column?.name || '-'), '<br>',
         '温度条件: ', escapeHtml(tempLabel), '<br>',
-        '一致: ', item.matchCount, '/', item.selectedCount, '<br>',
+        '一致件数: ', item.matchCount, '/', item.selectedCount, '<br>',
         'RT範囲: ', item.rtRange || '-', '<br>',
         '分析時間: ', formatAnalysisTime(item.analysisTime), '<br>',
         '最小RT差: ', item.minGap.toFixed(2), ' min<br>',
@@ -889,7 +889,7 @@
   }
 
   function clearOutputs() {
-    el.recommendations.innerHTML = '<p class="empty-text">溶剤を追加して「候補を提案する」を押してください。</p>';
+    el.recommendations.innerHTML = '<p class="empty-text">溶剤を追加して「候補を表示」を押してください。</p>';
     clearDetails();
     showInitialWarnings();
     state.ranked = [];

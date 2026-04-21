@@ -6,31 +6,91 @@
   <title>作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <style>
-    .top { padding: 14px 12px; margin-bottom: 12px; }
-    h1 { margin: 0 0 2px; font-size: 1.2rem; }
-    .sub { margin: 0; color: var(--muted); font-size: .86rem; }
-    .today { margin-top: 8px; font-size: .82rem; color: var(--muted); }
-    .menu { display: grid; gap: 10px; }
-    .menu a { display:block; background:#fff; border:1px solid var(--line); border-radius:14px; padding:15px 14px; font-weight:700; color:var(--text); box-shadow:var(--shadow); }
-    .menu a small { display:block; margin-top:4px; font-weight:500; color:var(--muted); }
-    .menu a:hover { text-decoration: none; background: var(--accent-soft); }
+    .home {
+      display: grid;
+      gap: 12px;
+      padding-bottom: 20px;
+    }
+    .top {
+      padding: 16px;
+      display: grid;
+      gap: 7px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .today {
+      color: var(--muted);
+      font-size: .8rem;
+      justify-self: end;
+      padding: 2px 8px;
+      border: 1px solid #e1e8f4;
+      background: #f8fbff;
+      border-radius: 999px;
+    }
+    .menu {
+      display: grid;
+      gap: 10px;
+    }
+    .menu a {
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 14px;
+      color: var(--text);
+      background: #fff;
+      box-shadow: var(--shadow);
+      line-height: 1.45;
+    }
+    .menu a strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 3px;
+    }
+    .menu a small {
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .menu a.primary-link {
+      border-color: #bfd1f6;
+      background: #f7faff;
+    }
+    .menu a:hover,
+    .menu a:focus-visible {
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+    .guide {
+      margin: 0;
+      color: var(--muted);
+      font-size: .82rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
+  <main class="wrap home">
     <section class="card top">
       <h1>作業用ミニハブ</h1>
-      <p class="sub">スマホ向けの業務ページ集（端末保存対応）</p>
-      <div class="today">本日: <span id="todayLabel">-</span></div>
+      <p class="sub">よく使う業務ページをまとめています。必要な画面を選んでください。</p>
+      <div class="today">本日 <span id="todayLabel">-</span></div>
     </section>
 
     <nav class="menu" aria-label="ページ一覧">
-      <a href="inventory-memo.html">在庫メモ<small>箱数入力・注文チェック・CSV保存</small></a>
-      <a href="qr-print.html">QR印刷<small>A4横で印刷しやすい掲示用</small></a>
-      <a href="gc-method-finder.html">GC条件提案<small>溶剤選択から候補条件を表示（仮スコア）</small></a>
-      <a href="gc-std-master.html">GC標準液マスタ<small>OCR由来の標準液（STD）一覧を確認・見直し</small></a>
-      <a href="docs/update-guide.md">更新手順<small>品目・発注目安・QRリンクの変更方法</small></a>
+      <a href="inventory-memo.html" class="primary-link"><strong>在庫メモ</strong><small>点検入力・注文チェック・CSV保存</small></a>
+      <a href="gc-method-finder.html" class="primary-link"><strong>GC条件提案</strong><small>溶剤条件から第1〜第3候補を表示</small></a>
+      <a href="qr-print.html"><strong>QR印刷</strong><small>A4横で掲示しやすい印刷レイアウト</small></a>
+      <a href="docs/update-guide.md"><strong>更新手順</strong><small>データやQRリンクの更新方法</small></a>
+      <a href="gc-std-master.html"><strong>GC標準液マスタ</strong><small>標準液一覧の確認・見直し</small></a>
     </nav>
+
+    <p class="guide">上から順に利用頻度が高いページです。</p>
   </main>
   <script src="assets/js/app.js"></script>
 </body>
