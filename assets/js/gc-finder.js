@@ -17,6 +17,8 @@
     machineFilter: document.getElementById('machineFilter'),
     columnFilter: document.getElementById('columnFilter'),
     tempFilter: document.getElementById('tempFilter'),
+    analysisTimeLimitInput: document.getElementById('analysisTimeLimitInput'),
+    analysisTimeFilterStatus: document.getElementById('analysisTimeFilterStatus'),
     analyteInput: document.getElementById('analyteInput'),
     analyteList: document.getElementById('analyteList'),
     quickAnalytes: document.getElementById('quickAnalytes'),
@@ -37,7 +39,8 @@
     data: null,
     selectedAnalytes: new Map(),
     ranked: [],
-    workplaceMap: new Map()
+    workplaceMap: new Map(),
+    lastFilterReport: null
   };
 
   init();
@@ -334,6 +337,19 @@
         }
       });
     });
+
+    if (el.analysisTimeLimitInput) {
+      el.analysisTimeLimitInput.addEventListener('input', () => {
+        updateAnalysisTimeFilterStatus();
+        if (state.ranked.length) {
+          state.ranked = rankMethods(Array.from(state.selectedAnalytes.values()));
+          renderRecommendations();
+          if (state.ranked[0]) showMethodDetails(state.ranked[0]);
+        }
+      });
+    }
+
+    updateAnalysisTimeFilterStatus();
   }
 
   function showInitialWarnings() {
@@ -498,11 +514,12 @@
     const selectedUndetermined = selectedEntries.filter((item) => item.known && isUndeterminedId(item.id));
     const unknownItems = selectedEntries.filter((item) => !item.known);
     const candidateMethods = state.data.methods.filter(matchFilters);
+    const analysisTimeLimit = getAnalysisTimeLimit();
     const weights = state.data.rules.weights || {};
     const thresholds = state.data.rules.thresholds || {};
     const certaintyScore = state.data.rules.certainty_score || { high: 1, medium: 0.6, low: 0.3 };
 
-    return candidateMethods
+    const evaluated = candidateMethods
       .map((method) => {
         const scoredRecords = method.records.filter((row) => !isUndeterminedRow(row));
         const matches = scoredRecords.filter((row) => selectedKnownIds.includes(row.analyte_normalized));
@@ -564,7 +581,31 @@
           selectedUndetermined
         };
       })
-      .filter(Boolean)
+      .filter(Boolean);
+
+    const EPSILON = 1e-9;
+    const kept = [];
+    let excludedByAnalysisTime = 0;
+    evaluated.forEach((item) => {
+      if (!Number.isFinite(analysisTimeLimit)) {
+        kept.push(item);
+        return;
+      }
+      if (Number(item.analysisTime) <= analysisTimeLimit + EPSILON) {
+        kept.push(item);
+      } else {
+        excludedByAnalysisTime += 1;
+      }
+    });
+
+    state.lastFilterReport = {
+      analysisTimeLimit,
+      excludedByAnalysisTime,
+      baseCandidateCount: evaluated.length,
+      finalCandidateCount: kept.length
+    };
+
+    return kept
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
   }
@@ -577,6 +618,8 @@
   }
 
   function renderRecommendations() {
+    updateAnalysisTimeFilterStatus(state.lastFilterReport);
+
     if (!state.ranked.length) {
       const selected = Array.from(state.selectedAnalytes.values());
       const hasKnown = selected.some((item) => item.known);
@@ -588,9 +631,15 @@
         reasonSet.push('条件フィルタが厳しすぎる');
       }
       if (hasKnown) reasonSet.push('データ件数不足');
+      if (state.lastFilterReport?.excludedByAnalysisTime > 0) {
+        reasonSet.push('分析時間上限で除外');
+      }
       if (!reasonSet.length) reasonSet.push('入力溶剤が未登録');
       const emptyReason = '候補が0件です。理由: ' + reasonSet.join(' / ') + '。';
-      el.recommendations.innerHTML = '<p class="empty-text">' + escapeHtml(emptyReason) + '</p>';
+      const strictTimeMessage = state.lastFilterReport?.excludedByAnalysisTime > 0
+        ? '<br>分析時間上限を緩めると候補が見つかる可能性があります。'
+        : '';
+      el.recommendations.innerHTML = '<p class="empty-text">条件に合う候補がありません。<br>' + escapeHtml(emptyReason) + strictTimeMessage + '</p>';
       clearDetails();
       showWarning('候補提案できません。フィルタ緩和・alias追記・RTデータ追加を確認してください。');
       return;
@@ -607,6 +656,9 @@
     if (hasMissing || hasUnknown) warnings.push('未登録またはデータ不足の溶剤があります。');
     if (hasUndetermined) warnings.push('「名称未確定」データを含む条件は低優先で評価しています。');
     if (hasLowCertainty) warnings.push('certainty=low を含む候補は注意表示しています。');
+    if (state.lastFilterReport?.excludedByAnalysisTime > 0) {
+      warnings.push('分析時間上限で ' + state.lastFilterReport.excludedByAnalysisTime + ' 件除外しました。');
+    }
     if (state.data.dataDensityLow || hasProvisional) warnings.push('候補精度は暫定です。');
     if (state.data.validationReport.errors.length) warnings.push('RTデータ検証エラーあり。');
     showWarning(warnings.join(' '));
@@ -763,6 +815,35 @@
     }
     el.dataWarning.hidden = false;
     el.dataWarning.textContent = text;
+  }
+
+  function getAnalysisTimeLimit() {
+    if (!el.analysisTimeLimitInput) return null;
+    const raw = String(el.analysisTimeLimitInput.value || '').trim();
+    if (!raw) return null;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value < 0) return null;
+    return value;
+  }
+
+  function updateAnalysisTimeFilterStatus(report) {
+    if (!el.analysisTimeFilterStatus) return;
+    const limit = Number.isFinite(report?.analysisTimeLimit) ? report.analysisTimeLimit : getAnalysisTimeLimit();
+    if (!Number.isFinite(limit)) {
+      el.analysisTimeFilterStatus.textContent = '分析時間上限: 未指定（全候補を対象）';
+      return;
+    }
+
+    let text = '分析時間上限: ' + formatLimitNumber(limit) + ' min 以下';
+    if (report && Number.isFinite(report.excludedByAnalysisTime) && report.excludedByAnalysisTime > 0) {
+      text += '（' + report.excludedByAnalysisTime + '件除外）';
+    }
+    el.analysisTimeFilterStatus.textContent = text;
+  }
+
+  function formatLimitNumber(value) {
+    if (!Number.isFinite(value)) return '-';
+    return Number(value.toFixed(3)).toString();
   }
 
   function calcMinGap(rows) {

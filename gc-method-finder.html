@@ -50,7 +50,12 @@
             <option value="">すべて</option>
           </select>
         </label>
+        <label>
+          分析時間上限（min）
+          <input id="analysisTimeLimitInput" type="number" inputmode="decimal" min="0" step="0.001" placeholder="例: 6">
+        </label>
       </div>
+      <p id="analysisTimeFilterStatus" class="hint">分析時間上限: 未指定（全候補を対象）</p>
 
       <div class="analyte-box">
         <p class="hint">分析したい溶剤を追加してください。候補から選ぶことも、名称を入力することもできます。</p>
