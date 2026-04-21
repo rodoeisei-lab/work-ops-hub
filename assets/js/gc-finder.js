@@ -30,6 +30,7 @@
     recommendations: document.getElementById('recommendations'),
     rtSummary: document.getElementById('rtSummary'),
     rtGraph: document.getElementById('rtGraph'),
+    graphMeta: document.getElementById('graphMeta'),
     graphLegend: document.getElementById('graphLegend'),
     unknownAnalytesPanel: document.getElementById('unknownAnalytesPanel'),
     rtTableBody: document.getElementById('rtTableBody')
@@ -717,46 +718,151 @@
   function renderGraph(rows, runtime, selectedIds) {
     if (!rows.length) {
       el.rtGraph.innerHTML = '<p class="empty-text">表示データがありません。</p>';
+      el.graphMeta.innerHTML = '';
       el.graphLegend.innerHTML = '';
       return;
     }
 
-    const maxRt = Math.max(runtime || 0, ...rows.map((r) => Number(r.rt_min) || 0), 1);
+    const sortedRows = rows.slice().sort((a, b) => a.rt_min - b.rt_min);
+    const rtValues = sortedRows.map((row) => Number(row.rt_min) || 0);
+    const maxRtObserved = Math.max(...rtValues, 0);
+    const runtimeValue = Number(runtime) || 0;
+    const axisMax = getGraphAxisMax(maxRtObserved, runtimeValue);
+    const tickStep = getTickStep(axisMax);
+
     const track = document.createElement('div');
     track.className = 'graph-track';
 
-    const sortedRows = rows.slice().sort((a, b) => a.rt_min - b.rt_min);
+    const labelLevels = assignLabelLevels(sortedRows, axisMax);
+    const levelCount = Math.max(...labelLevels, 0) + 1;
+    track.style.setProperty('--label-levels', String(levelCount));
+
+    const ticksLayer = document.createElement('div');
+    ticksLayer.className = 'graph-ticks';
+    for (let tick = 0; tick <= axisMax + 1e-6; tick += tickStep) {
+      const left = (tick / axisMax) * 100;
+      const tickEl = document.createElement('span');
+      tickEl.className = 'tick';
+      tickEl.style.left = Math.min(left, 100) + '%';
+      tickEl.textContent = formatTickLabel(tick, tickStep);
+      ticksLayer.appendChild(tickEl);
+    }
+    track.appendChild(ticksLayer);
+
+    if (runtimeValue > 0) {
+      const runtimeLine = document.createElement('span');
+      runtimeLine.className = 'runtime-line';
+      runtimeLine.style.left = Math.min((runtimeValue / axisMax) * 100, 100) + '%';
+      track.appendChild(runtimeLine);
+    }
+
     sortedRows.forEach((row, idx) => {
-      const left = ((Number(row.rt_min) || 0) / maxRt) * 100;
+      const rt = Number(row.rt_min) || 0;
+      const left = (rt / axisMax) * 100;
       const isSelected = selectedIds.includes(row.analyte_normalized);
+      const isLow = String(row.certainty || '').toLowerCase() === 'low';
+      const level = labelLevels[idx] || 0;
+
+      const guide = document.createElement('span');
+      guide.className = 'graph-guide' + (isSelected ? ' highlighted' : '') + (isLow ? ' low-certainty' : '');
+      guide.style.left = Math.min(left, 100) + '%';
+      track.appendChild(guide);
 
       const marker = document.createElement('span');
-      marker.className = isSelected ? 'graph-marker highlighted' : 'graph-marker';
+      marker.className = 'graph-marker' + (isSelected ? ' highlighted' : '') + (isLow ? ' low-certainty' : '');
       marker.style.left = Math.min(left, 100) + '%';
       track.appendChild(marker);
 
       const label = document.createElement('span');
-      label.className = 'graph-label';
+      label.className = 'graph-label' + (isSelected ? ' highlighted' : '') + (isLow ? ' low-certainty' : '');
       label.style.left = Math.min(left, 100) + '%';
-      label.textContent = (idx + 1) + '. ' + toAnalyteLabel(row.analyte_normalized, row.analyte_original) + ' (' + Number(row.rt_min).toFixed(2) + ')';
+      label.style.top = 'calc(6px + ' + (level * 16) + 'px)';
+      label.textContent = (idx + 1) + '. ' + toAnalyteLabel(row.analyte_normalized, row.analyte_original) + ' (' + rt.toFixed(2) + ')';
       track.appendChild(label);
     });
 
     el.rtGraph.innerHTML = '';
     el.rtGraph.appendChild(track);
 
-    const axis = document.createElement('p');
+    const axis = document.createElement('div');
     axis.className = 'axis-label';
-    axis.textContent = 'RT(min): 0 〜 ' + maxRt.toFixed(1);
+    axis.innerHTML = 'RT(min): <strong>0 〜 ' + axisMax.toFixed(1) + '</strong>' +
+      (runtimeValue > 0 ? '<span class="runtime-axis-note">分析時間ライン: ' + runtimeValue.toFixed(3) + ' min</span>' : '');
     el.rtGraph.appendChild(axis);
+
+    const minGap = getMinimumRtGap(rtValues);
+    const selectedCount = sortedRows.filter((row) => selectedIds.includes(row.analyte_normalized)).length;
+    const compactFlag = axisMax <= 4 ? '<span class="meta-chip">短時間レンジ最適化</span>' : '';
+    el.graphMeta.innerHTML = [
+      '<span class="meta-chip strong">分析時間: ', runtimeValue > 0 ? runtimeValue.toFixed(3) : '-', ' min</span>',
+      minGap !== null ? '<span class="meta-chip">最小RT差: ' + minGap.toFixed(3) + ' min</span>' : '',
+      selectedCount > 0 ? '<span class="meta-chip">対象溶剤のみ強調: ' + selectedCount + '件</span>' : '',
+      compactFlag
+    ].join('');
 
     el.graphLegend.innerHTML = sortedRows.map((row, idx) => {
       const certainty = String(row.certainty || '-').toLowerCase();
       const lowClass = certainty === 'low' ? ' low' : '';
       return '<span class="legend-item">[' + (idx + 1) + '] ' +
         escapeHtml(toAnalyteLabel(row.analyte_normalized, row.analyte_original)) +
+        ' / RT: ' + Number(row.rt_min).toFixed(3) +
         ' <span class="legend-certainty' + lowClass + '">' + escapeHtml(certainty) + '</span></span>';
     }).join('');
+  }
+
+  function getGraphAxisMax(maxRtObserved, runtimeValue) {
+    const basis = Math.max(maxRtObserved, runtimeValue, 0.6);
+    const withMargin = basis * 1.08;
+    return roundUpAxis(withMargin);
+  }
+
+  function roundUpAxis(value) {
+    if (value <= 1.2) return 1.2;
+    if (value <= 3) return Math.ceil(value * 2) / 2;
+    if (value <= 10) return Math.ceil(value);
+    return Math.ceil(value / 2) * 2;
+  }
+
+  function getTickStep(axisMax) {
+    if (axisMax <= 2) return 0.2;
+    if (axisMax <= 4) return 0.5;
+    if (axisMax <= 8) return 1;
+    if (axisMax <= 16) return 2;
+    return 5;
+  }
+
+  function formatTickLabel(value, tickStep) {
+    const decimal = tickStep < 1 ? 1 : 0;
+    return value.toFixed(decimal);
+  }
+
+  function assignLabelLevels(rows, axisMax) {
+    const levels = [];
+    const levelRt = [];
+    const collisionThreshold = axisMax <= 4 ? 0.18 : axisMax <= 8 ? 0.24 : 0.35;
+
+    rows.forEach((row) => {
+      const rt = Number(row.rt_min) || 0;
+      let level = 0;
+      while (levelRt[level] !== undefined && Math.abs(rt - levelRt[level]) < collisionThreshold) {
+        level += 1;
+      }
+      levels.push(level);
+      levelRt[level] = rt;
+    });
+
+    return levels;
+  }
+
+  function getMinimumRtGap(rtValues) {
+    if (!Array.isArray(rtValues) || rtValues.length < 2) return null;
+    const sorted = rtValues.slice().sort((a, b) => a - b);
+    let minGap = Number.POSITIVE_INFINITY;
+    for (let i = 1; i < sorted.length; i += 1) {
+      const gap = sorted[i] - sorted[i - 1];
+      if (gap < minGap) minGap = gap;
+    }
+    return Number.isFinite(minGap) ? minGap : null;
   }
 
   function renderTable(rows, selectedIds) {
@@ -790,6 +896,7 @@
   function clearDetails() {
     el.rtSummary.textContent = '候補が選択されていません。';
     el.rtGraph.innerHTML = '';
+    el.graphMeta.innerHTML = '';
     el.graphLegend.innerHTML = '';
     el.unknownAnalytesPanel.hidden = true;
     el.unknownAnalytesPanel.textContent = '';

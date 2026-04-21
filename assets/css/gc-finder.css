@@ -212,48 +212,148 @@ input[type="number"] {
 .rt-graph {
   border: 1px solid var(--line);
   border-radius: 10px;
-  min-height: 110px;
-  padding: 10px 8px;
-  background: linear-gradient(to right, #f8faff 0%, #fff 100%);
+  min-height: 160px;
+  padding: 10px 8px 8px;
+  background: linear-gradient(to right, #f7f9fd 0%, #fff 100%);
 }
 
 .graph-track {
   position: relative;
-  border-top: 2px solid #dce5f4;
-  margin: 26px 4px 10px;
-  height: 36px;
+  border-top: 2px solid #cdd8ea;
+  margin: 42px 4px 8px;
+  height: calc(32px + (var(--label-levels, 2) * 16px));
+}
+
+.graph-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -26px;
+  height: 22px;
+  pointer-events: none;
+}
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  font-size: .66rem;
+  color: #506180;
+}
+
+.tick::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  width: 1px;
+  height: 8px;
+  background: #ced8ea;
+  transform: translateX(-50%);
+}
+
+.runtime-line {
+  position: absolute;
+  top: -22px;
+  bottom: -2px;
+  width: 0;
+  border-left: 1px dashed #8b5f00;
+  opacity: .95;
+}
+
+.graph-guide {
+  position: absolute;
+  top: -1px;
+  height: 24px;
+  width: 1px;
+  background: #9cb2d6;
+  opacity: .65;
+}
+
+.graph-guide.highlighted {
+  background: #0b56d8;
+  opacity: .95;
+}
+
+.graph-guide.low-certainty {
+  opacity: .35;
 }
 
 .graph-marker {
   position: absolute;
-  top: -6px;
+  top: -5px;
   transform: translateX(-50%);
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: var(--accent);
+  background: #4369ad;
+  border: 1px solid #fff;
 }
 
 .graph-marker.highlighted {
-  width: 12px;
-  height: 12px;
-  top: -7px;
+  width: 11px;
+  height: 11px;
+  top: -6px;
   background: #0b56d8;
   box-shadow: 0 0 0 2px #d9e7ff;
 }
 
+.graph-marker.low-certainty {
+  opacity: .45;
+}
+
 .graph-label {
   position: absolute;
-  top: 10px;
+  top: 8px;
   transform: translateX(-50%);
-  font-size: .7rem;
+  font-size: .68rem;
   white-space: nowrap;
+  color: #2a3856;
+}
+
+.graph-label.highlighted {
+  color: #0b3f9d;
+  font-weight: 700;
+}
+
+.graph-label.low-certainty {
+  opacity: .6;
 }
 
 .axis-label {
-  margin: 0;
+  margin: 6px 0 0;
   color: var(--muted);
-  font-size: .78rem;
+  font-size: .76rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.runtime-axis-note {
+  color: #785400;
+}
+
+.graph-meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meta-chip {
+  font-size: .72rem;
+  border: 1px solid #d5dfef;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #fff;
+  color: #324667;
+}
+
+.meta-chip.strong {
+  border-color: #cfb073;
+  color: #6b4a00;
+  background: #fff8e8;
 }
 
 .graph-legend {
@@ -352,6 +452,25 @@ th, td {
   .action-row {
     grid-template-columns: auto auto;
     justify-content: end;
+  }
+}
+
+@media (max-width: 520px) {
+  .rt-graph {
+    padding: 10px 4px 8px;
+  }
+
+  .graph-track {
+    margin: 36px 2px 8px;
+    height: calc(38px + (var(--label-levels, 2) * 17px));
+  }
+
+  .graph-label {
+    font-size: .62rem;
+  }
+
+  .tick {
+    font-size: .6rem;
   }
 }
 
