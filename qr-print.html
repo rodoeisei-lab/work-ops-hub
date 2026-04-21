@@ -6,21 +6,28 @@
   <title>QR印刷</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <style>
-    .sheet { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; }
-    .title { margin:0 0 6px; font-size:1.3rem; }
-    .desc { margin:0 0 14px; color:var(--muted); }
-    .qr-box { display:grid; grid-template-columns: 1fr 240px; gap:16px; align-items:center; }
-    .qr-canvas-wrap { border:2px solid #111; padding:10px; width:max-content; background:#fff; }
-    #qrCanvas { width:220px; height:220px; image-rendering: pixelated; }
-    .url { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap:anywhere; border:1px dashed var(--line); padding:8px; border-radius:8px; }
+    .sheet { background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; }
+    .title { margin:0 0 5px; font-size:1.33rem; }
+    .desc { margin:0 0 12px; color:var(--muted); font-size:.9rem; }
+    .qr-box { display:grid; grid-template-columns: 1fr 250px; gap:16px; align-items:center; }
+    .guide-card { border:1px solid #e1e8f4; border-radius:12px; padding:10px; background:#f9fbff; }
+    .guide-card p { margin:0; font-size:.82rem; color:#445673; line-height:1.6; }
+    .qr-canvas-wrap { border:3px solid #111; border-radius:8px; padding:10px; width:max-content; background:#fff; }
+    #qrCanvas { width:230px; height:230px; image-rendering: pixelated; display:block; }
+    .url { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap:anywhere; border:1px dashed var(--line-strong); background:#fff; padding:8px; border-radius:8px; margin-top:8px; font-size:.79rem; }
     .print-btn { margin-top: 12px; width: 100%; }
     @media (max-width: 720px) {
+      .sheet { padding: 14px; }
       .qr-box { grid-template-columns: 1fr; }
       .qr-canvas-wrap { margin: 0 auto; }
     }
     @media print {
-      @page { size: A4 landscape; margin: 10mm; }
-      .sheet { border:2px solid #000; box-shadow:none; }
+      @page { size: A4 landscape; margin: 9mm; }
+      body { background:#fff; }
+      .wrap { width:100%; max-width:none; padding:0; }
+      .sheet { border:2px solid #000; box-shadow:none; border-radius:0; padding:10mm 11mm; }
+      .guide-card { border-color:#000; background:#fff; }
+      .url { border-color:#000; }
     }
   </style>
 </head>
@@ -28,14 +35,14 @@
   <main class="wrap">
     <section class="sheet">
       <h1 class="title">在庫メモ QR（掲示用）</h1>
-      <p class="desc">スマホで読み取り、在庫メモ画面を開きます。</p>
+      <p class="desc">スマホで読み取ると在庫メモ画面を開けます。</p>
       <div class="qr-box">
-        <div>
+        <div class="guide-card">
+          <p>1. カメラを起動してQRを読み取ります。<br>2. 表示されたリンクを開いて入力します。<br>3. 白黒印刷でも読み取りやすい設定です。</p>
           <p class="url" id="targetUrl"></p>
-          <p style="margin:.5rem 0 0; color:var(--muted); font-size:.85rem;">白黒印刷向けの高コントラスト表示です。</p>
         </div>
         <div class="qr-canvas-wrap" aria-label="QRコード">
-          <canvas id="qrCanvas" width="220" height="220"></canvas>
+          <canvas id="qrCanvas" width="230" height="230"></canvas>
         </div>
       </div>
       <button type="button" class="primary print-btn no-print" id="printBtn">印刷する</button>

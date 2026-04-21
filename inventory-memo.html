@@ -11,18 +11,21 @@
 <body>
   <main class="wrap">
     <section class="card top">
-      <h1>在庫メモ</h1>
-      <p class="sub">数量入力は箱数、期限切れメモは本数です。途中入力はこの端末に残ります。</p>
+      <div class="top-head">
+        <h1>在庫メモ</h1>
+        <span class="chip">端末に自動保存</span>
+      </div>
+      <p class="sub">在庫入力は箱数、期限切れメモは本数です。</p>
       <details class="top-panel" open>
         <summary>点検情報</summary>
-        <div class="field" style="padding: 0 12px 12px;">
+        <div class="field panel-inner">
           <label for="checkDate">点検日</label>
           <input id="checkDate" type="date">
         </div>
       </details>
     </section>
 
-    <div class="tabs">
+    <div class="tabs" role="tablist" aria-label="入力区分">
       <button class="tab active" data-tab="tube" type="button">検知管</button>
       <button class="tab" data-tab="supplies" type="button">備品</button>
       <button class="tab" data-tab="visual" type="button">目視確認</button>
@@ -32,8 +35,8 @@
     <section class="section" id="supplies"></section>
     <section class="section" id="visual"></section>
 
-    <div class="actions">
-      <button type="button" class="primary" id="buildSummary">コピー用テキスト作成</button>
+    <div class="actions" aria-label="操作ボタン">
+      <button type="button" class="primary" id="buildSummary">テキスト作成</button>
       <button type="button" class="success" id="downloadCsv">CSV保存</button>
       <button type="button" class="plain" id="copySummary" disabled>コピー</button>
       <button type="button" class="danger" id="resetForm">入力を消す</button>
@@ -41,7 +44,7 @@
 
     <section class="card result hidden" id="resultCard">
       <label for="summary">コピー用テキスト</label>
-      <textarea id="summary" placeholder="ここに作成されます"></textarea>
+      <textarea id="summary" placeholder="テキスト作成を押すと表示されます"></textarea>
       <div class="status" id="status"></div>
     </section>
   </main>
