@@ -2,6 +2,11 @@
   const state = window.InventoryStorage.loadState();
   let defs = null;
   let reorderRules = {};
+  const filterState = {
+    keyword: '',
+    alertOnly: false,
+    filledOnly: false
+  };
 
   const id = (text) => text.replace(/[^\w\u3040-\u30ff\u3400-\u9fff]+/g, '_');
   const setStatus = (message) => { document.getElementById('status').textContent = message; };
@@ -31,7 +36,7 @@
     const hint = point ? `<div class="hint">${point.label}</div>` : '';
     const warn = point ? `<div class="warn-note">${point.limit}${point.unit}以下で注意</div>` : '';
     const warnClass = point && state[key] !== '' && state[key] !== undefined && Number(state[key]) <= point.limit;
-    return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}">
+    return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}" data-filter-item="1" data-filter-alert="${warnClass ? '1' : '0'}" data-filter-filled="${state[key] !== '' && state[key] !== undefined ? '1' : '0'}" data-filter-text="${name.toLowerCase()}">
       <div class="name">${name}${hint}${warn}</div>
       <input class="qty" id="${id(key)}" type="number" min="0" step="1" inputmode="numeric" value="${state[key] ?? ''}" placeholder="0">
     </div>`;
@@ -39,13 +44,13 @@
 
   function memoField(section, group, name) {
     const key = `${section}__${group}__${name}`;
-    return `<div><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${state[key] ?? ''}</textarea></div>`;
+    return `<div data-filter-item="1" data-filter-alert="0" data-filter-filled="${(state[key] || '').trim() ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${state[key] ?? ''}</textarea></div>`;
   }
 
   function checkRow(section, group, name) {
     const key = `${section}__${group}__${name}__order`;
     const checked = state[key] ? 'checked' : '';
-    return `<div class="check-row"><div class="name">${name}</div><label class="order-flag"><input id="${id(key)}" type="checkbox" ${checked}>注文</label></div>`;
+    return `<div class="check-row" data-filter-item="1" data-filter-alert="${state[key] ? '1' : '0'}" data-filter-filled="${state[key] ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><div class="name">${name}</div><label class="order-flag"><input id="${id(key)}" type="checkbox" ${checked}>注文</label></div>`;
   }
 
   function expiredMemoBody() {
@@ -139,6 +144,51 @@
     });
   }
 
+  function applyFilters() {
+    document.querySelectorAll('.section').forEach((sectionEl) => {
+      sectionEl.querySelectorAll('details.group').forEach((groupEl) => {
+        let visibleCount = 0;
+        const filterItems = groupEl.querySelectorAll('[data-filter-item]');
+        filterItems.forEach((itemEl) => {
+          const text = itemEl.dataset.filterText || '';
+          const isAlert = itemEl.dataset.filterAlert === '1';
+          const hasValue = itemEl.dataset.filterFilled === '1';
+          const matchKeyword = !filterState.keyword || text.includes(filterState.keyword);
+          const matchAlert = !filterState.alertOnly || isAlert;
+          const matchFilled = !filterState.filledOnly || hasValue;
+          const show = matchKeyword && matchAlert && matchFilled;
+          itemEl.classList.toggle('filtered-out', !show);
+          if (show) visibleCount += 1;
+        });
+        groupEl.classList.toggle('filtered-out-group', filterItems.length > 0 && visibleCount === 0);
+      });
+    });
+  }
+
+  function syncFilterFilledState() {
+    document.querySelectorAll('.row[data-row-key]').forEach((row) => {
+      const key = row.dataset.rowKey;
+      const value = state[key];
+      row.dataset.filterFilled = value !== undefined && value !== '' ? '1' : '0';
+      row.dataset.filterAlert = row.classList.contains('alert') ? '1' : '0';
+      row.dataset.filterText = (row.querySelector('.name')?.textContent || '').toLowerCase();
+    });
+    document.querySelectorAll('.check-row').forEach((row) => {
+      const checked = row.querySelector('input[type="checkbox"]')?.checked;
+      row.dataset.filterFilled = checked ? '1' : '0';
+      row.dataset.filterAlert = checked ? '1' : '0';
+      row.dataset.filterText = (row.querySelector('.name')?.textContent || '').toLowerCase();
+    });
+    document.querySelectorAll('.memo-wrap > div').forEach((wrap) => {
+      const label = wrap.querySelector('label')?.textContent || '';
+      const value = (wrap.querySelector('textarea')?.value || '').trim();
+      wrap.dataset.filterItem = '1';
+      wrap.dataset.filterText = label.toLowerCase();
+      wrap.dataset.filterFilled = value ? '1' : '0';
+      wrap.dataset.filterAlert = '0';
+    });
+  }
+
   function bindInputs() {
     ['tube', 'supplies', 'visual'].forEach((section) => {
       sectionGroups(section).forEach((group) => {
@@ -148,6 +198,8 @@
             state[key] = event.target.value;
             save();
             refreshWarnings();
+            syncFilterFilledState();
+            applyFilters();
           });
         });
         (group.textareas || []).forEach((name) => {
@@ -155,6 +207,8 @@
           document.getElementById(id(key)).addEventListener('input', (event) => {
             state[key] = event.target.value;
             save();
+            syncFilterFilledState();
+            applyFilters();
           });
         });
         (group.checklist || []).forEach((name) => {
@@ -162,6 +216,8 @@
           document.getElementById(id(key)).addEventListener('change', (event) => {
             state[key] = event.target.checked;
             save();
+            syncFilterFilledState();
+            applyFilters();
           });
         });
       });
@@ -182,6 +238,21 @@
       });
     });
 
+    document.getElementById('itemFilter').addEventListener('input', (event) => {
+      filterState.keyword = (event.target.value || '').trim().toLowerCase();
+      applyFilters();
+    });
+
+    document.getElementById('alertOnly').addEventListener('change', (event) => {
+      filterState.alertOnly = event.target.checked;
+      applyFilters();
+    });
+
+    document.getElementById('filledOnly').addEventListener('change', (event) => {
+      filterState.filledOnly = event.target.checked;
+      applyFilters();
+    });
+
     const addBtn = document.getElementById('addExpired');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
@@ -198,6 +269,8 @@
         countEl.value = '';
         save();
         renderExpiredList();
+        syncFilterFilledState();
+        applyFilters();
       });
     }
   }
@@ -321,6 +394,8 @@
     bindAccordion();
     renderExpiredList();
     refreshWarnings();
+    syncFilterFilledState();
+    applyFilters();
 
     document.getElementById('buildSummary').addEventListener('click', () => {
       document.getElementById('summary').value = summaryText();

@@ -31,6 +31,23 @@
       <button class="tab" data-tab="visual" type="button">目視確認</button>
     </div>
 
+    <section class="card filter-panel" aria-label="表示フィルター">
+      <div class="field">
+        <label for="itemFilter">品目検索</label>
+        <input id="itemFilter" type="search" placeholder="品目名・メモ名で絞り込み">
+      </div>
+      <div class="filter-switches">
+        <label class="toggle">
+          <input id="alertOnly" type="checkbox">
+          <span>注意表示のみ</span>
+        </label>
+        <label class="toggle">
+          <input id="filledOnly" type="checkbox">
+          <span>入力済みのみ</span>
+        </label>
+      </div>
+    </section>
+
     <section class="section active" id="tube"></section>
     <section class="section" id="supplies"></section>
     <section class="section" id="visual"></section>
