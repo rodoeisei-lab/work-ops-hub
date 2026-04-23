@@ -7,9 +7,45 @@
     alertOnly: false,
     filledOnly: false
   };
+  const ICON_SVG = {
+    solvent: '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 2h6v1.4l-1.2 1.5v3.7l4.1 6.2A2 2 0 0 1 14.2 18H5.8a2 2 0 0 1-1.7-3.2L8.2 8.6V4.9L7 3.4V2Zm2.5 7.4-3.8 5.8c-.2.3 0 .8.3.8h8c.4 0 .6-.5.3-.8l-3.8-5.8h-1Z"/></svg>',
+    detector_tube: '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4.3 4.3a2 2 0 0 1 2.8 0l8.6 8.6a2 2 0 0 1-2.8 2.8L4.3 7a2 2 0 0 1 0-2.8Zm2 1.4-.6.6 8.6 8.6.6-.6-8.6-8.6ZM6.8 8.5l4.7 4.7-.9.9-4.7-4.7.9-.9Z"/></svg>',
+    reagent: '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M6 3.5A1.5 1.5 0 0 1 7.5 2h5A1.5 1.5 0 0 1 14 3.5V5h1a1 1 0 1 1 0 2h-.1l-.7 8.2a2.2 2.2 0 0 1-2.2 2H8a2.2 2.2 0 0 1-2.2-2L5.1 7H5a1 1 0 0 1 0-2h1V3.5Zm2 .5v1h4V4H8Zm-.2 3 .6 8h3.2l.6-8H7.8Z"/></svg>',
+    supply: '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 6.5 10 3l7 3.5V15l-7 3-7-3V6.5Zm7-1.3L5.4 7.5 10 9.8l4.6-2.3L10 5.2Zm-5 3.6v5l4 1.7v-5l-4-1.7Zm6 6.7 4-1.7v-5l-4 1.7v5Z"/></svg>',
+    visual_check: '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 4c4.3 0 7.9 2.5 9.4 6-1.5 3.5-5.1 6-9.4 6S2.1 13.5.6 10C2.1 6.5 5.7 4 10 4Zm0 2C6.8 6 4 7.8 2.7 10 4 12.2 6.8 14 10 14s6-1.8 7.3-4C16 7.8 13.2 6 10 6Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"/></svg>'
+  };
+  const ITEM_ICON_OVERRIDES = {
+    'アセトン': 'solvent',
+    'イソプロピルアルコール': 'solvent',
+    'トルエン': 'solvent',
+    'N,N-ジメチルホルムアミド': 'solvent',
+    'メチルエチルケトン（5本）': 'solvent',
+    '硝酸': 'reagent',
+    '塩酸': 'reagent',
+    '苛性ソーダ': 'reagent'
+  };
+  const DETECTOR_TUBE_KEYWORDS = ['検知管', 'チューブ', '吸収缶', 'フィルタ', 'カートリッジ', '発煙管', 'ろ紙'];
+  const SOLVENT_KEYWORDS = ['アルコール', 'アセトン', 'トルエン', 'ホルム', 'ベンゼン', 'キシレン', '酢酸', 'ケトン', 'ブタノール'];
+  const REAGENT_KEYWORDS = ['標準液', '試薬', '硝酸', '塩酸', '苛性'];
 
   const id = (text) => text.replace(/[^\w\u3040-\u30ff\u3400-\u9fff]+/g, '_');
   const setStatus = (message) => { document.getElementById('status').textContent = message; };
+  const hasKeyword = (name, keywords) => keywords.some((keyword) => name.includes(keyword));
+
+  function iconType(name, section) {
+    if (ITEM_ICON_OVERRIDES[name]) return ITEM_ICON_OVERRIDES[name];
+    if (section === 'visual') return 'visual_check';
+    if (hasKeyword(name, SOLVENT_KEYWORDS)) return 'solvent';
+    if (hasKeyword(name, REAGENT_KEYWORDS)) return 'reagent';
+    if (hasKeyword(name, DETECTOR_TUBE_KEYWORDS)) return 'detector_tube';
+    return section === 'tube' ? 'detector_tube' : 'supply';
+  }
+
+  function itemName(name, section) {
+    const type = iconType(name, section);
+    const icon = ICON_SVG[type] ? `<span class="item-icon icon-${type}" aria-hidden="true">${ICON_SVG[type]}</span>` : '';
+    return `<span class="name-main">${icon}<span class="name-label">${name}</span></span>`;
+  }
 
   async function loadConfig() {
     const [itemsRes, rulesRes] = await Promise.all([
@@ -37,7 +73,7 @@
     const warn = point ? `<div class="warn-note">${point.limit}${point.unit}以下で注意</div>` : '';
     const warnClass = point && state[key] !== '' && state[key] !== undefined && Number(state[key]) <= point.limit;
     return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}" data-filter-item="1" data-filter-alert="${warnClass ? '1' : '0'}" data-filter-filled="${state[key] !== '' && state[key] !== undefined ? '1' : '0'}" data-filter-text="${name.toLowerCase()}">
-      <div class="name">${name}${hint}${warn}</div>
+      <div class="name">${itemName(name, section)}${hint}${warn}</div>
       <input class="qty" id="${id(key)}" type="number" min="0" step="1" inputmode="numeric" value="${state[key] ?? ''}" placeholder="0">
     </div>`;
   }
@@ -50,7 +86,7 @@
   function checkRow(section, group, name) {
     const key = `${section}__${group}__${name}__order`;
     const checked = state[key] ? 'checked' : '';
-    return `<div class="check-row" data-filter-item="1" data-filter-alert="${state[key] ? '1' : '0'}" data-filter-filled="${state[key] ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><div class="name">${name}</div><label class="order-flag"><input id="${id(key)}" type="checkbox" ${checked}>注文</label></div>`;
+    return `<div class="check-row" data-filter-item="1" data-filter-alert="${state[key] ? '1' : '0'}" data-filter-filled="${state[key] ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><div class="name">${itemName(name, section)}</div><label class="order-flag"><input id="${id(key)}" type="checkbox" ${checked}>注文</label></div>`;
   }
 
   function expiredMemoBody() {
