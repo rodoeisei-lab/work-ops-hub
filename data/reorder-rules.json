@@ -1,22 +1,200 @@
 {
-  "rules": [
-    {
-      "name": "アセトン",
-      "limit": 20,
-      "unit": "箱",
-      "label": "発注目安 20箱"
-    },
-    {
-      "name": "イソプロピルアルコール",
-      "limit": 20,
-      "unit": "箱",
-      "label": "発注目安 20箱"
-    },
-    {
-      "name": "エチレンオキシド（5本）",
-      "limit": 10,
-      "unit": "箱",
-      "label": "発注目安 10箱"
-    }
-  ]
+  "アセトン": {
+    "threshold": 20,
+    "unit": "箱",
+    "label": "20箱以上",
+    "note": ""
+  },
+  "フッ化水素": {
+    "threshold": 10,
+    "unit": "箱",
+    "label": "10箱以上",
+    "note": ""
+  },
+  "シアン化水素": {
+    "threshold": 7,
+    "unit": "箱",
+    "label": "7箱以上",
+    "note": ""
+  },
+  "スチレン": {
+    "threshold": 8,
+    "unit": "箱",
+    "label": "8箱以上",
+    "note": ""
+  },
+  "キシレン": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "酢酸ブチル": {
+    "threshold": 4,
+    "unit": "箱",
+    "label": "4箱以上",
+    "note": ""
+  },
+  "アミン類": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "硝酸": {
+    "threshold": null,
+    "unit": "箱",
+    "label": "臨時で2箱追加・1回きり",
+    "note": "通常発注点ではなく臨時対応。自動警告対象から外す"
+  },
+  "2-ブタノール": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "クロロホルム（5本）": {
+    "threshold": 2,
+    "unit": "箱",
+    "label": "2箱以上",
+    "note": ""
+  },
+  "メチルエチルケトン（5本）": {
+    "threshold": 5,
+    "unit": "箱",
+    "label": "5箱以上",
+    "note": ""
+  },
+  "イソプロピルアルコール": {
+    "threshold": 20,
+    "unit": "箱",
+    "label": "20箱以上",
+    "note": ""
+  },
+  "エチレンオキシド（5本）": {
+    "threshold": 10,
+    "unit": "箱",
+    "label": "10箱以上",
+    "note": "期限短い"
+  },
+  "トルエン": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "酢酸エチル": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "硫化水素": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "N,N-ジメチルホルムアミド": {
+    "threshold": null,
+    "unit": "箱",
+    "label": "注文一旦中止",
+    "note": "自動発注警告対象から外す"
+  },
+  "ベンゼン（5本）": {
+    "threshold": 2,
+    "unit": "箱",
+    "label": "2箱以上",
+    "note": ""
+  },
+  "ホルムアルデヒド（20本）": {
+    "threshold": null,
+    "unit": "箱",
+    "label": "年間1箱程度",
+    "note": "通常発注点ではなく年間目安"
+  },
+  "発煙管": {
+    "threshold": 20,
+    "unit": "箱",
+    "label": "20箱以上",
+    "note": "画像では20箱以上と読取。要確認"
+  },
+  "カーボンビーズ（活性炭）": {
+    "threshold": 5,
+    "unit": "箱",
+    "label": "5箱以上",
+    "note": ""
+  },
+  "シリカゲルチューブ": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "アルカリ乾電池 単3": {
+    "threshold": 3,
+    "unit": "箱",
+    "label": "3箱以上",
+    "note": ""
+  },
+  "アルカリ乾電池 単1": {
+    "threshold": 5,
+    "unit": "本",
+    "label": "5本以上",
+    "note": ""
+  },
+  "ガラス繊維ろ紙 GA-55（金属 大）": {
+    "threshold": 10,
+    "unit": "箱",
+    "label": "10箱以上",
+    "note": ""
+  },
+  "ワットマン 定量ろ紙 No.41 φ55（Be用）": {
+    "threshold": 3,
+    "unit": "箱",
+    "label": "3箱以上",
+    "note": ""
+  },
+  "ユニパック マークA（Be用）": {
+    "threshold": 3,
+    "unit": "箱",
+    "label": "3箱以上",
+    "note": ""
+  },
+  "捕集板用グリス": {
+    "threshold": 6,
+    "unit": "箱",
+    "label": "6箱以上",
+    "note": ""
+  },
+  "ヒドラジンカートリッジ": {
+    "threshold": 1,
+    "unit": "箱",
+    "label": "1箱以上",
+    "note": ""
+  },
+  "石綿用吸収缶": {
+    "threshold": 5,
+    "unit": "箱",
+    "label": "5箱以上",
+    "note": ""
+  },
+  "メンブランフィルター AAWP02500 φ25mm（Mn）": {
+    "threshold": 5,
+    "unit": "箱",
+    "label": "5箱以上",
+    "note": ""
+  },
+  "メンブランフィルター AAWP04700 φ47mm（Co・Ni・Pb）": {
+    "threshold": 5,
+    "unit": "箱",
+    "label": "5箱以上",
+    "note": ""
+  },
+  "アドバンテック 定量ろ紙 No.6": {
+    "threshold": 3,
+    "unit": "箱",
+    "label": "3箱以上",
+    "note": ""
+  }
 }

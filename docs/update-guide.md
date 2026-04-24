@@ -7,22 +7,32 @@
 - 目視確認の注文チェック項目は `visual` の `checklist` に追加
 - 期限切れメモは `expiredMemo`（本数管理）
 
-## 2) 発注目安を変更する
+## 2) 発注点を変更する
 編集先: `data/reorder-rules.json`
 
-`rules` に以下形式で設定します。
+品目名をキーにして管理します（`inventory-items.json` の名称と完全一致）。
 
 ```json
 {
-  "name": "アセトン",
-  "limit": 20,
-  "unit": "箱",
-  "label": "発注目安 20箱"
+  "アセトン": {
+    "threshold": 20,
+    "unit": "箱",
+    "label": "20箱以上",
+    "note": ""
+  },
+  "N,N-ジメチルホルムアミド": {
+    "threshold": null,
+    "unit": "箱",
+    "label": "注文一旦中止",
+    "note": "自動発注警告対象から外す"
+  }
 }
 ```
 
-- `name` は品目名と完全一致させます
-- `limit` 以下で赤系表示になります
+- `threshold` が数値: 在庫数が `threshold` 以下で赤系警告表示
+- `threshold` が `null`: 通常の自動警告対象外（注意メモとして表示）
+- `label`: UIの「発注点: ...」として表示
+- `note`: 補足メモ表示
 
 ## 3) QRリンクを変更する
 編集先: `assets/js/qr-print.js`

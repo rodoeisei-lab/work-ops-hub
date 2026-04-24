@@ -55,10 +55,19 @@
     const itemData = await itemsRes.json();
     const ruleData = await rulesRes.json();
     defs = itemData;
-    reorderRules = (ruleData.rules || []).reduce((acc, rule) => {
-      acc[rule.name] = rule;
-      return acc;
-    }, {});
+    if (Array.isArray(ruleData.rules)) {
+      reorderRules = ruleData.rules.reduce((acc, rule) => {
+        acc[rule.name] = {
+          threshold: Number.isFinite(rule.limit) ? Number(rule.limit) : null,
+          unit: rule.unit || '箱',
+          label: rule.label || '',
+          note: rule.note || ''
+        };
+        return acc;
+      }, {});
+    } else {
+      reorderRules = ruleData || {};
+    }
   }
 
   function save() {
@@ -66,15 +75,27 @@
     setStatus('この端末に保存しました。');
   }
 
+  function hasNumericThreshold(rule) {
+    return rule && rule.threshold !== null && rule.threshold !== undefined && Number.isFinite(Number(rule.threshold));
+  }
+
   function itemRow(section, group, name) {
     const key = `${section}__${group}__${name}`;
     const point = reorderRules[name];
-    const hint = point ? `<div class="hint">${point.label}</div>` : '';
-    const warn = point ? `<div class="warn-note">${point.limit}${point.unit}以下で注意</div>` : '';
-    const warnClass = point && state[key] !== '' && state[key] !== undefined && Number(state[key]) <= point.limit;
-    return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}" data-filter-item="1" data-filter-alert="${warnClass ? '1' : '0'}" data-filter-filled="${state[key] !== '' && state[key] !== undefined ? '1' : '0'}" data-filter-text="${name.toLowerCase()}">
-      <div class="name">${itemName(name, section)}${hint}${warn}</div>
-      <input class="qty" id="${id(key)}" type="number" min="0" step="1" inputmode="numeric" value="${state[key] ?? ''}" placeholder="0">
+    const hasThreshold = hasNumericThreshold(point);
+    const threshold = hasThreshold ? Number(point.threshold) : null;
+    const value = state[key];
+    const hasValue = value !== '' && value !== undefined;
+    const warnClass = hasThreshold && hasValue && Number(value) <= threshold;
+
+    const ruleLabel = point?.label ? `<div class="hint">発注点: ${point.label}</div>` : '';
+    const warn = hasThreshold ? `<div class="warn-note">在庫数が${threshold}${point.unit || '箱'}以下なら注意</div>` : '';
+    const note = point?.note ? `<div class="rule-note">注意メモ: ${point.note}</div>` : '';
+    const special = !hasThreshold && point ? `<div class="special-note">${point.label || '発注メモ'}（通常の自動警告対象外）</div>` : '';
+
+    return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}" data-filter-item="1" data-filter-alert="${warnClass ? '1' : '0'}" data-filter-filled="${hasValue ? '1' : '0'}" data-filter-text="${name.toLowerCase()}">
+      <div class="name">${itemName(name, section)}${ruleLabel}${warn}${special}${note}</div>
+      <input class="qty" id="${id(key)}" type="number" min="0" step="1" inputmode="numeric" value="${value ?? ''}" placeholder="0">
     </div>`;
   }
 
@@ -164,19 +185,14 @@
   }
 
   function refreshWarnings() {
-    Object.keys(reorderRules).forEach((name) => {
+    document.querySelectorAll('.row[data-row-key]').forEach((row) => {
+      const key = row.dataset.rowKey;
+      const name = key.split('__').slice(2).join('__');
       const rule = reorderRules[name];
-      ['tube', 'supplies'].forEach((section) => {
-        sectionGroups(section).forEach((group) => {
-          if (!(group.items || []).includes(name)) return;
-          const key = `${section}__${group.title}__${name}`;
-          const row = document.querySelector(`[data-row-key="${key}"]`);
-          const value = state[key];
-          if (!row) return;
-          const warning = value !== '' && value !== undefined && Number(value) <= rule.limit;
-          row.classList.toggle('alert', warning);
-        });
-      });
+      const value = state[key];
+      const warning = hasNumericThreshold(rule) && value !== '' && value !== undefined && Number(value) <= Number(rule.threshold);
+      row.classList.toggle('alert', warning);
+      row.dataset.filterAlert = warning ? '1' : '0';
     });
   }
 
