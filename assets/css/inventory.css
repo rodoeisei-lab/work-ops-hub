@@ -117,6 +117,8 @@ details.top-panel summary::-webkit-details-marker { display: none; }
 .qty { padding:8px; text-align:center; }
 .hint { display:inline-block; margin-top:4px; font-size:.74rem; color:#805300; background:#fff7d8; border:1px solid #efd484; border-radius:999px; padding:2px 8px; }
 .warn-note { display:inline-block; margin-top:4px; font-size:.74rem; color: var(--warn-text); background:#ffe7e6; border:1px solid #efc5c2; border-radius:999px; padding:2px 8px; }
+.special-note { display:inline-block; margin-top:4px; font-size:.74rem; color:#6a4a0d; background:#fff4d9; border:1px solid #e9cf92; border-radius:999px; padding:2px 8px; }
+.rule-note { margin-top:4px; font-size:.73rem; color:#665f53; }
 
 .memo-wrap, .check-wrap, .expired-box { padding:8px 10px 10px; }
 .memo-wrap { display:grid; gap:8px; }
