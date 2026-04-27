@@ -453,3 +453,27 @@ tr:last-child td { border-bottom: none; }
   .input-row { grid-template-columns: 1fr; }
   .graph-track { min-width: 520px; }
 }
+
+.selected-method-memo {
+  border: 1px solid #dbe6f7;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 11px;
+  font-size: .84rem;
+  color: #30486f;
+}
+
+.rec-action-row {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.memo-card {
+  border: 1px solid #dbe8fb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px;
+  margin-top: 8px;
+}

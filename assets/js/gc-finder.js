@@ -40,7 +40,8 @@
     graphMeta: document.getElementById('graphMeta'),
     graphLegend: document.getElementById('graphLegend'),
     unknownAnalytesPanel: document.getElementById('unknownAnalytesPanel'),
-    rtTableBody: document.getElementById('rtTableBody')
+    rtTableBody: document.getElementById('rtTableBody'),
+    selectedMethodMemo: document.getElementById('selectedMethodMemo')
   };
 
   const state = {
@@ -49,7 +50,8 @@
     ranked: [],
     workplaceMap: new Map(),
     lastFilterReport: null,
-    multiWorkplaces: []
+    multiWorkplaces: [],
+    chosenMethodMemos: []
   };
 
   init();
@@ -61,6 +63,7 @@
       fillAnalyteOptions();
       bindEvents();
       initMultiPlanSection();
+      loadChosenMethodMemos();
       showInitialWarnings();
     } catch (error) {
       console.error(error);
@@ -1051,10 +1054,14 @@
         item.dataShortage ? '<br><span class="provisional-badge">データ不足</span>' : '',
         item.provisional ? '<br><span class="provisional-badge">暫定候補</span>' : '',
         '</p>',
-        '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">RT一覧を見る</button>'
+        '<div class="rec-action-row">',
+        '<button type="button" class="rec-select-btn" data-method-id="', escapeHtml(item.method.id), '">RT一覧を見る</button>',
+        '<button type="button" class="plain rec-use-btn" data-method-id="', escapeHtml(item.method.id), '">この条件を使う</button>',
+        '</div>'
       ].join('');
 
       card.querySelector('.rec-select-btn').addEventListener('click', () => showMethodDetails(item));
+      card.querySelector('.rec-use-btn').addEventListener('click', () => saveChosenMethod(item));
       el.recommendations.appendChild(card);
     });
   }
@@ -1441,6 +1448,62 @@
 
   function normalizeName(text) {
     return String(text || '').trim().toLowerCase().replace(/\s+/g, '');
+  }
+
+
+  function saveChosenMethod(item) {
+    const selectedLabels = Array.from(state.selectedAnalytes.values()).map((row) => row.label);
+    const memo = {
+      savedAt: new Date().toISOString(),
+      analytes: selectedLabels,
+      machine: item.method.machine?.name || '-',
+      column: item.method.column?.name || '-',
+      temp: getTempProgramDisplay(item.method.tempProgram),
+      analysisTime: Number(item.analysisTime) || null,
+      confidence: item.confidenceLabel
+    };
+    state.chosenMethodMemos.unshift(memo);
+    state.chosenMethodMemos = state.chosenMethodMemos.slice(0, 6);
+    localStorage.setItem('gc_selected_method_memos', JSON.stringify(state.chosenMethodMemos));
+    renderChosenMethodMemos();
+  }
+
+  function loadChosenMethodMemos() {
+    try {
+      const raw = localStorage.getItem('gc_selected_method_memos');
+      if (!raw) {
+        renderChosenMethodMemos();
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      state.chosenMethodMemos = Array.isArray(parsed) ? parsed.slice(0, 6) : [];
+    } catch (error) {
+      state.chosenMethodMemos = [];
+    }
+    renderChosenMethodMemos();
+  }
+
+  function renderChosenMethodMemos() {
+    if (!el.selectedMethodMemo) return;
+    if (!state.chosenMethodMemos.length) {
+      el.selectedMethodMemo.textContent = 'まだ選択されていません。';
+      return;
+    }
+    el.selectedMethodMemo.innerHTML = state.chosenMethodMemos.map((memo) => {
+      const date = new Date(memo.savedAt || Date.now());
+      const dateLabel = Number.isNaN(date.getTime()) ? '-' :
+        date.getFullYear() + '/' + String(date.getMonth() + 1).padStart(2, '0') + '/' + String(date.getDate()).padStart(2, '0') +
+        ' ' + String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+      return [
+        '<div class="memo-card">',
+        '<strong>', escapeHtml(dateLabel), '</strong><br>',
+        '対象物質: ', escapeHtml((memo.analytes || []).join('、') || '-'), '<br>',
+        '機械: ', escapeHtml(memo.machine || '-'), ' / カラム: ', escapeHtml(memo.column || '-'), '<br>',
+        '温度条件: ', escapeHtml(memo.temp || '-'), ' / 分析時間: ', Number.isFinite(memo.analysisTime) ? formatCompactNumber(memo.analysisTime, 2, 3) + ' min' : '-', '<br>',
+        '信頼度: ', escapeHtml(memo.confidence || '-') ,
+        '</div>'
+      ].join('');
+    }).join('');
   }
 
   function escapeHtml(text) {
