@@ -17,6 +17,14 @@
     "medium": 0.65,
     "low": 0.35
   },
+  "multi_workplace_plan": {
+    "single_machine_priority_units_max": 2,
+    "consultation_units_min": 3,
+    "short_total_min": 20,
+    "long_total_min": 30,
+    "late_start_time": "16:00",
+    "default_setup_buffer_per_unit_min": 1.0
+  },
   "analytes": [
     { "id": "acetone", "label": "アセトン", "aliases": ["acetone", "アセトン"] },
     { "id": "methanol", "label": "メタノール", "aliases": ["methanol", "meoh", "メタノール"] },
