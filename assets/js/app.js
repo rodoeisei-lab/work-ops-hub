@@ -31,7 +31,8 @@
     { href: 'gc-day-plan.html', label: 'GC当日', pages: ['gc-day-plan.html'] },
     { href: 'gc-method-finder.html', label: 'GC条件', pages: ['gc-method-finder.html'] },
     { href: 'gc-rt-library.html', label: 'RT', pages: ['gc-rt-library.html'] },
-    { href: 'gc-std-master.html', label: 'STD', pages: ['gc-std-master.html'] }
+    { href: 'gc-std-master.html', label: 'STD', pages: ['gc-std-master.html'] },
+    { href: 'gc-calculator.html', label: '計算', pages: ['gc-calculator.html'] }
   ];
 
   if (!document.querySelector('.quick-nav')) {

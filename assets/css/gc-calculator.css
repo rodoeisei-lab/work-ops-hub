@@ -1,0 +1,92 @@
+.gc-calculator-page { display: grid; gap: 12px; }
+.section-block { padding: 14px; }
+.section-block h1,
+.section-block h2 { margin: 0 0 8px; }
+.section-block p { margin: 0; }
+.hint { color: var(--muted); font-size: .84rem; }
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.status-message { margin-top: 8px; min-height: 1.3em; font-size: .84rem; color: #36507d; }
+
+.rows-container { display: grid; gap: 10px; }
+
+.calc-row {
+  border: 1px solid #dce6f4;
+  border-radius: 14px;
+  padding: 10px;
+  background: #f9fbff;
+}
+
+.row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.row-title { margin: 0; font-size: .9rem; }
+
+.row-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.field label,
+.material-field label {
+  display: grid;
+  gap: 5px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: #415473;
+}
+
+.meta-note {
+  font-size: .75rem;
+  color: #60718d;
+  margin-top: 4px;
+}
+
+.result-box {
+  min-height: 44px;
+  border: 1px solid #ccd8ea;
+  background: #fff;
+  border-radius: 11px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: #1f4fbf;
+}
+
+.badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.badge { display: inline-flex; border-radius: 999px; padding: 2px 8px; font-size: .72rem; border: 1px solid transparent; }
+.badge-review { background: #fff3ee; color: #a45a2d; border-color: #f0cdb7; }
+.badge-low { background: #fff9ef; color: #87611f; border-color: #e8d5ab; }
+
+.error-text {
+  margin-top: 5px;
+  font-size: .75rem;
+  color: #9b3f3f;
+}
+
+.caution-block {
+  border-color: #e5ddc5;
+  background: #fffdf8;
+}
+.caution-block p { color: #5f5b4b; font-size: .8rem; }
+
+@media (min-width: 860px) {
+  .actions-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .row-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .field.wide { grid-column: span 2; }
+}
+
+@media (max-width: 520px) {
+  .row-grid { grid-template-columns: 1fr; }
+}
