@@ -27,12 +27,6 @@
   color: #7c580d;
 }
 
-.back-link {
-  display: inline-block;
-  margin-top: 8px;
-  font-weight: 700;
-}
-
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
