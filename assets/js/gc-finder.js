@@ -43,6 +43,7 @@
     graphLegend: document.getElementById('graphLegend'),
     unknownAnalytesPanel: document.getElementById('unknownAnalytesPanel'),
     rtTableBody: document.getElementById('rtTableBody'),
+    rtCardList: document.getElementById('rtCardList'),
     selectedMethodMemo: document.getElementById('selectedMethodMemo')
   };
 
@@ -1310,10 +1311,12 @@
   function renderTable(rows, selectedIds) {
     if (!rows.length) {
       el.rtTableBody.innerHTML = '<tr><td colspan="4" class="empty-cell">表示するデータがありません。</td></tr>';
+      el.rtCardList.innerHTML = '<p class="empty-cell">表示するデータがありません。</p>';
       return;
     }
 
-    el.rtTableBody.innerHTML = rows.slice().sort((a, b) => a.rt_min - b.rt_min).map((row, idx) => {
+    const sortedRows = rows.slice().sort((a, b) => a.rt_min - b.rt_min);
+    el.rtTableBody.innerHTML = sortedRows.map((row, idx) => {
       const certainty = String(row.certainty || '-').toLowerCase();
       const certaintyLabel = '<span class="certainty-badge ' + (certainty === 'low' ? 'low' : '') + '">' + escapeHtml(toCertaintyLabel(certainty)) + '</span>';
       const rowClass = selectedIds.includes(row.analyte_normalized) ? ' class="highlighted-row"' : '';
@@ -1324,6 +1327,18 @@
         '<td>', certaintyLabel, '</td>',
         '<td>', escapeHtml(row.note || '-'), '</td>',
         '</tr>'
+      ].join('');
+    }).join('');
+
+    el.rtCardList.innerHTML = sortedRows.map((row, idx) => {
+      const analyte = toAnalyteLabel(row.analyte_normalized, row.analyte_original);
+      return [
+        '<article class="mobile-data-card">',
+        '<p><strong>', (idx + 1), '. ', escapeHtml(analyte), '</strong></p>',
+        '<p>RT: ', formatCompactNumber(Number(row.rt_min), 2, 3), ' min</p>',
+        '<p>信頼度: ', escapeHtml(toCertaintyLabel(row.certainty)), '</p>',
+        '<p>備考: ', escapeHtml(row.note || '-'), '</p>',
+        '</article>'
       ].join('');
     }).join('');
   }
@@ -1343,6 +1358,7 @@
     el.unknownAnalytesPanel.hidden = true;
     el.unknownAnalytesPanel.textContent = '';
     el.rtTableBody.innerHTML = '<tr><td colspan="4" class="empty-cell">表示するデータがありません。</td></tr>';
+    el.rtCardList.innerHTML = '<p class="empty-cell">表示するデータがありません。</p>';
   }
 
   function renderUnknownAnalytes(unknownItems) {

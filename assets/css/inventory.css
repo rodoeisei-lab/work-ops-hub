@@ -175,7 +175,10 @@ details.top-panel summary::-webkit-details-marker { display: none; }
 }
 
 @media (max-width: 520px) {
-  .row { grid-template-columns:minmax(0,1fr) 78px; }
+  .row { grid-template-columns:1fr; align-items:start; }
+  .qty { text-align:left; max-width:100%; }
+  .order-flag { white-space:normal; }
+  .check-row { grid-template-columns:1fr; align-items:start; }
   .name-main { gap: 5px; }
   .item-icon {
     width: 15px;
