@@ -1,0 +1,23 @@
+{
+  "common": [
+    { "normalized_name": "methanol", "display_name": "メタノール" },
+    { "normalized_name": "acetone", "display_name": "アセトン" },
+    { "normalized_name": "IPA", "display_name": "IPA" },
+    { "normalized_name": "n-ヘキサン", "display_name": "n-ヘキサン" },
+    { "normalized_name": "MEK", "display_name": "MEK" },
+    { "normalized_name": "ethyl_acetate", "display_name": "酢酸エチル" },
+    { "normalized_name": "isobutanol", "display_name": "イソブタノール" },
+    { "normalized_name": "1-butanol", "display_name": "1-ブタノール" },
+    { "normalized_name": "MIBK", "display_name": "MIBK" },
+    { "normalized_name": "toluene", "display_name": "トルエン" },
+    { "normalized_name": "isobutyl_acetate", "display_name": "酢酸イソブチル" },
+    { "normalized_name": "butyl_acetate", "display_name": "酢酸ブチル" },
+    { "normalized_name": "ethylbenzene", "display_name": "エチルベンゼン" },
+    { "normalized_name": "p-xylene", "display_name": "p-キシレン" },
+    { "normalized_name": "o-xylene", "display_name": "o-キシレン" }
+  ],
+  "liquid_standard": [
+    { "normalized_name": "ブチセロ", "display_name": "ブチセロ" },
+    { "normalized_name": "styrene", "display_name": "スチレン" }
+  ]
+}
