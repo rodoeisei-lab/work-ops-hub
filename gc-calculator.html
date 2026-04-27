@@ -26,6 +26,15 @@
       <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
     </section>
 
+    <section class="card section-block" aria-labelledby="favoriteTitle">
+      <h2 id="favoriteTitle">よく使う物質クイック選択</h2>
+      <p class="hint">タップすると計算行の物質へすぐ反映します。</p>
+      <p class="hint">通常よく使う物質</p>
+      <div id="favoriteCommonChips" class="quick-chips" aria-label="通常よく使う物質"></div>
+      <p class="hint">液体スタンダードでよく使う物質</p>
+      <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体スタンダードでよく使う物質"></div>
+    </section>
+
     <section class="card section-block" aria-labelledby="rowsTitle">
       <h2 id="rowsTitle">計算行</h2>
       <div id="rowsContainer" class="rows-container"></div>
@@ -42,6 +51,7 @@
   </main>
 
   <script src="assets/js/app.js"></script>
+  <script src="assets/js/gc-favorites.js" defer></script>
   <script src="assets/js/gc-calculator.js" defer></script>
 </body>
 </html>

@@ -477,3 +477,5 @@ tr:last-child td { border-bottom: none; }
   padding: 9px;
   margin-top: 8px;
 }
+
+.quick-chip.liquid-chip { background:#f8f6ff; border-color:#ddd4ff; }

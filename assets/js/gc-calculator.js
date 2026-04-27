@@ -1,5 +1,7 @@
 (() => {
   const DATA_PATH = 'data/gc-std-master.json';
+  const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
+  const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
   const STORAGE_KEY = 'gc-calculator-state-v1';
   const DEFAULT_ROWS = 3;
 
@@ -14,13 +16,19 @@
     copyResultBtn: document.getElementById('copyResultBtn'),
     downloadCsvBtn: document.getElementById('downloadCsvBtn'),
     copyTextOutput: document.getElementById('copyTextOutput'),
-    statusMessage: document.getElementById('statusMessage')
+    statusMessage: document.getElementById('statusMessage'),
+    favoriteCommonChips: document.getElementById('favoriteCommonChips'),
+    favoriteLiquidChips: document.getElementById('favoriteLiquidChips')
   };
 
   const state = {
     materials: [],
     optionLookup: new Map(),
-    rows: []
+    rows: [],
+    activeRowId: null,
+    favorites: { common: [], liquid_standard: [] },
+    analyteAliases: {},
+    analyteDisplay: {}
   };
 
   init();
@@ -28,11 +36,13 @@
   async function init() {
     bindGlobalEvents();
     await loadMaster();
+    await loadFavoriteData();
     restoreState();
     if (!state.rows.length) {
       for (let i = 0; i < DEFAULT_ROWS; i += 1) state.rows.push(createEmptyRow());
     }
     renderRows();
+    renderFavoriteChips();
     showStatus('入力内容はこの端末に自動保存されます。');
   }
 
@@ -40,6 +50,7 @@
     els.addRowBtn.addEventListener('click', () => {
       state.rows.push(createEmptyRow());
       renderRows();
+    renderFavoriteChips();
       persist();
     });
 
@@ -50,6 +61,7 @@
       localStorage.removeItem(STORAGE_KEY);
       els.copyTextOutput.value = '';
       renderRows();
+    renderFavoriteChips();
       showStatus('入力内容をクリアしました。');
     });
 
@@ -111,6 +123,7 @@
           optionLabel,
           displayName: display,
           rawLabel: raw,
+          normalizedName: String(item.normalized_name || ''),
           stdValue: Number.isFinite(stdValue) ? stdValue : null,
           confidence: String(item.confidence || ''),
           status: String(item.status || ''),
@@ -125,6 +138,19 @@
     }
   }
 
+
+  async function loadFavoriteData() {
+    if (!window.GcFavorites?.load) return;
+    const [favorites, analyteAliases, analyteDisplay] = await Promise.all([
+      window.GcFavorites.load(),
+      fetchJsonSafe(ANALYTE_ALIASES_PATH, {}),
+      fetchJsonSafe(ANALYTE_DISPLAY_PATH, {})
+    ]);
+    state.favorites = favorites;
+    state.analyteAliases = analyteAliases || {};
+    state.analyteDisplay = analyteDisplay || {};
+  }
+
   function createEmptyRow() {
     return {
       id: `r_${Math.random().toString(36).slice(2)}`,
@@ -134,6 +160,78 @@
       sampleAreaInput: '',
       memo: ''
     };
+  }
+
+
+  function renderFavoriteChips() {
+    if (!els.favoriteCommonChips || !els.favoriteLiquidChips) return;
+    renderFavoriteGroup(els.favoriteCommonChips, state.favorites.common || [], false);
+    renderFavoriteGroup(els.favoriteLiquidChips, state.favorites.liquid_standard || [], true);
+  }
+
+  function renderFavoriteGroup(container, list, isSecondary) {
+    container.innerHTML = '';
+    (list || []).forEach((entry) => {
+      const matched = findMaterialByFavorite(entry);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'quick-chip' + (isSecondary ? ' secondary' : '');
+      chip.textContent = entry.display_name || entry.normalized_name || '-';
+      chip.dataset.materialOption = matched?.optionLabel || '';
+      chip.disabled = !matched;
+      chip.title = matched ? 'クリックで選択中の行に反映' : 'STDマスタ未登録';
+      chip.addEventListener('click', () => applyFavoriteToActiveRow(chip.dataset.materialOption));
+      container.appendChild(chip);
+    });
+    syncFavoriteChipState();
+  }
+
+  function findMaterialByFavorite(entry) {
+    const keys = new Set();
+    [entry?.normalized_name, entry?.display_name].forEach((v) => {
+      if (v) keys.add(window.GcFavorites.normalize(v));
+    });
+    const aliasList = state.analyteAliases?.[entry?.normalized_name] || [];
+    aliasList.forEach((v) => keys.add(window.GcFavorites.normalize(v)));
+    const display = state.analyteDisplay?.[entry?.normalized_name];
+    if (display) keys.add(window.GcFavorites.normalize(display));
+
+    return state.materials.find((m) => {
+      const mKeys = [m.displayName, m.rawLabel, m.normalizedName].map((v) => window.GcFavorites.normalize(v));
+      return mKeys.some((k) => keys.has(k));
+    }) || null;
+  }
+
+  function applyFavoriteToActiveRow(optionLabel) {
+    if (!optionLabel) return;
+    const row = state.rows.find((r) => r.id === state.activeRowId) || state.rows.find((r) => !String(r.materialInput || '').trim()) || state.rows[0];
+    if (!row) return;
+    row.materialInput = optionLabel;
+    const selected = resolveMaterial(optionLabel);
+    if (selected && !String(row.stdInput || '').trim()) row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
+    renderRows();
+    persist();
+    showStatus('よく使う物質を行に反映しました。');
+  }
+
+  function syncFavoriteChipState() {
+    const selected = new Set(state.rows.map((row) => String(row.materialInput || '').trim()));
+    [els.favoriteCommonChips, els.favoriteLiquidChips].forEach((container) => {
+      if (!container) return;
+      Array.from(container.querySelectorAll('.quick-chip')).forEach((chip) => {
+        chip.classList.toggle('active', selected.has(chip.dataset.materialOption));
+      });
+    });
+  }
+
+  async function fetchJsonSafe(path, fallback) {
+    try {
+      const res = await fetch(path, { cache: 'no-cache' });
+      if (!res.ok) return fallback;
+      return await res.json();
+    } catch (_error) {
+      return fallback;
+    }
   }
 
   function restoreState() {
@@ -174,6 +272,7 @@
       if (!root) return;
       bindRowEvents(root, row.id);
     });
+    syncFavoriteChipState();
   }
 
   function buildDatalistHtml() {
@@ -259,7 +358,12 @@
     const sampleAreaInput = root.querySelector('.sample-area-input');
     const memoInput = root.querySelector('.memo-input');
 
+    materialInput.addEventListener('focus', () => {
+      state.activeRowId = rowId;
+    });
+
     materialInput.addEventListener('input', () => {
+      state.activeRowId = rowId;
       row.materialInput = materialInput.value;
       const selected = resolveMaterial(row.materialInput);
       if (selected && !String(row.stdInput || '').trim()) row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
@@ -268,18 +372,21 @@
       persist();
     });
 
+    stdInput.addEventListener('focus', () => { state.activeRowId = rowId; });
     stdInput.addEventListener('input', () => {
       row.stdInput = stdInput.value;
       updateRowComputedView(root, row);
       persist();
     });
 
+    stdAreaInput.addEventListener('focus', () => { state.activeRowId = rowId; });
     stdAreaInput.addEventListener('input', () => {
       row.stdAreaInput = stdAreaInput.value;
       updateRowComputedView(root, row);
       persist();
     });
 
+    sampleAreaInput.addEventListener('focus', () => { state.activeRowId = rowId; });
     sampleAreaInput.addEventListener('input', () => {
       row.sampleAreaInput = sampleAreaInput.value;
       updateRowComputedView(root, row);
@@ -295,6 +402,7 @@
       state.rows = state.rows.filter((r) => r.id !== rowId);
       if (!state.rows.length) state.rows.push(createEmptyRow());
       renderRows();
+    renderFavoriteChips();
       persist();
     });
   }
@@ -325,6 +433,7 @@
     if (coefficientBox) coefficientBox.textContent = calc.coefficientText;
     if (ppmBox) ppmBox.textContent = calc.ppmText;
     if (errorText) errorText.textContent = calc.errorText;
+    syncFavoriteChipState();
   }
 
   function resolveMaterial(materialInput) {

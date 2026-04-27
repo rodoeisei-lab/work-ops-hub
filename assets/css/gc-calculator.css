@@ -90,3 +90,10 @@
 @media (max-width: 520px) {
   .row-grid { grid-template-columns: 1fr; }
 }
+
+
+.quick-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+.quick-chip { border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--text); padding:7px 11px; font-size:.82rem; min-height:34px; }
+.quick-chip.secondary { background:#f6f8ff; border-color:#d9e2f6; }
+.quick-chip:disabled { opacity:.45; cursor:not-allowed; }
+.quick-chip.active { background: var(--accent-soft); border-color:#b5c9ff; color:var(--accent); }

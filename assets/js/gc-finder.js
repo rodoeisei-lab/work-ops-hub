@@ -7,6 +7,7 @@
     rtLibrary: 'data/gc-rt-library.json',
     analyteAliases: 'data/gc-analyte-aliases.json',
     analyteDisplay: 'data/gc-analyte-display.json',
+    favorites: 'data/gc-favorite-analytes.json',
     rules: 'data/gc-method-rules.json'
   };
 
@@ -22,6 +23,7 @@
     analyteInput: document.getElementById('analyteInput'),
     analyteList: document.getElementById('analyteList'),
     quickAnalytes: document.getElementById('quickAnalytes'),
+    quickLiquidAnalytes: document.getElementById('quickLiquidAnalytes'),
     selectedAnalytes: document.getElementById('selectedAnalytes'),
     addAnalyteBtn: document.getElementById('addAnalyteBtn'),
     clearAnalytesBtn: document.getElementById('clearAnalytesBtn'),
@@ -51,7 +53,8 @@
     workplaceMap: new Map(),
     lastFilterReport: null,
     multiWorkplaces: [],
-    chosenMethodMemos: []
+    chosenMethodMemos: [],
+    favoriteMeta: { common: new Set(), liquid_standard: new Set(), all: new Set() }
   };
 
   init();
@@ -72,7 +75,7 @@
   }
 
   async function loadData() {
-    const [workplaces, machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, rules] = await Promise.all([
+    const [workplaces, machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, favorites, rules] = await Promise.all([
       fetchJson(PATHS.workplaces),
       fetchJson(PATHS.machines),
       fetchJson(PATHS.columns),
@@ -80,6 +83,7 @@
       fetchJson(PATHS.rtLibrary),
       fetchJson(PATHS.analyteAliases),
       fetchJson(PATHS.analyteDisplay),
+      fetchJson(PATHS.favorites, { common: [], liquid_standard: [] }),
       fetchJson(PATHS.rules)
     ]);
 
@@ -87,6 +91,8 @@
     const normalizedRtLibrary = normalizeRtLibrary(rtLibrary, aliasBundle.aliasLookup);
     const validationReport = validateRtLibrary(normalizedRtLibrary);
     const analyteCatalog = buildAnalyteCatalog(aliasBundle, normalizedRtLibrary);
+    const favoriteMeta = buildFavoriteMeta(favorites, aliasBundle, analyteCatalog);
+    state.favoriteMeta = favoriteMeta;
     const methods = buildMethods(machines, columns, tempPrograms, normalizedRtLibrary);
 
     return {
@@ -98,6 +104,7 @@
       rules,
       aliasBundle,
       analyteCatalog,
+      favoriteMeta,
       methods,
       validationReport,
       dataDensityLow: normalizedRtLibrary.length < 30
@@ -221,8 +228,8 @@
 
   function getSortedAnalyteCatalog() {
     return state.data.analyteCatalog
-      .map((item) => ({ item, rtOrder: getAnalyteRtOrder(item.id) }))
-      .sort((a, b) => compareRtOrder(a.rtOrder, b.rtOrder, a.item, b.item))
+      .map((item) => ({ item, rtOrder: getAnalyteRtOrder(item.id), favRank: getFavoriteRank(item.id) }))
+      .sort((a, b) => compareFavoriteRank(a.favRank, b.favRank) || compareRtOrder(a.rtOrder, b.rtOrder, a.item, b.item))
       .map((entry) => entry.item);
   }
 
@@ -275,6 +282,42 @@
     return itemA.label.localeCompare(itemB.label, 'ja');
   }
 
+
+  function buildFavoriteMeta(favorites, aliasBundle, analyteCatalog) {
+    const idLookup = new Map();
+    (analyteCatalog || []).forEach((item) => {
+      [item.id, item.label].concat(item.aliases || []).forEach((name) => {
+        idLookup.set(normalizeName(name), item.id);
+      });
+    });
+
+    function resolveId(entry) {
+      const keys = [entry?.normalized_name, entry?.display_name];
+      const aliasNames = aliasBundle.canonicalToAliases.get(entry?.normalized_name) || [];
+      keys.push(...aliasNames);
+      for (const key of keys) {
+        const hit = idLookup.get(normalizeName(key));
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    const common = new Set((favorites?.common || []).map(resolveId).filter(Boolean));
+    const liquid = new Set((favorites?.liquid_standard || []).map(resolveId).filter(Boolean));
+    return { common, liquid_standard: liquid, all: new Set([...common, ...liquid]) };
+  }
+
+  function getFavoriteRank(analyteId) {
+    if (state.data?.favoriteMeta?.common?.has(analyteId)) return 0;
+    if (state.data?.favoriteMeta?.liquid_standard?.has(analyteId)) return 1;
+    return 2;
+  }
+
+  function compareFavoriteRank(a, b) {
+    if (a === b) return 0;
+    return a - b;
+  }
+
   function buildMethods(machines, columns, tempPrograms, rtLibrary) {
     const machineMap = new Map((machines || []).map((m) => [m.id, m]));
     const columnMap = new Map((columns || []).map((c) => [c.id, c]));
@@ -296,9 +339,12 @@
     }));
   }
 
-  async function fetchJson(path) {
+  async function fetchJson(path, fallbackValue) {
     const res = await fetch(path);
-    if (!res.ok) throw new Error(path + ' の読み込みに失敗');
+    if (!res.ok) {
+      if (fallbackValue !== undefined) return fallbackValue;
+      throw new Error(path + ' の読み込みに失敗');
+    }
     return res.json();
   }
 
@@ -421,28 +467,39 @@
     const sortedCatalog = getSortedAnalyteCatalog();
     el.analyteList.innerHTML = '';
     el.quickAnalytes.innerHTML = '';
+    if (el.quickLiquidAnalytes) el.quickLiquidAnalytes.innerHTML = '';
 
     sortedCatalog.forEach((item) => {
       const option = document.createElement('option');
       option.value = item.label;
       el.analyteList.appendChild(option);
 
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'quick-chip';
-      chip.dataset.analyteId = item.id;
-      chip.textContent = item.label;
-      chip.addEventListener('click', () => {
-        if (state.selectedAnalytes.has(item.id)) {
-          state.selectedAnalytes.delete(item.id);
-        } else {
-          state.selectedAnalytes.set(item.id, { id: item.id, label: item.label, known: true });
-        }
-        renderSelectedAnalytes();
-        syncQuickChipState();
-      });
+      const chip = buildAnalyteChip(item, state.data?.favoriteMeta?.common?.has(item.id) ? '' : 'non-favorite');
       el.quickAnalytes.appendChild(chip);
+
+      if (el.quickLiquidAnalytes && state.data?.favoriteMeta?.liquid_standard?.has(item.id)) {
+        const liquidChip = buildAnalyteChip(item, 'liquid-chip');
+        el.quickLiquidAnalytes.appendChild(liquidChip);
+      }
     });
+  }
+
+  function buildAnalyteChip(item, extraClassName) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'quick-chip' + (extraClassName ? ' ' + extraClassName : '');
+    chip.dataset.analyteId = item.id;
+    chip.textContent = item.label;
+    chip.addEventListener('click', () => {
+      if (state.selectedAnalytes.has(item.id)) {
+        state.selectedAnalytes.delete(item.id);
+      } else {
+        state.selectedAnalytes.set(item.id, { id: item.id, label: item.label, known: true });
+      }
+      renderSelectedAnalytes();
+      syncQuickChipState();
+    });
+    return chip;
   }
 
   function addAnalyteFromInput() {
@@ -498,8 +555,10 @@
   }
 
   function syncQuickChipState() {
-    Array.from(el.quickAnalytes.children).forEach((chip) => {
-      chip.classList.toggle('active', state.selectedAnalytes.has(chip.dataset.analyteId));
+    [el.quickAnalytes, el.quickLiquidAnalytes].filter(Boolean).forEach((container) => {
+      Array.from(container.children).forEach((chip) => {
+        chip.classList.toggle('active', state.selectedAnalytes.has(chip.dataset.analyteId));
+      });
     });
   }
 
