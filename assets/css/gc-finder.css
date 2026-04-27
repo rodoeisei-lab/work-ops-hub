@@ -73,28 +73,46 @@
 
 .quick-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 10px;
   margin-top: 8px;
-  max-height: 150px;
-  overflow: auto;
-  padding: 2px 2px 2px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 24px 8px 0;
+  scrollbar-width: thin;
 }
 
 .quick-chip {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #fff;
-  color: var(--text);
-  padding: 9px 11px;
-  font-size: .83rem;
-  min-height: 38px;
+  color: var(--accent);
+  padding: 11px 16px;
+  font-size: .9rem;
+  min-height: 44px;
+  font-weight: 700;
+  flex: 0 0 auto;
+  cursor: pointer;
 }
 
 .quick-chip.active {
-  background: var(--accent-soft);
-  border-color: #b5c9ff;
-  color: var(--accent);
+  background: #1f4fbf;
+  border-color: #1f4fbf;
+  color: #fff;
+}
+
+.quick-chip:active {
+  transform: translateY(1px);
+}
+
+.quick-chips::after {
+  content: '';
+  position: sticky;
+  right: 0;
+  width: 16px;
+  flex: 0 0 16px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff);
 }
 
 .selected-row {
@@ -107,7 +125,7 @@
 .selected-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .selected-tag {

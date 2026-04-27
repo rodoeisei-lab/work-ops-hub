@@ -6,10 +6,15 @@
 .top-grid label,.workplace-card label { display: grid; gap: 6px; font-size: .84rem; font-weight: 700; color:#425470; }
 .workplace-list { display: grid; gap: 10px; }
 .workplace-card { border: 1px solid #dce7f8; border-radius: 12px; background:#f9fbff; padding: 10px; }
-.input-row { display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:8px; }
-.quick-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; max-height:130px; overflow:auto; }
-.quick-chips button { min-height: 38px; border-radius: 999px; padding: 7px 11px; font-size: .8rem; border:1px solid #d7e2f4; background:#fff; }
-.quick-chips button.active { border-color:#b6caf0; background:#edf4ff; color:#1f4fbf; }
+.input-row { display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:10px; }
+.chip-section-title { margin: 10px 0 0; font-size: .82rem; font-weight: 700; color: #445673; }
+.chip-section-title.subtle { margin-top: 8px; color: #5e7090; }
+.quick-chips { display:flex; flex-wrap:nowrap; gap:10px; margin-top:6px; overflow-x:auto; overflow-y:hidden; padding:2px 24px 8px 0; scrollbar-width:thin; }
+.quick-chips::after { content:''; position:sticky; right:0; width:16px; flex:0 0 16px; pointer-events:none; background:linear-gradient(90deg, rgba(249,251,255,0), #f9fbff); }
+.quick-chips button { min-height: 44px; border-radius: 999px; padding: 10px 16px; font-size: .9rem; font-weight: 700; border:1px solid #d7e2f4; background:#fff; color:#1f4fbf; flex:0 0 auto; cursor:pointer; }
+.quick-chips button.active { border-color:#1f4fbf; background:#1f4fbf; color:#fff; }
+.empty-chip-note { font-size: .8rem; color: #6b7c97; }
+.selected-row { margin-top: 8px; display: grid; gap: 6px; font-size: .84rem; color:#344a70; }
 .selected-items { margin-top: 8px; font-size: .82rem; color:#344a70; }
 .selected-tag { display:inline-flex; align-items:center; gap:6px; margin: 4px 6px 0 0; background:#edf4ff; border-radius:999px; padding: 4px 8px; }
 .selected-tag button { border:0; background:transparent; min-height:auto; padding:0; }

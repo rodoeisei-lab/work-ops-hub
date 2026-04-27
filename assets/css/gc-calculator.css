@@ -92,8 +92,9 @@
 }
 
 
-.quick-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
-.quick-chip { border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--text); padding:7px 11px; font-size:.82rem; min-height:34px; }
+.quick-chips { display:flex; flex-wrap:nowrap; gap:10px; margin-top:8px; overflow-x:auto; overflow-y:hidden; padding:3px 24px 8px 0; scrollbar-width:thin; }
+.quick-chips::after { content:''; position:sticky; right:0; width:16px; flex:0 0 16px; pointer-events:none; background:linear-gradient(90deg, rgba(255,255,255,0), #fff); }
+.quick-chip { border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--accent); padding:10px 16px; font-size:.9rem; min-height:44px; font-weight:700; flex:0 0 auto; }
 .quick-chip.secondary { background:#f6f8ff; border-color:#d9e2f6; }
 .quick-chip:disabled { opacity:.45; cursor:not-allowed; }
-.quick-chip.active { background: var(--accent-soft); border-color:#b5c9ff; color:var(--accent); }
+.quick-chip.active { background: #1f4fbf; border-color:#1f4fbf; color:#fff; }

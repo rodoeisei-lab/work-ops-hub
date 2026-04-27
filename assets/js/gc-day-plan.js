@@ -6,7 +6,8 @@
     rtLibrary: 'data/gc-rt-library.json',
     analyteAliases: 'data/gc-analyte-aliases.json',
     analyteDisplay: 'data/gc-analyte-display.json',
-    rules: 'data/gc-method-rules.json'
+    rules: 'data/gc-method-rules.json',
+    favorites: 'data/gc-favorite-analytes.json'
   };
 
   const els = {
@@ -38,9 +39,10 @@
   }
 
   async function loadData() {
-    const [machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, rules] = await Promise.all([
+    const [machines, columns, tempPrograms, rtLibrary, analyteAliases, analyteDisplay, rules, favorites] = await Promise.all([
       fetchJson(PATHS.machines), fetchJson(PATHS.columns), fetchJson(PATHS.tempPrograms), fetchJson(PATHS.rtLibrary),
-      fetchJson(PATHS.analyteAliases), fetchJson(PATHS.analyteDisplay), fetchJson(PATHS.rules)
+      fetchJson(PATHS.analyteAliases), fetchJson(PATHS.analyteDisplay), fetchJson(PATHS.rules),
+      fetchJson(PATHS.favorites, { common: [], liquid_standard: [] })
     ]);
     const aliasLookup = new Map();
     const displayMap = new Map();
@@ -82,7 +84,8 @@
       label: displayMap.get(id) || id
     })).sort((a, b) => a.label.localeCompare(b.label, 'ja'));
 
-    return { methods, analytes, aliasLookup, displayMap, rules, machines };
+    const favoriteMeta = buildFavoriteMeta(favorites, analytes);
+    return { methods, analytes, aliasLookup, displayMap, rules, machines, favoriteMeta };
   }
 
   function createEntry(code) { return { key: 'w_' + Math.random().toString(36).slice(2), code: code || suggestCode(), selected: new Map() }; }
@@ -99,19 +102,23 @@
       card.className = 'workplace-card';
       card.innerHTML = `
         <label>匿名コード<input class="code-input" data-key="${entry.key}" value="${escapeHtml(entry.code)}" placeholder="例: A01"></label>
+        <p class="chip-section-title">よく使う物質</p>
+        <div class="quick-chips" data-key="${entry.key}" data-chip-kind="common"></div>
+        <p class="chip-section-title subtle">液体STD</p>
+        <div class="quick-chips liquid-std-chips" data-key="${entry.key}" data-chip-kind="liquid"></div>
         <div class="input-row">
-          <input class="analyte-input" data-key="${entry.key}" list="analyteList" placeholder="分析対象物質を入力">
+          <input class="analyte-input" data-key="${entry.key}" list="analyteList" placeholder="全物質から選択">
           <button class="plain add-btn" data-key="${entry.key}" type="button">物質追加</button>
         </div>
-        <div class="quick-chips" data-key="${entry.key}"></div>
-        <div class="selected-items" data-list="${entry.key}">なし</div>
+        <div class="selected-row"><strong>選択中</strong><div class="selected-items" data-list="${entry.key}">なし</div></div>
         <div class="action-row">
           <button class="plain clear-btn" data-key="${entry.key}" type="button">クリア</button>
           ${idx >= 2 ? `<button class="danger remove-btn" data-key="${entry.key}" type="button">作業場を削除</button>` : '<span></span>'}
         </div>
       `;
       els.workplaceCards.appendChild(card);
-      renderChips(entry, card.querySelector('.quick-chips'));
+      renderChips(entry, card.querySelector('.quick-chips[data-chip-kind="common"]'), 'common');
+      renderChips(entry, card.querySelector('.quick-chips[data-chip-kind="liquid"]'), 'liquid_standard');
       renderSelected(entry, card.querySelector('[data-list]'));
     });
     renderDatalist();
@@ -140,15 +147,29 @@
 
   function findEntry(key) { return state.workplaceEntries.find((x) => x.key === key); }
 
-  function renderChips(entry, root) {
-    state.data.analytes.forEach((a) => {
+  function renderChips(entry, root, kind) {
+    if (!root) return;
+    const targets = getFavoriteAnalytes(kind);
+    if (!targets.length) {
+      root.innerHTML = '<span class="empty-chip-note">候補なし</span>';
+      return;
+    }
+    targets.forEach((a) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = entry.selected.has(a.id) ? 'active' : '';
+      b.setAttribute('aria-pressed', entry.selected.has(a.id) ? 'true' : 'false');
       b.textContent = a.label;
       b.addEventListener('click', () => { entry.selected.has(a.id) ? entry.selected.delete(a.id) : entry.selected.set(a.id, a); renderWorkplaces(); });
       root.appendChild(b);
     });
+  }
+
+  function getFavoriteAnalytes(kind) {
+    const favorites = kind === 'liquid_standard'
+      ? state.data.favoriteMeta.liquid_standard
+      : state.data.favoriteMeta.common;
+    return state.data.analytes.filter((item) => favorites.has(item.id));
   }
 
   function renderSelected(entry, root) {
@@ -261,8 +282,36 @@
   function calcEnd(start, plus) { const base = parseTime(start); if (!Number.isFinite(base)) return '開始時刻入力で表示'; const t = (Math.round(base + plus) + 1440) % 1440; return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}頃`; }
   function parseTime(t) { if (!String(t).includes(':')) return NaN; const [h, m] = String(t).split(':').map(Number); return h * 60 + m; }
   function norm(v) { return String(v || '').trim().toLowerCase().replace(/\s+/g, ''); }
+  function buildFavoriteMeta(favorites, analytes) {
+    const idByNorm = new Map();
+    (analytes || []).forEach((item) => {
+      idByNorm.set(norm(item.id), item.id);
+      idByNorm.set(norm(item.label), item.id);
+    });
+
+    function toId(entry) {
+      const keys = [entry?.normalized_name, entry?.display_name];
+      for (const key of keys) {
+        const found = idByNorm.get(norm(key));
+        if (found) return found;
+      }
+      return null;
+    }
+
+    return {
+      common: new Set((favorites?.common || []).map(toId).filter(Boolean)),
+      liquid_standard: new Set((favorites?.liquid_standard || []).map(toId).filter(Boolean))
+    };
+  }
   function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }
   function fmt(n) { return Number.isFinite(n) ? Number(n.toFixed(2)).toString() : '-'; }
   function escapeHtml(v) { return String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;'); }
-  async function fetchJson(path) { const res = await fetch(path); if (!res.ok) throw new Error(path + ' の読み込みに失敗'); return res.json(); }
+  async function fetchJson(path, fallback) {
+    const res = await fetch(path);
+    if (!res.ok) {
+      if (typeof fallback !== 'undefined') return fallback;
+      throw new Error(path + ' の読み込みに失敗');
+    }
+    return res.json();
+  }
 })();
