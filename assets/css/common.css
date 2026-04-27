@@ -162,7 +162,7 @@ button:disabled { cursor: not-allowed; opacity: .5; }
   box-shadow: 0 10px 28px rgba(12, 33, 72, 0.14);
   padding: 6px;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -197,10 +197,16 @@ body.has-sticky-actions .quick-nav { bottom: calc(env(safe-area-inset-bottom) + 
   .wrap { padding: 10px; }
 }
 
+@media (max-width: 720px) {
+  .quick-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    row-gap: 4px;
+  }
+}
+
 @media (max-width: 540px) {
   .quick-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    row-gap: 4px;
   }
 }
 

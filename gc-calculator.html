@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GC濃度計算 | 作業用ミニハブ</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css">
+</head>
+<body>
+  <main class="wrap gc-calculator-page">
+    <header class="card section-block page-header">
+      <h1>GC濃度計算</h1>
+      <p>STD値と当日のSTDエリアから係数を計算し、検体エリアからppmを算出します。</p>
+      <p class="hint">式: 係数 = STD ÷ STDエリア / ppm = 検体エリア × 係数</p>
+    </header>
+
+    <section class="card section-block actions-block no-print" aria-label="操作">
+      <div class="actions-grid">
+        <button id="addRowBtn" type="button" class="plain">行を追加</button>
+        <button id="clearAllBtn" type="button" class="danger">入力を消す</button>
+        <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー用テキスト作成</button>
+        <button id="copyResultBtn" type="button" class="success">計算結果をコピー</button>
+        <button id="downloadCsvBtn" type="button" class="primary">CSV保存</button>
+      </div>
+      <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card section-block" aria-labelledby="rowsTitle">
+      <h2 id="rowsTitle">計算行</h2>
+      <div id="rowsContainer" class="rows-container"></div>
+    </section>
+
+    <section class="card section-block" aria-labelledby="copyTitle">
+      <h2 id="copyTitle">コピー用テキスト</h2>
+      <textarea id="copyTextOutput" rows="14" placeholder="「コピー用テキスト作成」を押すと作成されます。"></textarea>
+    </section>
+
+    <section class="card section-block caution-block">
+      <p>この計算は、登録されたSTD値と入力エリアに基づく簡易計算です。STD値やピーク同定に誤りがないか確認して使用してください。</p>
+    </section>
+  </main>
+
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/gc-calculator.js" defer></script>
+</body>
+</html>
