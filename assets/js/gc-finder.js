@@ -26,6 +26,13 @@
     addAnalyteBtn: document.getElementById('addAnalyteBtn'),
     clearAnalytesBtn: document.getElementById('clearAnalytesBtn'),
     suggestBtn: document.getElementById('suggestBtn'),
+    multiGcStartTime: document.getElementById('multiGcStartTime'),
+    multiSetupBufferInput: document.getElementById('multiSetupBufferInput'),
+    multiWorkplaceInputs: document.getElementById('multiWorkplaceInputs'),
+    addMultiWorkplaceBtn: document.getElementById('addMultiWorkplaceBtn'),
+    multiSuggestBtn: document.getElementById('multiSuggestBtn'),
+    multiPlanSummary: document.getElementById('multiPlanSummary'),
+    multiPlanDetails: document.getElementById('multiPlanDetails'),
     dataWarning: document.getElementById('dataWarning'),
     recommendations: document.getElementById('recommendations'),
     rtSummary: document.getElementById('rtSummary'),
@@ -41,7 +48,8 @@
     selectedAnalytes: new Map(),
     ranked: [],
     workplaceMap: new Map(),
-    lastFilterReport: null
+    lastFilterReport: null,
+    multiWorkplaces: []
   };
 
   init();
@@ -52,6 +60,7 @@
       fillFilterOptions();
       fillAnalyteOptions();
       bindEvents();
+      initMultiPlanSection();
       showInitialWarnings();
     } catch (error) {
       console.error(error);
@@ -350,6 +359,17 @@
       });
     }
 
+    if (el.addMultiWorkplaceBtn) {
+      el.addMultiWorkplaceBtn.addEventListener('click', () => {
+        state.multiWorkplaces.push(createMultiWorkplaceEntry());
+        renderMultiWorkplaceInputs();
+      });
+    }
+
+    if (el.multiSuggestBtn) {
+      el.multiSuggestBtn.addEventListener('click', suggestMultiWorkplacePlan);
+    }
+
     updateAnalysisTimeFilterStatus();
   }
 
@@ -508,13 +528,351 @@
     syncQuickChipState();
   }
 
-  function rankMethods(selectedEntries) {
+  function initMultiPlanSection() {
+    if (!el.multiWorkplaceInputs) return;
+    const setupDefault = Number(state.data?.rules?.multi_workplace_plan?.default_setup_buffer_per_unit_min);
+    if (el.multiSetupBufferInput && Number.isFinite(setupDefault) && setupDefault >= 0) {
+      el.multiSetupBufferInput.value = setupDefault.toFixed(1);
+    }
+    state.multiWorkplaces = [createMultiWorkplaceEntry('A01'), createMultiWorkplaceEntry('A02')];
+    renderMultiWorkplaceInputs();
+    resetMultiPlanOutput();
+  }
+
+  function createMultiWorkplaceEntry(defaultCode) {
+    const seed = defaultCode || suggestNextWorkplaceCode(state.multiWorkplaces);
+    return {
+      key: 'mw_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      code: seed,
+      selectedAnalytes: new Map()
+    };
+  }
+
+  function suggestNextWorkplaceCode(entries) {
+    const used = new Set((entries || []).map((item) => String(item.code || '').trim().toUpperCase()));
+    for (let i = 1; i <= 99; i += 1) {
+      const candidate = 'A' + String(i).padStart(2, '0');
+      if (!used.has(candidate)) return candidate;
+    }
+    return 'B01';
+  }
+
+  function renderMultiWorkplaceInputs() {
+    if (!el.multiWorkplaceInputs) return;
+    el.multiWorkplaceInputs.innerHTML = '';
+
+    state.multiWorkplaces.forEach((entry, index) => {
+      const card = document.createElement('article');
+      card.className = 'multi-workplace-card';
+      card.innerHTML = [
+        '<div class="multi-workplace-head">',
+        '<label>単位作業場所コード<input type="text" class="multi-workplace-code" data-key="', escapeHtml(entry.key), '" value="', escapeHtml(entry.code), '" placeholder="例: A01"></label>',
+        '<button type="button" class="plain danger-text multi-clear-btn" data-key="', escapeHtml(entry.key), '">この作業場をクリア</button>',
+        '</div>',
+        '<div class="input-row">',
+        '<input type="text" class="multi-analyte-input" data-key="', escapeHtml(entry.key), '" list="analyteList" placeholder="物質を入力">',
+        '<button type="button" class="plain multi-add-btn" data-key="', escapeHtml(entry.key), '">物質を追加</button>',
+        '</div>',
+        '<div class="quick-chips multi-quick-chips" data-key="', escapeHtml(entry.key), '"></div>',
+        '<div class="selected-row"><strong>入力物質</strong><div class="selected-chips multi-selected-chips" data-key="', escapeHtml(entry.key), '">なし</div></div>',
+        index >= 2 ? '<button type="button" class="plain danger-text multi-remove-btn" data-key="' + escapeHtml(entry.key) + '">作業場を削除</button>' : ''
+      ].join('');
+      el.multiWorkplaceInputs.appendChild(card);
+
+      renderMultiQuickChips(entry, card.querySelector('.multi-quick-chips'));
+      renderMultiSelectedAnalytes(entry, card.querySelector('.multi-selected-chips'));
+    });
+
+    bindMultiWorkplaceEvents();
+  }
+
+  function bindMultiWorkplaceEvents() {
+    Array.from(el.multiWorkplaceInputs.querySelectorAll('.multi-workplace-code')).forEach((input) => {
+      input.addEventListener('input', () => {
+        const entry = state.multiWorkplaces.find((item) => item.key === input.dataset.key);
+        if (!entry) return;
+        entry.code = sanitizeWorkplaceCode(input.value);
+        input.value = entry.code;
+      });
+    });
+
+    Array.from(el.multiWorkplaceInputs.querySelectorAll('.multi-add-btn')).forEach((button) => {
+      button.addEventListener('click', () => addMultiAnalyte(button.dataset.key));
+    });
+
+    Array.from(el.multiWorkplaceInputs.querySelectorAll('.multi-analyte-input')).forEach((input) => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        addMultiAnalyte(input.dataset.key);
+      });
+    });
+
+    Array.from(el.multiWorkplaceInputs.querySelectorAll('.multi-clear-btn')).forEach((button) => {
+      button.addEventListener('click', () => {
+        const entry = state.multiWorkplaces.find((item) => item.key === button.dataset.key);
+        if (!entry) return;
+        entry.selectedAnalytes.clear();
+        renderMultiWorkplaceInputs();
+      });
+    });
+
+    Array.from(el.multiWorkplaceInputs.querySelectorAll('.multi-remove-btn')).forEach((button) => {
+      button.addEventListener('click', () => {
+        state.multiWorkplaces = state.multiWorkplaces.filter((item) => item.key !== button.dataset.key);
+        if (!state.multiWorkplaces.length) state.multiWorkplaces.push(createMultiWorkplaceEntry('A01'));
+        renderMultiWorkplaceInputs();
+      });
+    });
+  }
+
+  function renderMultiQuickChips(entry, container) {
+    if (!container) return;
+    getSortedAnalyteCatalog().forEach((item) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'quick-chip' + (entry.selectedAnalytes.has(item.id) ? ' active' : '');
+      chip.textContent = item.label;
+      chip.addEventListener('click', () => {
+        if (entry.selectedAnalytes.has(item.id)) {
+          entry.selectedAnalytes.delete(item.id);
+        } else {
+          entry.selectedAnalytes.set(item.id, { id: item.id, label: item.label, known: true });
+        }
+        renderMultiWorkplaceInputs();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function renderMultiSelectedAnalytes(entry, container) {
+    if (!container) return;
+    if (!entry.selectedAnalytes.size) {
+      container.textContent = 'なし';
+      return;
+    }
+    container.innerHTML = Array.from(entry.selectedAnalytes.entries()).map(([id, item]) => {
+      const className = item.known ? 'selected-tag' : 'selected-tag unregistered';
+      const suffix = item.known ? '' : '（未登録）';
+      return '<span class="' + className + '">' + escapeHtml(item.label + suffix) +
+        '<button type="button" class="multi-remove-analyte" data-workplace-key="' + escapeHtml(entry.key) + '" data-remove-id="' + escapeHtml(id) + '">×</button></span>';
+    }).join('');
+
+    Array.from(container.querySelectorAll('.multi-remove-analyte')).forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = state.multiWorkplaces.find((item) => item.key === button.dataset.workplaceKey);
+        if (!target) return;
+        target.selectedAnalytes.delete(button.dataset.removeId);
+        renderMultiWorkplaceInputs();
+      });
+    });
+  }
+
+  function addMultiAnalyte(workplaceKey) {
+    const entry = state.multiWorkplaces.find((item) => item.key === workplaceKey);
+    const input = el.multiWorkplaceInputs.querySelector('.multi-analyte-input[data-key="' + workplaceKey + '"]');
+    if (!entry || !input) return;
+    const raw = String(input.value || '').trim();
+    if (!raw) return;
+    const resolved = resolveAnalyte(raw);
+    entry.selectedAnalytes.set(resolved.id, resolved);
+    input.value = '';
+    renderMultiWorkplaceInputs();
+  }
+
+  function sanitizeWorkplaceCode(value) {
+    const upper = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return upper.slice(0, 4);
+  }
+
+  function suggestMultiWorkplacePlan() {
+    const prepared = state.multiWorkplaces.map((entry, index) => ({
+      key: entry.key,
+      code: sanitizeWorkplaceCode(entry.code) || suggestNextWorkplaceCode(state.multiWorkplaces.slice(0, index)),
+      selectedEntries: Array.from(entry.selectedAnalytes.values())
+    })).filter((entry) => entry.selectedEntries.length > 0);
+
+    if (!prepared.length) {
+      el.multiPlanSummary.innerHTML = '<p class="empty-text">先に各作業場へ物質を1つ以上入力してください。</p>';
+      el.multiPlanDetails.innerHTML = '';
+      return;
+    }
+
+    const results = prepared.map((row) => {
+      const ranked = rankMethods(row.selectedEntries, {});
+      return {
+        code: row.code,
+        selectedEntries: row.selectedEntries,
+        ranked,
+        top: ranked[0] || null
+      };
+    });
+
+    const setupBufferPerUnit = Math.max(0, Number(el.multiSetupBufferInput?.value || 1) || 1);
+    const totalAnalysis = results.reduce((sum, row) => sum + (Number(row.top?.analysisTime) || 0), 0);
+    const totalBuffer = setupBufferPerUnit * results.length;
+    const totalMinutes = totalAnalysis + totalBuffer;
+    const plan = buildMultiPlanJudgement(results, totalMinutes);
+
+    renderMultiPlanSummary(plan, totalMinutes, totalAnalysis, totalBuffer, setupBufferPerUnit, results.length);
+    renderMultiPlanDetails(results);
+  }
+
+  function renderMultiPlanSummary(plan, totalMinutes, totalAnalysis, totalBuffer, setupBufferPerUnit, unitCount) {
+    const hasStart = Boolean(el.multiGcStartTime?.value);
+    const startLabel = hasStart ? el.multiGcStartTime.value : '未入力';
+    const endLabel = hasStart ? calcEndTimeLabel(el.multiGcStartTime.value, totalMinutes) : '開始時刻入力で表示';
+    const commentHtml = plan.comments.map((msg) => '<li>' + escapeHtml(msg) + '</li>').join('');
+    const consultClass = plan.requiresConsultation ? ' needs-consultation' : '';
+
+    el.multiPlanSummary.innerHTML = [
+      '<article class="multi-summary-card', consultClass, '">',
+      '<h3>全体プラン（候補提案）</h3>',
+      '<p>使用候補機械: <strong>', escapeHtml(plan.machineSummary), '</strong></p>',
+      '<p>GC2014優先: <strong>', plan.prefersGc2014 ? 'はい' : '要確認', '</strong></p>',
+      '<p>作業場数: <strong>', unitCount, '単位</strong></p>',
+      '<p>合計分析時間: <strong>', formatCompactNumber(totalAnalysis, 1, 2), ' min</strong></p>',
+      '<p>段取り余裕時間: <strong>', formatCompactNumber(totalBuffer, 1, 2), ' min</strong>（', formatCompactNumber(setupBufferPerUnit, 1, 2), ' min × ', unitCount, '）</p>',
+      '<p>合計目安: <strong>', formatCompactNumber(totalMinutes, 1, 2), ' min</strong></p>',
+      '<p>開始時刻: <strong>', escapeHtml(startLabel), '</strong> / 終了目安: <strong>', escapeHtml(endLabel), '</strong></p>',
+      '<p class="hint">※ 最終判断は装置状況・実測で要確認です。</p>',
+      '<ul class="multi-comment-list">', commentHtml, '</ul>',
+      '</article>'
+    ].join('');
+  }
+
+  function renderMultiPlanDetails(results) {
+    if (!results.length) {
+      el.multiPlanDetails.innerHTML = '';
+      return;
+    }
+    el.multiPlanDetails.innerHTML = results.map((row) => {
+      const analytes = row.selectedEntries.map((item) => item.label).join('、');
+      if (!row.top) {
+        return [
+          '<article class="multi-result-card">',
+          '<h4>', escapeHtml(row.code), '</h4>',
+          '<p>入力物質: ', escapeHtml(analytes), '</p>',
+          '<p>推奨候補: 要確認</p>',
+          '<p class="provisional-badge">データ不足のため候補を出せませんでした。</p>',
+          '</article>'
+        ].join('');
+      }
+      const best = row.top;
+      return [
+        '<article class="multi-result-card">',
+        '<h4>', escapeHtml(row.code), '</h4>',
+        '<p>入力物質: ', escapeHtml(analytes), '</p>',
+        '<p>推奨候補: 第1候補（要確認）</p>',
+        '<p>機械: <strong>', escapeHtml(best.method.machine?.name || '-'), '</strong></p>',
+        '<p>カラム: <strong>', escapeHtml(best.method.column?.name || '-'), '</strong></p>',
+        '<p>温度条件: <strong>', escapeHtml(getTempProgramDisplay(best.method.tempProgram)), '</strong></p>',
+        '<p>分析時間: <strong>', formatAnalysisTime(best.analysisTime), '</strong></p>',
+        '<p>最小RT差: <strong>', formatCompactNumber(best.minGap, 2, 3), ' min</strong></p>',
+        '<p>信頼度: <strong>', escapeHtml(best.confidenceLabel), '</strong></p>',
+        '<p>注意点: ', escapeHtml(buildJudgementMemo(best)), '</p>',
+        best.provisional ? '<p class="provisional-badge">暫定候補（要確認）</p>' : '',
+        '</article>'
+      ].join('');
+    }).join('');
+  }
+
+  function buildMultiPlanJudgement(results, totalMinutes) {
+    const planningRules = state.data?.rules?.multi_workplace_plan || {};
+    const unitCount = results.length;
+    const singleMachineMaxUnits = Number(planningRules.single_machine_priority_units_max ?? 2);
+    const consultationMinUnits = Number(planningRules.consultation_units_min ?? 3);
+    const shortThreshold = Number(planningRules.short_total_min ?? 20);
+    const longThreshold = Number(planningRules.long_total_min ?? 30);
+    const lateStartThreshold = String(planningRules.late_start_time || '16:00');
+    const missingCount = results.filter((row) => !row.top).length;
+    const topMachines = results.map((row) => row.top?.method?.machine?.name).filter(Boolean);
+    const gc2014Name = state.data.machines.find((m) => m.id === 'gc2014')?.name || 'GC2014';
+    const comments = [];
+    let requiresConsultation = false;
+    let machineSummary = topMachines.length ? Array.from(new Set(topMachines)).join(' / ') : '要確認';
+    let prefersGc2014 = true;
+
+    if (unitCount <= 1) {
+      comments.push('1単位のため、1台運用候補です。');
+      comments.push(gc2014Name + 'を優先した候補提案です。');
+      machineSummary = gc2014Name + ' 1台運用候補';
+    } else if (unitCount <= singleMachineMaxUnits) {
+      comments.push(unitCount + '単位のため、' + gc2014Name + ' 1台で処理候補です。');
+      machineSummary = gc2014Name + ' 1台運用候補';
+    } else if (unitCount >= consultationMinUnits) {
+      comments.push('3単位以上のため要相談です。');
+      requiresConsultation = true;
+      prefersGc2014 = false;
+      if (totalMinutes <= shortThreshold) {
+        comments.push('合計時間が短いため、' + gc2014Name + ' 1台でも対応候補です。');
+      }
+      if (totalMinutes > longThreshold) {
+        comments.push('合計時間が長いため、複数台運用も検討してください。');
+      }
+    } else {
+      comments.push('運用条件を要確認です。');
+    }
+
+    if (isLateStartTime(el.multiGcStartTime?.value, lateStartThreshold)) {
+      comments.push('開始時刻が遅いため、複数台運用も検討してください。');
+    }
+    if (missingCount > 0) {
+      comments.push('一部データ未登録のため要確認です。');
+    }
+    if (!comments.length) {
+      comments.push('候補提案です。要確認のうえ運用判断してください。');
+    }
+
+    return {
+      machineSummary,
+      comments,
+      requiresConsultation,
+      prefersGc2014
+    };
+  }
+
+  function calcEndTimeLabel(startTime, plusMinutes) {
+    const base = parseTimeToMinutes(startTime);
+    if (!Number.isFinite(base) || !Number.isFinite(plusMinutes)) return '要確認';
+    const total = base + plusMinutes;
+    const normalized = ((Math.round(total) % (24 * 60)) + (24 * 60)) % (24 * 60);
+    const hour = String(Math.floor(normalized / 60)).padStart(2, '0');
+    const minute = String(normalized % 60).padStart(2, '0');
+    return hour + ':' + minute + '頃';
+  }
+
+  function parseTimeToMinutes(time) {
+    const text = String(time || '');
+    if (!text.includes(':')) return null;
+    const [h, m] = text.split(':').map((n) => Number(n));
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    return (h * 60) + m;
+  }
+
+  function isLateStartTime(startTime, thresholdTime) {
+    const start = parseTimeToMinutes(startTime);
+    const threshold = parseTimeToMinutes(thresholdTime);
+    if (!Number.isFinite(start) || !Number.isFinite(threshold)) return false;
+    return start >= threshold;
+  }
+
+  function resetMultiPlanOutput() {
+    if (el.multiPlanSummary) {
+      el.multiPlanSummary.innerHTML = '<p class="empty-text">作業場入力後に「まとめて候補提案」を押してください。</p>';
+    }
+    if (el.multiPlanDetails) {
+      el.multiPlanDetails.innerHTML = '';
+    }
+  }
+
+  function rankMethods(selectedEntries, overrideFilters) {
     const selectedKnownIds = selectedEntries
       .filter((item) => item.known && !isUndeterminedId(item.id))
       .map((item) => item.id);
     const selectedUndetermined = selectedEntries.filter((item) => item.known && isUndeterminedId(item.id));
     const unknownItems = selectedEntries.filter((item) => !item.known);
-    const candidateMethods = state.data.methods.filter(matchFilters);
+    const candidateMethods = state.data.methods.filter((method) => matchFilters(method, overrideFilters));
     const analysisTimeLimit = getAnalysisTimeLimit();
     const weights = state.data.rules.weights || {};
     const thresholds = state.data.rules.thresholds || {};
@@ -611,10 +969,13 @@
       .slice(0, 3);
   }
 
-  function matchFilters(method) {
-    if (el.machineFilter.value && method.machine?.id !== el.machineFilter.value) return false;
-    if (el.columnFilter.value && method.column?.id !== el.columnFilter.value) return false;
-    if (el.tempFilter.value && method.tempProgram?.id !== el.tempFilter.value) return false;
+  function matchFilters(method, overrideFilters) {
+    const machineFilter = overrideFilters?.machine ?? el.machineFilter.value;
+    const columnFilter = overrideFilters?.column ?? el.columnFilter.value;
+    const tempFilter = overrideFilters?.temp ?? el.tempFilter.value;
+    if (machineFilter && method.machine?.id !== machineFilter) return false;
+    if (columnFilter && method.column?.id !== columnFilter) return false;
+    if (tempFilter && method.tempProgram?.id !== tempFilter) return false;
     return true;
   }
 
