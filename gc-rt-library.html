@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GC RTライブラリ | 作業用ミニハブ</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/gc-rt-library.css">
+</head>
+<body>
+  <main class="wrap rt-page">
+    <header class="card section-block">
+      <h1>GC RTライブラリ</h1>
+      <p>条件ごとのRTを一覧確認できます。内部IDではなく表示名で表示します。</p>
+    </header>
+
+    <section class="card section-block">
+      <h2>絞り込み</h2>
+      <div class="filter-grid">
+        <label>機械<select id="machineFilter"><option value="">すべて</option></select></label>
+        <label>カラム<select id="columnFilter"><option value="">すべて</option></select></label>
+        <label>温度条件<select id="tempFilter"><option value="">すべて</option></select></label>
+        <label>信頼度<select id="confidenceFilter"><option value="">すべて</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></label>
+        <label>物質名検索<input id="searchInput" type="search" placeholder="物質名で検索"></label>
+      </div>
+      <label class="toggle"><input id="lowOnly" type="checkbox">要確認または低のみ表示</label>
+      <p id="summaryText" class="hint">読み込み中...</p>
+    </section>
+
+    <section class="card section-block">
+      <h2>RT一覧（RTが短い順）</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>機械</th><th>カラム</th><th>温度条件</th><th>物質</th><th>RT(min)</th><th>信頼度</th><th>備考</th></tr></thead>
+          <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">読み込み中...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/gc-rt-library.js" defer></script>
+</body>
+</html>

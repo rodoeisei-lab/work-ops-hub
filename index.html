@@ -3,28 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>作業用ミニハブ</title>
+  <title>作業メニュー | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <style>
-    .home {
-      display: grid;
-      gap: 12px;
-      padding-bottom: 20px;
-    }
-    .top {
-      padding: 16px;
-      display: grid;
-      gap: 7px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 1.3rem;
-    }
-    .sub {
-      margin: 0;
-      color: var(--muted);
-      font-size: .9rem;
-    }
+    .home { display: grid; gap: 12px; }
+    .top { padding: 16px; display: grid; gap: 8px; }
+    h1 { margin: 0; font-size: 1.3rem; }
+    .sub { margin: 0; color: var(--muted); font-size: .9rem; }
     .today {
       color: var(--muted);
       font-size: .8rem;
@@ -34,63 +19,43 @@
       background: #f8fbff;
       border-radius: 999px;
     }
-    .menu {
-      display: grid;
-      gap: 10px;
-    }
+    .menu { display: grid; gap: 10px; }
     .menu a {
       display: block;
       border: 1px solid var(--line);
       border-radius: 14px;
-      padding: 14px 14px;
+      padding: 14px;
       color: var(--text);
       background: #fff;
       box-shadow: var(--shadow);
-      line-height: 1.45;
+      min-height: 76px;
     }
-    .menu a strong {
-      display: block;
-      font-size: 1rem;
-      margin-bottom: 3px;
-    }
-    .menu a small {
-      color: var(--muted);
-      font-size: .82rem;
-    }
-    .menu a.primary-link {
-      border-color: #bfd1f6;
-      background: #f7faff;
-    }
-    .menu a:hover,
-    .menu a:focus-visible {
-      text-decoration: none;
-      transform: translateY(-1px);
-    }
-    .guide {
-      margin: 0;
-      color: var(--muted);
-      font-size: .82rem;
-      text-align: center;
-    }
+    .menu a strong { display:block; font-size: 1rem; margin-bottom: 3px; }
+    .menu a small { color: var(--muted); font-size: .82rem; }
+    .menu a.primary-link { border-color: #bfd1f6; background: #f7faff; }
+    .menu a:hover, .menu a:focus-visible { text-decoration:none; transform: translateY(-1px); }
+    .guide { margin: 0 0 12px; color: var(--muted); font-size: .82rem; text-align:center; }
   </style>
 </head>
 <body>
   <main class="wrap home">
     <section class="card top">
-      <h1>作業用ミニハブ</h1>
-      <p class="sub">よく使う業務ページをまとめています。必要な画面を選んでください。</p>
+      <h1>作業メニュー</h1>
+      <p class="sub">日々の作業ページを用途別に整理しています。上から順に使うと迷いにくい構成です。</p>
       <div class="today">本日 <span id="todayLabel">-</span></div>
     </section>
 
     <nav class="menu" aria-label="ページ一覧">
-      <a href="inventory-memo.html" class="primary-link"><strong>在庫メモ</strong><small>点検入力・注文チェック・CSV保存</small></a>
-      <a href="gc-method-finder.html" class="primary-link"><strong>GC条件提案</strong><small>溶剤条件から第1〜第3候補を表示</small></a>
-      <a href="qr-print.html"><strong>QR印刷</strong><small>A4横で掲示しやすい印刷レイアウト</small></a>
-      <a href="docs/update-guide.md"><strong>更新手順</strong><small>データやQRリンクの更新方法</small></a>
-      <a href="gc-std-master.html"><strong>GC標準液マスタ</strong><small>標準液一覧の確認・見直し</small></a>
+      <a href="inventory-memo.html" class="primary-link"><strong>在庫メモ</strong><small>箱数入力・発注点確認・CSV保存</small></a>
+      <a href="gc-day-plan.html" class="primary-link"><strong>GC当日プラン</strong><small>複数の単位作業場所をGCへ割り振る</small></a>
+      <a href="gc-method-finder.html" class="primary-link"><strong>GC条件提案</strong><small>溶剤から機械・カラム・温度条件を候補表示</small></a>
+      <a href="gc-rt-library.html"><strong>GC RTライブラリ</strong><small>条件ごとのRT一覧を確認</small></a>
+      <a href="gc-std-master.html"><strong>GC標準液マスタ</strong><small>STD値と要確認データを確認</small></a>
+      <a href="qr-print.html"><strong>QR印刷</strong><small>掲示用QRコードを印刷</small></a>
+      <a href="docs/update-guide.md"><strong>更新手順</strong><small>品目や発注点、GCデータの更新方法</small></a>
     </nav>
 
-    <p class="guide">上から順に利用頻度が高いページです。</p>
+    <p class="guide">匿名コード運用を前提にした、モバイル向け業務UIです。</p>
   </main>
   <script src="assets/js/app.js"></script>
 </body>

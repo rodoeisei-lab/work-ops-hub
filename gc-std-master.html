@@ -11,21 +11,17 @@
   <main class="wrap gc-std-page">
     <header class="card page-header">
       <h1>GC標準液マスタ</h1>
-      <p>画像読取ベースの標準液（STD）一覧です。未確定データも保持し、後で更新しやすい構成にしています。</p>
+      <p>STD一覧を確認するページです。要確認データを見つけやすくしています。</p>
     </header>
 
     <section class="card section-block" aria-labelledby="filterTitle">
       <h2 id="filterTitle">絞り込み</h2>
-      <div class="filter-row">
-        <label>
-          検索
-          <input id="searchInput" type="text" placeholder="元表記 / 正式名称候補 / メモを検索">
-        </label>
-        <label class="checkbox-label">
-          <input id="needsReviewOnly" type="checkbox">
-          要確認のみ表示
-        </label>
+      <div class="filter-grid">
+        <label>検索<input id="searchInput" type="search" placeholder="元表記 / 正式名称候補 / メモを検索"></label>
+        <label>状態<select id="statusFilter"><option value="">すべて</option><option value="confirmed">確定</option><option value="provisional">仮</option><option value="needs_review">要確認</option></select></label>
+        <label>信頼度<select id="confidenceFilter"><option value="">すべて</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></label>
       </div>
+      <label class="checkbox-label"><input id="needsReviewOnly" type="checkbox">要確認のみ表示</label>
       <p id="summaryText" class="hint">読み込み中...</p>
     </section>
 
@@ -33,21 +29,8 @@
       <h2 id="tableTitle">標準液一覧</h2>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>元表記</th>
-              <th>正式名称候補</th>
-              <th>STD</th>
-              <th>確からしさ</th>
-              <th>状態</th>
-              <th>メモ</th>
-            </tr>
-          </thead>
-          <tbody id="stdTableBody">
-            <tr>
-              <td colspan="6" class="empty-cell">読み込み中...</td>
-            </tr>
-          </tbody>
+          <thead><tr><th>元表記</th><th>正式名称候補</th><th>STD</th><th>信頼度</th><th>状態</th><th>備考</th></tr></thead>
+          <tbody id="stdTableBody"><tr><td colspan="6" class="empty-cell">読み込み中...</td></tr></tbody>
         </table>
       </div>
     </section>

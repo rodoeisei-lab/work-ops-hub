@@ -1,130 +1,21 @@
-.gc-std-page {
-  max-width: 1120px;
-}
-
-.page-header,
-.section-block {
-  padding: 14px;
-  margin-bottom: 12px;
-}
-
-.page-header h1 {
-  margin: 0 0 8px;
-  font-size: 1.22rem;
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--muted);
-  font-size: .92rem;
-}
-
-.section-block h2 {
-  margin: 0 0 10px;
-  font-size: 1rem;
-}
-
-.filter-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: end;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.checkbox-label input {
-  width: 18px;
-  height: 18px;
-}
-
-.hint {
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: .86rem;
-}
-
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 860px;
-}
-
-th,
-td {
-  border-bottom: 1px solid var(--line);
-  padding: 10px 8px;
-  text-align: left;
-  vertical-align: top;
-  font-size: .89rem;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-th {
-  background: #f8fafc;
-  white-space: nowrap;
-}
-
-tr:last-child td {
-  border-bottom: 0;
-}
-
-.std-cell {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: .74rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-}
-
-.badge-confidence-high,
-.badge-status-confirmed {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge-confidence-medium,
-.badge-status-provisional {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge-confidence-low,
-.badge-status-needs_review {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.empty-cell {
-  color: var(--muted);
-}
-
-@media (max-width: 700px) {
-  .filter-row {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  table {
-    min-width: 720px;
-  }
-}
+.gc-std-page { max-width: 1120px; }
+.page-header,.section-block { padding: 14px; margin-bottom: 12px; }
+.page-header h1 { margin: 0 0 8px; font-size: 1.22rem; }
+.page-header p,.hint { margin: 0; color: var(--muted); font-size: .9rem; }
+.section-block h2 { margin: 0 0 10px; font-size: 1rem; }
+.filter-grid { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:10px; }
+.filter-grid label { display:grid; gap:6px; font-size:.83rem; font-weight:700; color:#425470; }
+.checkbox-label { display:inline-flex; align-items:center; gap:8px; margin-top:8px; font-weight:600; }
+.checkbox-label input { width:18px; height:18px; }
+.table-wrap { width:100%; overflow:auto; margin-top:10px; }
+table { width:100%; border-collapse: collapse; min-width: 860px; }
+th,td { border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top; font-size:.89rem; line-height:1.45; }
+th { background:#f8fafc; white-space:nowrap; }
+.std-cell { text-align:right; font-variant-numeric: tabular-nums; font-weight:600; }
+.note-cell { white-space: normal; word-break: break-word; }
+.badge { display:inline-flex; align-items:center; border-radius:999px; padding:2px 8px; font-size:.74rem; font-weight:700; }
+.badge-confidence-high,.badge-status-confirmed { background:#dcfce7; color:#166534; }
+.badge-confidence-medium,.badge-status-provisional { background:#fef3c7; color:#92400e; }
+.badge-confidence-low,.badge-status-needs_review { background:#fee2e2; color:#b91c1c; }
+.empty-cell { color: var(--muted); }
+@media (max-width:760px){ .filter-grid { grid-template-columns:1fr; } table{min-width:720px;} }
