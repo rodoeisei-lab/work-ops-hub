@@ -221,7 +221,7 @@
 
           <div class="field">
             <label>係数
-              <div class="result-box">${escapeHtml(calc.coefficientText)}</div>
+              <div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div>
             </label>
           </div>
 
@@ -233,7 +233,7 @@
 
           <div class="field">
             <label>ppm
-              <div class="result-box">${escapeHtml(calc.ppmText)}</div>
+              <div class="result-box ppm-output">${escapeHtml(calc.ppmText)}</div>
             </label>
           </div>
 
@@ -263,25 +263,26 @@
       row.materialInput = materialInput.value;
       const selected = resolveMaterial(row.materialInput);
       if (selected && !String(row.stdInput || '').trim()) row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
-      renderRows();
+      if (selected && !String(stdInput.value || '').trim()) stdInput.value = row.stdInput;
+      updateRowComputedView(root, row);
       persist();
     });
 
     stdInput.addEventListener('input', () => {
       row.stdInput = stdInput.value;
-      renderRows();
+      updateRowComputedView(root, row);
       persist();
     });
 
     stdAreaInput.addEventListener('input', () => {
       row.stdAreaInput = stdAreaInput.value;
-      renderRows();
+      updateRowComputedView(root, row);
       persist();
     });
 
     sampleAreaInput.addEventListener('input', () => {
       row.sampleAreaInput = sampleAreaInput.value;
-      renderRows();
+      updateRowComputedView(root, row);
       persist();
     });
 
@@ -296,6 +297,34 @@
       renderRows();
       persist();
     });
+  }
+
+  function updateRowComputedView(root, row) {
+    const resolved = resolveMaterial(row.materialInput);
+    const calc = calculate(row, resolved);
+
+    const metaNote = root.querySelector('.meta-note');
+    const badges = root.querySelector('.badges');
+    const coefficientBox = root.querySelector('.coefficient-output');
+    const ppmBox = root.querySelector('.ppm-output');
+    const errorText = root.querySelector('.error-text');
+
+    if (metaNote) {
+      metaNote.textContent = resolved
+        ? `${resolved.displayName}${resolved.rawLabel ? `（raw: ${resolved.rawLabel}）` : ''}`
+        : '物質を選択してください';
+    }
+
+    if (badges) {
+      const badgesHtml = [];
+      if (resolved?.status === 'needs_review') badgesHtml.push('<span class="badge badge-review">要確認</span>');
+      if (resolved?.confidence === 'low') badgesHtml.push('<span class="badge badge-low">信頼度: 低</span>');
+      badges.innerHTML = badgesHtml.join('');
+    }
+
+    if (coefficientBox) coefficientBox.textContent = calc.coefficientText;
+    if (ppmBox) ppmBox.textContent = calc.ppmText;
+    if (errorText) errorText.textContent = calc.errorText;
   }
 
   function resolveMaterial(materialInput) {
