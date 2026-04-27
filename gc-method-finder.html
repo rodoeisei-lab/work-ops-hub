@@ -52,15 +52,15 @@
 
       <div class="analyte-box">
         <p class="hint">分析対象の溶剤を追加してください。</p>
+        <p class="hint">よく使う物質</p>
+        <div id="quickAnalytes" class="quick-chips" aria-label="よく使う物質候補"></div>
+        <p class="hint">液体STD</p>
+        <div id="quickLiquidAnalytes" class="quick-chips" aria-label="液体STD候補"></div>
         <div class="input-row">
-          <input id="analyteInput" type="text" list="analyteList" placeholder="例: アセトン、トルエン">
+          <input id="analyteInput" type="text" list="analyteList" placeholder="全物質から選択">
           <datalist id="analyteList"></datalist>
           <button id="addAnalyteBtn" type="button" class="plain">追加</button>
         </div>
-        <p class="hint">よく使う溶剤</p>
-        <div id="quickAnalytes" class="quick-chips" aria-label="溶剤候補"></div>
-        <p class="hint">液体スタンダードでよく使う溶剤</p>
-        <div id="quickLiquidAnalytes" class="quick-chips" aria-label="液体スタンダード溶剤候補"></div>
         <div class="selected-row">
           <strong>選択中</strong>
           <div id="selectedAnalytes" class="selected-chips">なし</div>

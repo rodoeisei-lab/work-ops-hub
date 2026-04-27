@@ -178,6 +178,7 @@
       chip.className = 'quick-chip' + (isSecondary ? ' secondary' : '');
       chip.textContent = entry.display_name || entry.normalized_name || '-';
       chip.dataset.materialOption = matched?.optionLabel || '';
+      chip.setAttribute('aria-pressed', 'false');
       chip.disabled = !matched;
       chip.title = matched ? 'クリックで選択中の行に反映' : 'STDマスタ未登録';
       chip.addEventListener('click', () => applyFavoriteToActiveRow(chip.dataset.materialOption));
@@ -219,7 +220,9 @@
     [els.favoriteCommonChips, els.favoriteLiquidChips].forEach((container) => {
       if (!container) return;
       Array.from(container.querySelectorAll('.quick-chip')).forEach((chip) => {
-        chip.classList.toggle('active', selected.has(chip.dataset.materialOption));
+        const isActive = selected.has(chip.dataset.materialOption);
+        chip.classList.toggle('active', isActive);
+        chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
     });
   }

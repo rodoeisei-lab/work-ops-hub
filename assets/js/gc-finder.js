@@ -473,15 +473,19 @@
       const option = document.createElement('option');
       option.value = item.label;
       el.analyteList.appendChild(option);
+    });
 
-      const chip = buildAnalyteChip(item, state.data?.favoriteMeta?.common?.has(item.id) ? '' : 'non-favorite');
+    getFavoriteAnalyteItems('common').forEach((item) => {
+      const chip = buildAnalyteChip(item);
       el.quickAnalytes.appendChild(chip);
+    });
 
-      if (el.quickLiquidAnalytes && state.data?.favoriteMeta?.liquid_standard?.has(item.id)) {
+    if (el.quickLiquidAnalytes) {
+      getFavoriteAnalyteItems('liquid_standard').forEach((item) => {
         const liquidChip = buildAnalyteChip(item, 'liquid-chip');
         el.quickLiquidAnalytes.appendChild(liquidChip);
-      }
-    });
+      });
+    }
   }
 
   function buildAnalyteChip(item, extraClassName) {
@@ -490,6 +494,7 @@
     chip.className = 'quick-chip' + (extraClassName ? ' ' + extraClassName : '');
     chip.dataset.analyteId = item.id;
     chip.textContent = item.label;
+    chip.setAttribute('aria-pressed', state.selectedAnalytes.has(item.id) ? 'true' : 'false');
     chip.addEventListener('click', () => {
       if (state.selectedAnalytes.has(item.id)) {
         state.selectedAnalytes.delete(item.id);
@@ -500,6 +505,11 @@
       syncQuickChipState();
     });
     return chip;
+  }
+
+  function getFavoriteAnalyteItems(kind) {
+    const target = kind === 'liquid_standard' ? state.data?.favoriteMeta?.liquid_standard : state.data?.favoriteMeta?.common;
+    return getSortedAnalyteCatalog().filter((item) => target?.has(item.id));
   }
 
   function addAnalyteFromInput() {
@@ -557,7 +567,9 @@
   function syncQuickChipState() {
     [el.quickAnalytes, el.quickLiquidAnalytes].filter(Boolean).forEach((container) => {
       Array.from(container.children).forEach((chip) => {
-        chip.classList.toggle('active', state.selectedAnalytes.has(chip.dataset.analyteId));
+        const selected = state.selectedAnalytes.has(chip.dataset.analyteId);
+        chip.classList.toggle('active', selected);
+        chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
     });
   }
@@ -690,10 +702,11 @@
 
   function renderMultiQuickChips(entry, container) {
     if (!container) return;
-    getSortedAnalyteCatalog().forEach((item) => {
+    getFavoriteAnalyteItems('common').forEach((item) => {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'quick-chip' + (entry.selectedAnalytes.has(item.id) ? ' active' : '');
+      chip.setAttribute('aria-pressed', entry.selectedAnalytes.has(item.id) ? 'true' : 'false');
       chip.textContent = item.label;
       chip.addEventListener('click', () => {
         if (entry.selectedAnalytes.has(item.id)) {
