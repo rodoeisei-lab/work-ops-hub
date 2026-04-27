@@ -12,7 +12,8 @@
     confidenceFilter: document.getElementById('confidenceFilter'),
     needsReviewOnly: document.getElementById('needsReviewOnly'),
     summaryText: document.getElementById('summaryText'),
-    stdTableBody: document.getElementById('stdTableBody')
+    stdTableBody: document.getElementById('stdTableBody'),
+    stdCardList: document.getElementById('stdCardList')
   };
 
   let allRows = [];
@@ -47,6 +48,7 @@
   function renderTable(filteredRows) {
     if (!filteredRows.length) {
       els.stdTableBody.innerHTML = '<tr><td colspan="6" class="empty-cell">該当データがありません。</td></tr>';
+      els.stdCardList.innerHTML = '<p class="empty-cell">該当データがありません。</p>';
       return;
     }
 
@@ -63,6 +65,22 @@
           <td>${badge(`badge-status-${row.status}`, statusLabel)}</td>
           <td class="note-cell">${escapeHtml(row.note || '-')}</td>
         </tr>
+      `;
+    }).join('');
+
+    els.stdCardList.innerHTML = filteredRows.map((row) => {
+      const confidenceLabel = CONFIDENCE_LABEL[row.confidence] || '-';
+      const statusLabel = STATUS_LABEL[row.status] || '-';
+      const stdValue = Number.isFinite(row.std_value) ? Number(row.std_value.toFixed(2)).toString() : '-';
+      return `
+        <article class="mobile-data-card">
+          <p><strong>${escapeHtml(row.display_name || row.normalized_name || '')}</strong>${favoriteBadge(row)}</p>
+          <p>元表記: ${escapeHtml(row.raw_label || '-')}</p>
+          <p>STD: ${escapeHtml(stdValue)}</p>
+          <p>状態: ${escapeHtml(statusLabel)}</p>
+          <p>信頼度: ${escapeHtml(confidenceLabel)}</p>
+          <p>備考: ${escapeHtml(row.note || '-')}</p>
+        </article>
       `;
     }).join('');
   }

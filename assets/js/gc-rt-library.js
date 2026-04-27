@@ -18,7 +18,8 @@
     favoriteFilter: document.getElementById('favoriteFilter'),
     lowOnly: document.getElementById('lowOnly'),
     summaryText: document.getElementById('summaryText'),
-    tableBody: document.getElementById('tableBody')
+    tableBody: document.getElementById('tableBody'),
+    mobileCardList: document.getElementById('mobileCardList')
   };
 
   let rows = [];
@@ -84,6 +85,7 @@
 
     if (!filtered.length) {
       els.tableBody.innerHTML = '<tr><td colspan="7" class="empty-cell">該当データがありません。</td></tr>';
+      els.mobileCardList.innerHTML = '<p class="empty-cell">該当データがありません。</p>';
       return;
     }
 
@@ -97,6 +99,18 @@
         <td>${confidenceBadge(r.confidence)}</td>
         <td>${escapeHtml(r.note || '-')}</td>
       </tr>
+    `).join('');
+
+    els.mobileCardList.innerHTML = filtered.map((r) => `
+      <article class="mobile-data-card">
+        <p><strong>${escapeHtml(r.analyte)}</strong>${favoriteBadge(r)}</p>
+        <p>機械: ${escapeHtml(r.machine)}</p>
+        <p>カラム: ${escapeHtml(r.column)}</p>
+        <p>温度条件: ${escapeHtml(r.temp)}</p>
+        <p>RT: ${fmt(r.rt)} min</p>
+        <p>信頼度: ${r.confidence === 'high' ? '高' : r.confidence === 'low' ? '低' : '中'}</p>
+        <p>備考: ${escapeHtml(r.note || '-')}</p>
+      </article>
     `).join('');
   }
 

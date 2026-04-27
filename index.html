@@ -29,12 +29,19 @@
       background: #fff;
       box-shadow: var(--shadow);
       min-height: 76px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .menu a strong { display:block; font-size: 1rem; margin-bottom: 3px; }
     .menu a small { color: var(--muted); font-size: .82rem; }
     .menu a.primary-link { border-color: #bfd1f6; background: #f7faff; }
     .menu a:hover, .menu a:focus-visible { text-decoration:none; transform: translateY(-1px); }
     .guide { margin: 0 0 12px; color: var(--muted); font-size: .82rem; text-align:center; }
+    @media (max-width: 560px) {
+      .top { padding: 13px; }
+      .menu a { padding: 12px; min-height: 0; }
+      .today { justify-self: start; }
+    }
   </style>
 </head>
 <body>

@@ -73,13 +73,10 @@
 
 .quick-chips {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 24px 8px 0;
-  scrollbar-width: thin;
+  padding: 4px 0 8px;
 }
 
 .quick-chip {
@@ -91,8 +88,11 @@
   font-size: .9rem;
   min-height: 44px;
   font-weight: 700;
-  flex: 0 0 auto;
+  flex: 1 1 180px;
+  max-width: 100%;
   cursor: pointer;
+  white-space: normal;
+  text-align: center;
 }
 
 .quick-chip.active {
@@ -103,16 +103,6 @@
 
 .quick-chip:active {
   transform: translateY(1px);
-}
-
-.quick-chips::after {
-  content: '';
-  position: sticky;
-  right: 0;
-  width: 16px;
-  flex: 0 0 16px;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff);
 }
 
 .selected-row {
@@ -280,6 +270,7 @@
   border-radius: 12px;
   padding: 11px;
   background: #fff;
+  overflow-wrap: anywhere;
 }
 
 .rec-card.top {
@@ -353,7 +344,7 @@
   min-height: 170px;
   padding: 10px 8px 10px;
   background: linear-gradient(to right, #f5f8fd 0%, #fff 100%);
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .graph-track {
@@ -361,7 +352,7 @@
   border-top: 2px solid #cdd8ea;
   margin: 42px 4px 8px;
   height: calc(34px + (var(--label-levels, 2) * 17px));
-  min-width: 560px;
+  min-width: 0;
 }
 
 .graph-ticks {
@@ -398,7 +389,9 @@
   top: 8px;
   transform: translateX(-50%);
   font-size: .67rem;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 86px;
+  text-align: center;
   color: #2a3856;
   background: rgba(255, 255, 255, .8);
   padding: 0 3px;
@@ -440,8 +433,8 @@
   font-size: .82rem;
 }
 
-.table-wrap { margin-top: 10px; overflow:auto; border:1px solid #e3eaf6; border-radius:10px; background:#fff; }
-table { width:100%; border-collapse: collapse; min-width: 540px; }
+.table-wrap { margin-top: 10px; overflow: hidden; border:1px solid #e3eaf6; border-radius:10px; background:#fff; }
+table { width:100%; border-collapse: collapse; min-width: 0; }
 th, td { padding: 9px 8px; border-bottom:1px solid #edf2f8; font-size:.82rem; text-align:left; vertical-align: top; }
 th { background:#f7faff; color:#405271; position:sticky; top:0; z-index:1; }
 tr:last-child td { border-bottom: none; }
@@ -461,6 +454,9 @@ tr:last-child td { border-bottom: none; }
 .certainty-badge.low { background:#fff2da; color:#946100; }
 .highlighted-row { background:#f8fbff; }
 .empty-cell { text-align:center; color:var(--muted); }
+.mobile-card-list { display:none; margin-top:10px; gap:8px; }
+.mobile-data-card { border:1px solid #e1e8f4; border-radius:10px; padding:10px; background:#fff; font-size:.82rem; display:grid; gap:4px; }
+.mobile-data-card p { margin:0; }
 
 @media (max-width: 720px) {
   .filter-grid { grid-template-columns: 1fr; }
@@ -469,7 +465,9 @@ tr:last-child td { border-bottom: none; }
   .action-row,
   .workplace-action-row,
   .input-row { grid-template-columns: 1fr; }
-  .graph-track { min-width: 520px; }
+  .table-wrap { display:none; }
+  .mobile-card-list { display:grid; }
+  .graph-label { max-width: 70px; font-size:.62rem; }
 }
 
 .selected-method-memo {
