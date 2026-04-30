@@ -6,64 +6,154 @@
   <title>作業メニュー | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <style>
-    .home { display: grid; gap: 12px; }
-    .top { padding: 16px; display: grid; gap: 8px; }
-    h1 { margin: 0; font-size: 1.3rem; }
-    .sub { margin: 0; color: var(--muted); font-size: .9rem; }
+    .home { display: grid; gap: 18px; padding-top: 18px; padding-bottom: 24px; }
+
+    .hero {
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+      background: linear-gradient(155deg, #ffffff 0%, #f3f7ff 50%, #edf3ff 100%);
+      border-color: #cfdcf2;
+    }
+    .hero-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    .hero h1 { margin: 0; font-size: 1.7rem; letter-spacing: .01em; }
+    .hero .sub { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.75; max-width: 64ch; }
     .today {
-      color: var(--muted);
-      font-size: .8rem;
-      justify-self: end;
-      padding: 2px 8px;
-      border: 1px solid #e1e8f4;
+      color: #304a74;
+      font-size: .82rem;
+      padding: 5px 12px;
+      border: 1px solid #cad9f3;
       background: #f8fbff;
       border-radius: 999px;
+      font-weight: 700;
+      white-space: nowrap;
     }
-    .menu { display: grid; gap: 10px; }
-    .menu a {
-      display: block;
+
+    .hero-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .quick-links {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .quick-links a {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 46px;
+      border-radius: 11px;
+      border: 1px solid #c3d5f5;
+      background: #fff;
+      color: #1e448f;
+      font-size: .88rem;
+      font-weight: 700;
+      box-shadow: 0 5px 15px rgba(20, 45, 91, 0.06);
+    }
+    .quick-links a:hover,
+    .quick-links a:focus-visible { text-decoration: none; background: #f5f9ff; }
+
+    .section-title { margin: 0 0 10px; font-size: 1.08rem; }
+    .section-note { margin: -3px 0 12px; color: var(--muted); font-size: .85rem; }
+
+    .menu-group { display: grid; gap: 10px; }
+    .menu-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .menu-card {
+      display: grid;
+      gap: 6px;
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 14px;
       color: var(--text);
       background: #fff;
       box-shadow: var(--shadow);
-      min-height: 76px;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      min-height: 96px;
+      transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
-    .menu a strong { display:block; font-size: 1rem; margin-bottom: 3px; }
-    .menu a small { color: var(--muted); font-size: .82rem; }
-    .menu a.primary-link { border-color: #bfd1f6; background: #f7faff; }
-    .menu a:hover, .menu a:focus-visible { text-decoration:none; transform: translateY(-1px); }
-    .guide { margin: 0 0 12px; color: var(--muted); font-size: .82rem; text-align:center; }
-    @media (max-width: 560px) {
-      .top { padding: 13px; }
-      .menu a { padding: 12px; min-height: 0; }
-      .today { justify-self: start; }
+    .menu-card strong { font-size: 1rem; }
+    .menu-card small { color: var(--muted); font-size: .84rem; line-height: 1.6; }
+    .menu-card:hover,
+    .menu-card:focus-visible {
+      text-decoration: none;
+      border-color: #a7bfe8;
+      box-shadow: 0 12px 24px rgba(16, 40, 86, 0.09);
+      transform: translateY(-1px);
+    }
+    .menu-card.primary-link { border-color: #b9cbeb; background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%); }
+
+    .help {
+      padding: 14px 16px;
+      display: grid;
+      gap: 4px;
+      background: #f8fbff;
+      border: 1px solid #d8e4f5;
+      border-radius: 12px;
+    }
+    .help p { margin: 0; font-size: .83rem; color: #415778; }
+
+    .guide { margin: 2px 0 0; color: var(--muted); font-size: .82rem; text-align: center; }
+
+    @media (max-width: 760px) {
+      .hero { padding: 16px; }
+      .hero h1 { font-size: 1.45rem; }
+      .quick-links { grid-template-columns: 1fr; }
+      .menu-grid { grid-template-columns: 1fr; }
+      .menu-card { min-height: 0; }
     }
   </style>
 </head>
 <body>
   <main class="wrap home">
-    <section class="card top">
-      <h1>作業メニュー</h1>
-      <p class="sub">日々の作業ページを用途別に整理しています。上から順に使うと迷いにくい構成です。</p>
-      <div class="today">本日 <span id="todayLabel">-</span></div>
+    <section class="card hero">
+      <div class="hero-head">
+        <h1>作業メニュー</h1>
+        <div class="today">本日 <span id="todayLabel">-</span></div>
+      </div>
+      <p class="sub">労働衛生・作業環境測定の実務ページを、業務の流れに沿ってまとめています。まずは下の「よく使う3機能」から開始すると迷いません。</p>
+      <div class="hero-meta">
+        <span class="chip">モバイル最適化</span>
+        <span class="chip">匿名コード運用</span>
+        <span class="chip">日次運用向け</span>
+      </div>
+      <nav class="quick-links" aria-label="よく使う機能">
+        <a href="inventory-memo.html">在庫メモを開く</a>
+        <a href="gc-day-plan.html">GC当日プランを開く</a>
+        <a href="gc-method-finder.html">GC条件提案を開く</a>
+      </nav>
     </section>
 
-    <nav class="menu" aria-label="ページ一覧">
-      <a href="inventory-memo.html" class="primary-link"><strong>在庫メモ</strong><small>箱数入力・発注点確認・CSV保存</small></a>
-      <a href="gc-day-plan.html" class="primary-link"><strong>GC当日プラン</strong><small>複数の単位作業場所をGCへ割り振る</small></a>
-      <a href="gc-method-finder.html" class="primary-link"><strong>GC条件提案</strong><small>溶剤から機械・カラム・温度条件を候補表示</small></a>
-      <a href="gc-rt-library.html"><strong>GC RTライブラリ</strong><small>条件ごとのRT一覧を確認</small></a>
-      <a href="gc-std-master.html"><strong>GC標準液マスタ</strong><small>STD値と要確認データを確認</small></a>
-      <a href="gc-calculator.html"><strong>GC濃度計算</strong><small>STDエリアと検体エリアから係数・ppmを計算</small></a>
-      <a href="qr-print.html"><strong>QR印刷</strong><small>掲示用QRコードを印刷</small></a>
-      <a href="docs/update-guide.md"><strong>更新手順</strong><small>品目や発注点、GCデータの更新方法</small></a>
-    </nav>
+    <section class="menu-group" aria-labelledby="dailyMenuTitle">
+      <h2 id="dailyMenuTitle" class="section-title">日次業務</h2>
+      <p class="section-note">日々の作業で使用頻度が高いページです。</p>
+      <div class="menu-grid">
+        <a href="inventory-memo.html" class="menu-card primary-link"><strong>在庫メモ</strong><small>箱数入力・発注点確認・CSV保存</small></a>
+        <a href="gc-day-plan.html" class="menu-card primary-link"><strong>GC当日プラン</strong><small>複数の単位作業場所をGCへ割り振る</small></a>
+        <a href="gc-method-finder.html" class="menu-card primary-link"><strong>GC条件提案</strong><small>溶剤から機械・カラム・温度条件を候補表示</small></a>
+      </div>
+    </section>
 
-    <p class="guide">匿名コード運用を前提にした、モバイル向け業務UIです。</p>
+    <section class="menu-group" aria-labelledby="analysisMenuTitle">
+      <h2 id="analysisMenuTitle" class="section-title">分析・確認ツール</h2>
+      <p class="section-note">GC条件の確認、標準液管理、濃度計算に使うページです。</p>
+      <div class="menu-grid">
+        <a href="gc-rt-library.html" class="menu-card"><strong>GC RTライブラリ</strong><small>条件ごとのRT一覧を確認</small></a>
+        <a href="gc-std-master.html" class="menu-card"><strong>GC標準液マスタ</strong><small>STD値と要確認データを確認</small></a>
+        <a href="gc-calculator.html" class="menu-card"><strong>GC濃度計算</strong><small>STDエリアと検体エリアから係数・ppmを計算</small></a>
+      </div>
+    </section>
+
+    <section class="menu-group" aria-labelledby="utilityMenuTitle">
+      <h2 id="utilityMenuTitle" class="section-title">補助・運用</h2>
+      <div class="menu-grid">
+        <a href="qr-print.html" class="menu-card"><strong>QR印刷</strong><small>掲示用QRコードを印刷</small></a>
+        <a href="docs/update-guide.md" class="menu-card"><strong>更新手順</strong><small>品目や発注点、GCデータの更新方法</small></a>
+      </div>
+      <div class="help">
+        <p><strong>使い方の目安：</strong>「日次業務」→「分析・確認ツール」→「補助・運用」の順で使うと、作業が分断しにくくなります。</p>
+      </div>
+    </section>
+
+    <p class="guide">作業環境測定・労働衛生業務の現場運用を想定した、シンプルな業務ハブです。</p>
   </main>
   <script src="assets/js/app.js"></script>
 </body>
