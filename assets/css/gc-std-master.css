@@ -28,3 +28,7 @@ th { background:#f8fafc; white-space:normal; }
 }
 
 .badge-favorite { background:#e8f0ff; color:#244a9a; margin-left:6px; }
+
+.gc-std-page .table-wrap { border:1px solid #e2e8f4; border-radius:12px; }
+.gc-std-page td,.gc-std-page th{ word-break: break-word; }
+@media (max-width:900px){ .page-header,.section-block { padding:12px; } .mobile-data-card{padding:12px; font-size:.9rem; line-height:1.5;} }
