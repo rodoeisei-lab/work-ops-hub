@@ -10,6 +10,7 @@
 <body>
   <main class="wrap gc-calculator-page">
     <header class="card section-block page-header">
+      <a href="#rowsTitle" class="hint no-print">計算カードへ移動</a>
       <h1>GC濃度計算</h1>
       <p>STD値と当日のSTDエリアから係数を計算し、検体エリアからppmを算出します。</p>
       <p class="hint">式: 係数 = STD ÷ STDエリア / ppm = 検体エリア × 係数</p>
@@ -28,14 +29,14 @@
 
     <section class="card section-block" aria-labelledby="favoriteTitle">
       <h2 id="favoriteTitle">よく使う物質</h2>
-      <p class="hint">タップすると計算行の物質へすぐ反映します。</p>
+      <p class="hint">タップすると計算カードの物質へすぐ反映します。</p>
       <div id="favoriteCommonChips" class="quick-chips" aria-label="通常よく使う物質"></div>
       <p class="hint">液体STD</p>
       <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体スタンダードでよく使う物質"></div>
     </section>
 
     <section class="card section-block" aria-labelledby="rowsTitle">
-      <h2 id="rowsTitle">計算行</h2>
+      <h2 id="rowsTitle">計算カード</h2>
       <div id="rowsContainer" class="rows-container"></div>
     </section>
 
