@@ -2,7 +2,8 @@
   const DATA_PATH = 'data/gc-std-master.json';
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
-  const STORAGE_KEY = 'gc-calculator-state-v2';
+  const STORAGE_KEY = 'gc-calculator-state-v3';
+  const LEGACY_STORAGE_KEYS = ['gc-calculator-state-v2'];
   const DEFAULT_ROWS = 1;
   const MAIN_CHIP_NAMES = ['メタノール', 'アセトン', 'IPA', 'n-ヘキサン', 'MEK', '酢酸エチル', 'イソブタノール', '1-ブタノール', 'MIBK', 'トルエン', '酢酸イソブチル', '酢酸ブチル', 'エチルベンゼン', 'p-キシレン', 'o-キシレン'];
 
@@ -48,6 +49,7 @@
   function bindGlobalEvents() {
     els.addRowBtn.addEventListener('click', () => {
       state.rows.push(createEmptyRow());
+      normalizeCardsState();
       renderRows();
       renderFavoriteChips();
       persist();
@@ -56,6 +58,7 @@
     els.clearAllBtn.addEventListener('click', () => {
       if (!window.confirm('入力内容をすべて消します。よろしいですか？')) return;
       state.rows = [createEmptyRow()];
+      normalizeCardsState();
       localStorage.removeItem(STORAGE_KEY);
       els.copyTextOutput.value = '';
       renderRows();
@@ -112,7 +115,8 @@
         aliases: Array.isArray(item.aliases) ? item.aliases.map((a) => String(a || '')).filter(Boolean) : [],
         stdValue: Number.isFinite(stdValue) ? stdValue : null,
         confidence: String(item.confidence || ''),
-        status: String(item.status || '')
+        status: String(item.status || ''),
+        note: String(item.note || '')
       };
     });
 
@@ -138,7 +142,15 @@
   }
 
   function createEmptyRow() {
-    return { id: `r_${Math.random().toString(36).slice(2)}`, materialInput: '', stdInput: '', stdAreaInput: '', sampleAreaInput: '', memo: '', stdManual: false, materialKey: '' };
+    return { id: `r_${Math.random().toString(36).slice(2)}`, materialInput: '', stdInput: '', stdAreaInput: '', sampleAreaInput: '', memo: '', stdManual: false, materialKey: '', rawLabel: '', displayName: '', normalizedName: '', status: '', confidence: '', note: '' };
+  }
+
+
+  function normalizeCardsState() {
+    if (!Array.isArray(state.rows)) state.rows = [];
+    state.rows = state.rows.map((row) => ({ ...createEmptyRow(), ...row }));
+    if (!state.rows.length) state.rows.push(createEmptyRow());
+    if (!state.rows.some((r) => r.id === state.activeRowId)) state.activeRowId = state.rows[0].id;
   }
 
   function renderRows() {
@@ -155,15 +167,15 @@
   }
 
   function renderRow(row) {
-    const material = resolveMaterial(row.materialInput);
+    const material = resolveMaterial(row.materialInput, row.materialKey);
     const calc = calculate(row, material);
-    const title = material?.displayName || '未選択';
+    const title = material?.displayName || '物質を選択してください';
     const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
     const statusBadge = material?.status && material.status !== 'confirmed' ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
     const manualBadge = row.stdManual ? '<span class="badge badge-manual">手入力</span>' : '';
     return `<article class="calc-row" data-row-id="${escapeHtml(row.id)}">
       <div class="row-head"><h3 class="row-title">${escapeHtml(title)}</h3><button type="button" class="danger remove-row-btn">削除</button></div>
-      <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : '計算カード（未選択）')}</div>
+      <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : '空の計算カード')}</div>
       <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${manualBadge}</div>
       <div class="row-grid">
       <div class="field wide"><label>物質を選択<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw表記で検索"></label></div>
@@ -199,7 +211,7 @@
 
     root.querySelector('.remove-row-btn').addEventListener('click', () => {
       state.rows = state.rows.filter((r) => r.id !== rowId);
-      if (!state.rows.length) state.rows.push(createEmptyRow());
+      normalizeCardsState();
       renderRows();
       renderFavoriteChips();
       persist();
@@ -227,10 +239,16 @@
 
   function applyMaterialSelection(row, text, root) {
     state.activeRowId = row.id;
-    const selected = resolveMaterial(text);
+    const selected = findStdEntry(text, row);
     if (!selected) {
       row.materialInput = text;
       row.materialKey = '';
+      row.rawLabel = '';
+      row.displayName = text || '';
+      row.normalizedName = '';
+      row.status = '';
+      row.confidence = '';
+      row.note = '';
       if (!row.stdManual) row.stdInput = '';
       updateRowComputedView(root, row);
       persist();
@@ -240,7 +258,13 @@
     if (duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
     row.materialInput = selected.displayName;
     row.materialKey = selected.key;
+    row.rawLabel = selected.rawLabel || '';
+    row.displayName = selected.displayName || '';
+    row.normalizedName = selected.normalizedName || '';
     row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
+    row.status = selected.status || '';
+    row.confidence = selected.confidence || '';
+    row.note = selected.note || '';
     row.stdManual = false;
     updateRowComputedView(root, row, true);
     persist();
@@ -281,6 +305,17 @@
     if (!normalizedInput) return null;
     return state.searchLookup.get(normalizedInput) || null;
   }
+
+  function findStdEntry(input, row = null) {
+    const keyCandidates = [row?.rawLabel, row?.normalizedName, row?.displayName, input];
+    for (const key of keyCandidates) {
+      const matched = resolveMaterial(key, row?.materialKey || '');
+      if (matched) return matched;
+    }
+    if (row?.materialKey) return resolveMaterial('', row.materialKey);
+    return null;
+  }
+
   const normalize = (v) => String(v || '').trim().toLowerCase();
   const parseNumber = (raw) => {
     const s = String(raw || '').trim(); if (!s) return { empty: true, valid: true, value: null };
@@ -343,7 +378,8 @@
   }
   function applyFavoriteToActiveRow(displayName) {
     if (!displayName) return;
-    const row = state.rows.find((r) => r.id === state.activeRowId) || state.rows.find((r) => !r.materialInput) || state.rows[0];
+    normalizeCardsState();
+    const row = state.rows.find((r) => r.id === state.activeRowId) || state.rows[0];
     const root = els.rowsContainer.querySelector(`[data-row-id="${row.id}"]`);
     if (root) {
       root.querySelector('.material-input').value = displayName;
@@ -362,20 +398,33 @@
 
   function restoreState() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const current = localStorage.getItem(STORAGE_KEY);
+      const legacy = LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
+      const parsed = JSON.parse(current || legacy || '{}');
       if (Array.isArray(parsed.rows)) {
         state.rows = parsed.rows.map((r) => {
           const row = { ...createEmptyRow(), ...r };
-          const material = resolveMaterial(row.materialInput, row.materialKey);
+          const material = findStdEntry(row.materialInput, row);
           if (material && !row.materialKey) row.materialKey = material.key;
+          if (material) {
+            row.rawLabel = material.rawLabel || '';
+            row.displayName = material.displayName || '';
+            row.normalizedName = material.normalizedName || '';
+            row.status = material.status || '';
+            row.confidence = material.confidence || '';
+            row.note = material.note || '';
+          }
           if (material && !row.stdManual && !String(row.stdInput || '').trim()) row.stdInput = material.stdValue == null ? '' : String(material.stdValue);
           return row;
         });
       }
+      state.activeRowId = parsed.activeRowId || null;
+      normalizeCardsState();
       if (typeof parsed.copyTextOutput === 'string') els.copyTextOutput.value = parsed.copyTextOutput;
-    } catch (_e) { state.rows = []; }
+      LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+    } catch (_e) { state.rows = []; normalizeCardsState(); }
   }
-  function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, copyTextOutput: els.copyTextOutput.value })); }
+  function persist() { normalizeCardsState(); localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value })); }
   async function fetchJsonSafe(path, fallback) { try { const r = await fetch(path); return r.ok ? await r.json() : fallback; } catch { return fallback; } }
   function csvEscape(v) { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replaceAll('"', '""')}"` : t; }
   function todayIso() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
