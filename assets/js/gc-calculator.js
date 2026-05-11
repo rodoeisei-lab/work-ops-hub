@@ -4,6 +4,7 @@
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
   const STORAGE_KEY = 'gc-calculator-state-v2';
   const DEFAULT_ROWS = 1;
+  const MAIN_CHIP_NAMES = ['メタノール', 'アセトン', 'IPA', 'n-ヘキサン', 'MEK', '酢酸エチル', 'イソブタノール', '1-ブタノール', 'MIBK', 'トルエン', '酢酸イソブチル', '酢酸ブチル', 'エチルベンゼン', 'p-キシレン', 'o-キシレン'];
 
   const STATUS_LABEL = { confirmed: '確定', provisional: '仮登録', needs_review: 'STD要確認' };
 
@@ -108,6 +109,7 @@
         displayName,
         rawLabel,
         normalizedName: String(item.normalized_name || ''),
+        aliases: Array.isArray(item.aliases) ? item.aliases.map((a) => String(a || '')).filter(Boolean) : [],
         stdValue: Number.isFinite(stdValue) ? stdValue : null,
         confidence: String(item.confidence || ''),
         status: String(item.status || '')
@@ -116,7 +118,7 @@
 
     state.materials.forEach((m) => {
       state.optionLookup.set(m.optionLabel, m);
-      [m.optionLabel, m.displayName, m.rawLabel, m.normalizedName].forEach((k) => {
+      [m.optionLabel, m.displayName, m.rawLabel, m.normalizedName, ...m.aliases].forEach((k) => {
         const key = normalize(k);
         if (key) state.searchLookup.set(key, m);
       });
@@ -136,7 +138,7 @@
   }
 
   function createEmptyRow() {
-    return { id: `r_${Math.random().toString(36).slice(2)}`, materialInput: '', stdInput: '', stdAreaInput: '', sampleAreaInput: '', memo: '', stdManual: false };
+    return { id: `r_${Math.random().toString(36).slice(2)}`, materialInput: '', stdInput: '', stdAreaInput: '', sampleAreaInput: '', memo: '', stdManual: false, materialKey: '' };
   }
 
   function renderRows() {
@@ -155,16 +157,17 @@
   function renderRow(row) {
     const material = resolveMaterial(row.materialInput);
     const calc = calculate(row, material);
-    const title = material?.displayName || '物質を選択';
+    const title = material?.displayName || '未選択';
     const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
     const statusBadge = material?.status && material.status !== 'confirmed' ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
     const manualBadge = row.stdManual ? '<span class="badge badge-manual">手入力</span>' : '';
     return `<article class="calc-row" data-row-id="${escapeHtml(row.id)}">
       <div class="row-head"><h3 class="row-title">${escapeHtml(title)}</h3><button type="button" class="danger remove-row-btn">削除</button></div>
+      <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : '計算カード（未選択）')}</div>
       <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${manualBadge}</div>
       <div class="row-grid">
       <div class="field wide"><label>物質を選択<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw表記で検索"></label></div>
-      <div class="field"><label>STD<input type="text" class="std-input" inputmode="decimal" value="${escapeHtml(row.stdInput)}"></label></div>
+      <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(row.stdInput)}" readonly></label></div>
       <div class="field"><label>当日STDエリア<input type="text" class="std-area-input" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}"></label></div>
       <div class="field"><label>係数<div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div></label></div>
       <div class="field"><label>検体エリア<input type="text" class="sample-area-input" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}"></label></div>
@@ -189,6 +192,7 @@
     materialInput.addEventListener('blur', () => applyMaterialSelection(row, materialInput.value, root));
 
     stdInput.addEventListener('input', () => { state.activeRowId = rowId; row.stdInput = stdInput.value; row.stdManual = true; updateOnly(); });
+    stdInput.addEventListener('focus', () => { if (stdInput.readOnly) showStatus('STDは自動反映です。手入力したい場合は「手入力に切替」を押してください。'); });
     stdAreaInput.addEventListener('input', () => { state.activeRowId = rowId; row.stdAreaInput = stdAreaInput.value; updateOnly(); });
     sampleAreaInput.addEventListener('input', () => { state.activeRowId = rowId; row.sampleAreaInput = sampleAreaInput.value; updateOnly(); });
     memoInput.addEventListener('input', () => { row.memo = memoInput.value; persist(); });
@@ -200,6 +204,25 @@
       renderFavoriteChips();
       persist();
     });
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'btn-ghost std-toggle-btn';
+    toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
+    toggleBtn.addEventListener('click', () => {
+      row.stdManual = !row.stdManual;
+      if (!row.stdManual) {
+        const material = resolveMaterial(row.materialInput, row.materialKey);
+        row.stdInput = material?.stdValue == null ? '' : String(material.stdValue);
+      }
+      stdInput.readOnly = !row.stdManual;
+      stdInput.classList.toggle('std-auto', !row.stdManual);
+      toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
+      updateOnly();
+    });
+    const stdField = root.querySelector('.std-input')?.closest('.field');
+    if (stdField) stdField.appendChild(toggleBtn);
+    stdInput.readOnly = !row.stdManual;
   }
 
   function applyMaterialSelection(row, text, root) {
@@ -207,6 +230,8 @@
     const selected = resolveMaterial(text);
     if (!selected) {
       row.materialInput = text;
+      row.materialKey = '';
+      if (!row.stdManual) row.stdInput = '';
       updateRowComputedView(root, row);
       persist();
       return;
@@ -214,6 +239,7 @@
     const duplicate = state.rows.some((r) => r.id !== row.id && resolveMaterial(r.materialInput)?.displayName === selected.displayName);
     if (duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
     row.materialInput = selected.displayName;
+    row.materialKey = selected.key;
     row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
     row.stdManual = false;
     updateRowComputedView(root, row, true);
@@ -221,15 +247,24 @@
   }
 
   function updateRowComputedView(root, row, rerenderHead = false) {
-    const material = resolveMaterial(row.materialInput);
+    const material = resolveMaterial(row.materialInput, row.materialKey);
     const calc = calculate(row, material);
     root.querySelector('.coefficient-output').textContent = calc.coefficientText;
     root.querySelector('.ppm-output').textContent = calc.ppmText || '—';
     root.querySelector('.error-text').textContent = calc.errorText;
     if (rerenderHead) {
       root.querySelector('.row-title').textContent = material?.displayName || '物質を選択';
+      root.querySelector('.card-caption').textContent = material ? `計算カード：${material.displayName}` : '計算カード（未選択）';
       root.querySelector('.meta-note').textContent = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
     }
+    const stdInput = root.querySelector('.std-input');
+    if (stdInput) {
+      stdInput.value = row.stdInput || '';
+      stdInput.readOnly = !row.stdManual;
+      stdInput.classList.toggle('std-auto', !row.stdManual);
+    }
+    const toggleBtn = root.querySelector('.std-toggle-btn');
+    if (toggleBtn) toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
     const badges = [];
     if (material?.status && material.status !== 'confirmed') badges.push(`<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>`);
     if (row.stdManual) badges.push('<span class="badge badge-manual">手入力</span>');
@@ -237,8 +272,14 @@
     syncFavoriteChipState();
   }
 
-  function resolveMaterial(input) {
-    return state.searchLookup.get(normalize(input)) || null;
+  function resolveMaterial(input, materialKey = '') {
+    if (materialKey) {
+      const byKey = state.materials.find((m) => m.key === materialKey);
+      if (byKey) return byKey;
+    }
+    const normalizedInput = normalize(input);
+    if (!normalizedInput) return null;
+    return state.searchLookup.get(normalizedInput) || null;
   }
   const normalize = (v) => String(v || '').trim().toLowerCase();
   const parseNumber = (raw) => {
@@ -249,6 +290,7 @@
   function calculate(row, material) {
     const std = parseNumber(row.stdInput); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
     if (!std.valid || !stdArea.valid || !sample.valid) return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
+    if (std.empty) return { coefficientText: '', ppmText: '', errorText: 'STD値を取得できませんでした。物質マスタとの紐づけを確認してください。' };
     if (stdArea.empty || stdArea.value === 0) return { coefficientText: '', ppmText: '', errorText: 'STDエリアを入力してください。' };
     const c = std.value / stdArea.value; const ppm = sample.empty ? null : sample.value * c;
     return { coefficientText: Number(c.toPrecision(10)).toString(), ppmText: ppm == null ? '' : Number(ppm.toFixed(2)).toString(), errorText: '' };
@@ -257,7 +299,7 @@
   function buildCopyText() {
     const parts = ['GC濃度計算', `日付: ${todayIso()}`, ''];
     state.rows.forEach((row) => {
-      const material = resolveMaterial(row.materialInput);
+      const material = resolveMaterial(row.materialInput, row.materialKey);
       const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
       const calc = calculate(row, material);
@@ -271,15 +313,23 @@
     state.rows.forEach((row) => {
       const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
-      const material = resolveMaterial(row.materialInput); const calc = calculate(row, material);
+      const material = resolveMaterial(row.materialInput, row.materialKey); const calc = calculate(row, material);
       lines.push([todayIso(), material?.displayName || row.materialInput || '', row.stdInput || '', row.stdAreaInput || '', calc.coefficientText || '', row.sampleAreaInput || '', calc.ppmText || '', STATUS_LABEL[material?.status] || '', row.memo || ''].map(csvEscape).join(','));
     });
     return lines.join('\n');
   }
 
   function renderFavoriteChips() {
-    renderFavoriteGroup(els.favoriteCommonChips, state.favorites.common || [], false);
-    renderFavoriteGroup(els.favoriteLiquidChips, state.favorites.liquid_standard || [], true);
+    const merged = [...(state.favorites.common || []), ...(state.favorites.liquid_standard || [])];
+    const map = new Map();
+    merged.forEach((entry) => {
+      const matched = findMaterialByFavorite(entry);
+      if (!matched) return;
+      const label = matched.displayName;
+      if (!MAIN_CHIP_NAMES.includes(label) && !(label === 'n-ブタノール')) return;
+      if (!map.has(label)) map.set(label, { display_name: label, normalized_name: matched.normalizedName });
+    });
+    renderFavoriteGroup(els.favoriteCommonChips, Array.from(map.values()), false);
   }
   function renderFavoriteGroup(container, list, secondary) {
     if (!container) return; container.innerHTML = '';
@@ -302,8 +352,8 @@
     }
   }
   function syncFavoriteChipState() {
-    const selected = new Set(state.rows.map((r) => resolveMaterial(r.materialInput)?.displayName).filter(Boolean));
-    [els.favoriteCommonChips, els.favoriteLiquidChips].forEach((c) => c && c.querySelectorAll('.quick-chip').forEach((chip) => chip.classList.toggle('active', selected.has(chip.dataset.materialOption))));
+    const selected = new Set(state.rows.map((r) => resolveMaterial(r.materialInput, r.materialKey)?.displayName).filter(Boolean));
+    [els.favoriteCommonChips].forEach((c) => c && c.querySelectorAll('.quick-chip').forEach((chip) => chip.classList.toggle('active', selected.has(chip.dataset.materialOption))));
   }
   function findMaterialByFavorite(entry) {
     const keys = [entry?.normalized_name, entry?.display_name, ...(state.analyteAliases?.[entry?.normalized_name] || []), state.analyteDisplay?.[entry?.normalized_name]].map(normalize);
@@ -313,7 +363,15 @@
   function restoreState() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      if (Array.isArray(parsed.rows)) state.rows = parsed.rows.map((r) => ({ ...createEmptyRow(), ...r }));
+      if (Array.isArray(parsed.rows)) {
+        state.rows = parsed.rows.map((r) => {
+          const row = { ...createEmptyRow(), ...r };
+          const material = resolveMaterial(row.materialInput, row.materialKey);
+          if (material && !row.materialKey) row.materialKey = material.key;
+          if (material && !row.stdManual && !String(row.stdInput || '').trim()) row.stdInput = material.stdValue == null ? '' : String(material.stdValue);
+          return row;
+        });
+      }
       if (typeof parsed.copyTextOutput === 'string') els.copyTextOutput.value = parsed.copyTextOutput;
     } catch (_e) { state.rows = []; }
   }
