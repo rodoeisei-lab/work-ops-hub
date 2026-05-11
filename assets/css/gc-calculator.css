@@ -40,3 +40,8 @@
   .row-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .field.wide { grid-column: span 2; }
 }
+
+.gc-calculator-page { overflow-x: clip; }
+.quick-chips { overflow: visible; }
+.row-grid .field { min-width: 0; }
+.bottom-nav { display:none !important; }

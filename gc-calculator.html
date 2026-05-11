@@ -18,7 +18,7 @@
 
     <section class="card section-block actions-block no-print" aria-label="操作">
       <div class="actions-grid">
-        <button id="addRowBtn" type="button" class="plain">行を追加</button>
+        <button id="addRowBtn" type="button" class="plain">計算カードを追加</button>
         <button id="clearAllBtn" type="button" class="danger">入力を消す</button>
         <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー用テキスト作成</button>
         <button id="copyResultBtn" type="button" class="success">計算結果をコピー</button>
@@ -31,6 +31,11 @@
       <h2 id="favoriteTitle">よく使う物質</h2>
       <p class="hint">タップすると現在の計算カードへ上書き反映します。</p>
       <div id="favoriteCommonChips" class="quick-chips" aria-label="通常よく使う物質"></div>
+    </section>
+
+    <section class="card section-block" aria-labelledby="liquidStdTitle">
+      <h2 id="liquidStdTitle">液体STD</h2>
+      <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体STD"></div>
     </section>
 
     <section class="card section-block" aria-labelledby="rowsTitle">
