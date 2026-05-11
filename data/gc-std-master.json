@@ -478,5 +478,22 @@
     "confidence": "low",
     "status": "needs_review",
     "note": "重複行。最新画像でも末尾にあり"
+  },
+  {
+    "raw_label": "cyclohexane",
+    "normalized_name": "cyclohexane",
+    "display_name": "シクロヘキサン",
+    "std_value": null,
+    "rt": null,
+    "area": null,
+    "coefficient": null,
+    "nd_line": null,
+    "confidence": "low",
+    "status": "needs_review",
+    "note": "STD値を確認してください",
+    "aliases": [
+      "シクロヘキサン",
+      "cyclohexane"
+    ]
   }
 ]

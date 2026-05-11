@@ -17,7 +17,9 @@
   ],
   "ethyl_acetate": [
     "ethyl_acetate",
-    "酢酸エチル"
+    "酢酸エチル",
+    "set",
+    "SET"
   ],
   "IPA": [
     "IPA",
@@ -34,7 +36,8 @@
   ],
   "toluene": [
     "toluene",
-    "トルエン"
+    "トルエン",
+    "Toluen"
   ],
   "isobutyl_acetate": [
     "isobutyl_acetate",
@@ -52,7 +55,10 @@
   "1-butanol": [
     "1-butanol",
     "1-ブタノール",
-    "n-butanol"
+    "n-butanol",
+    "NBT",
+    "nbt",
+    "n-ブタノール"
   ],
   "ethylbenzene": [
     "ethylbenzene",
@@ -85,7 +91,8 @@
     "シクロヘキサン"
   ],
   "ブチセロ": [
-    "ブチセロ"
+    "ブチセロ",
+    "BTセロ"
   ],
   "未確定": [
     "未確定",

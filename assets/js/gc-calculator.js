@@ -2,10 +2,11 @@
   const DATA_PATH = 'data/gc-std-master.json';
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
-  const STORAGE_KEY = 'gc-calculator-state-v3';
-  const LEGACY_STORAGE_KEYS = ['gc-calculator-state-v2'];
+  const STORAGE_KEY = 'gc-calculator-state-v4';
+  const LEGACY_STORAGE_KEYS = ['gc-calculator-state-v3', 'gc-calculator-state-v2'];
   const DEFAULT_ROWS = 1;
   const MAIN_CHIP_NAMES = ['メタノール', 'アセトン', 'IPA', 'n-ヘキサン', 'MEK', '酢酸エチル', 'イソブタノール', '1-ブタノール', 'MIBK', 'トルエン', '酢酸イソブチル', '酢酸ブチル', 'エチルベンゼン', 'p-キシレン', 'o-キシレン'];
+  const LIQUID_STD_NAMES = ['ブチセロ', 'スチレン', 'シクロヘキサン'];
 
   const STATUS_LABEL = { confirmed: '確定', provisional: '仮登録', needs_review: 'STD要確認' };
 
@@ -172,13 +173,14 @@
     const title = material?.displayName || '物質を選択してください';
     const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
     const statusBadge = material?.status && material.status !== 'confirmed' ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
+    const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認してください</span>' : '';
     const manualBadge = row.stdManual ? '<span class="badge badge-manual">手入力</span>' : '';
     return `<article class="calc-row" data-row-id="${escapeHtml(row.id)}">
       <div class="row-head"><h3 class="row-title">${escapeHtml(title)}</h3><button type="button" class="danger remove-row-btn">削除</button></div>
       <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : '空の計算カード')}</div>
-      <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${manualBadge}</div>
+      <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${stdNeedsCheck}${manualBadge}</div>
       <div class="row-grid">
-      <div class="field wide"><label>物質を選択<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw表記で検索"></label></div>
+      <div class="field wide"><label>全物質から選択<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw_label / 別名で検索"></label></div>
       <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(row.stdInput)}" readonly></label></div>
       <div class="field"><label>当日STDエリア<input type="text" class="std-area-input" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}"></label></div>
       <div class="field"><label>係数<div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div></label></div>
@@ -291,6 +293,7 @@
     if (toggleBtn) toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
     const badges = [];
     if (material?.status && material.status !== 'confirmed') badges.push(`<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>`);
+    if (!row.stdManual && material && material.stdValue == null) badges.push('<span class="badge badge-review">STD値を確認してください</span>');
     if (row.stdManual) badges.push('<span class="badge badge-manual">手入力</span>');
     root.querySelector('.badges').innerHTML = badges.join('');
     syncFavoriteChipState();
@@ -365,6 +368,8 @@
       if (!map.has(label)) map.set(label, { display_name: label, normalized_name: matched.normalizedName });
     });
     renderFavoriteGroup(els.favoriteCommonChips, Array.from(map.values()), false);
+    const liquid = LIQUID_STD_NAMES.map((name) => ({ display_name: name, normalized_name: name }));
+    renderFavoriteGroup(els.favoriteLiquidChips, liquid, true);
   }
   function renderFavoriteGroup(container, list, secondary) {
     if (!container) return; container.innerHTML = '';
@@ -389,11 +394,15 @@
   }
   function syncFavoriteChipState() {
     const selected = new Set(state.rows.map((r) => resolveMaterial(r.materialInput, r.materialKey)?.displayName).filter(Boolean));
-    [els.favoriteCommonChips].forEach((c) => c && c.querySelectorAll('.quick-chip').forEach((chip) => chip.classList.toggle('active', selected.has(chip.dataset.materialOption))));
+    [els.favoriteCommonChips, els.favoriteLiquidChips].forEach((c) => c && c.querySelectorAll('.quick-chip').forEach((chip) => chip.classList.toggle('active', selected.has(chip.dataset.materialOption))));
   }
   function findMaterialByFavorite(entry) {
-    const keys = [entry?.normalized_name, entry?.display_name, ...(state.analyteAliases?.[entry?.normalized_name] || []), state.analyteDisplay?.[entry?.normalized_name]].map(normalize);
-    return state.materials.find((m) => keys.some((k) => k && [m.displayName, m.rawLabel, m.normalizedName].map(normalize).includes(k))) || null;
+    const fromAlias = state.analyteAliases?.[entry?.normalized_name] || [];
+    const keys = [entry?.normalized_name, entry?.display_name, ...fromAlias, state.analyteDisplay?.[entry?.normalized_name]].map(normalize).filter(Boolean);
+    return state.materials.find((m) => {
+      const pool = [m.displayName, m.rawLabel, m.normalizedName, ...(m.aliases || [])].map(normalize);
+      return keys.some((k) => pool.includes(k));
+    }) || null;
   }
 
   function restoreState() {
