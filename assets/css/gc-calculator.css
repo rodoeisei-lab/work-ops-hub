@@ -98,3 +98,6 @@
 .quick-chip.secondary { background:#f6f8ff; border-color:#d9e2f6; }
 .quick-chip:disabled { opacity:.45; cursor:not-allowed; }
 .quick-chip.active { background: #1f4fbf; border-color:#1f4fbf; color:#fff; }
+
+.gc-calculator-page { max-width: 1120px; margin-inline:auto; }
+@media (max-width:700px){ .section-block { padding:12px; } .actions-grid{ grid-template-columns:1fr; } .quick-chip{ flex:1 1 100%; } }
