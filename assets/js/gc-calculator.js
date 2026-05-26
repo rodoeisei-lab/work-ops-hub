@@ -376,8 +376,12 @@
     list.forEach((entry) => {
       const matched = findMaterialByFavorite(entry);
       const chip = document.createElement('button'); chip.type = 'button'; chip.className = `quick-chip${secondary ? ' secondary' : ''}`;
-      chip.textContent = entry.display_name || entry.normalized_name || '-'; chip.dataset.materialOption = matched?.displayName || '';
-      chip.disabled = !matched; chip.addEventListener('click', () => applyFavoriteToActiveRow(chip.dataset.materialOption)); container.appendChild(chip);
+      chip.textContent = entry.display_name || entry.normalized_name || '-';
+      chip.dataset.materialOption = matched?.displayName || entry.display_name || entry.normalized_name || '';
+      chip.disabled = false;
+      chip.addEventListener('click', () => applyFavoriteToActiveRow(chip.dataset.materialOption));
+      if (!matched) chip.classList.add('secondary');
+      container.appendChild(chip);
     });
     syncFavoriteChipState();
   }
