@@ -6,99 +6,242 @@
   <title>作業メニュー | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <style>
-    .home { display: grid; gap: 18px; padding-top: 18px; padding-bottom: 24px; }
+    .home {
+      display: grid;
+      gap: 20px;
+      padding-top: 20px;
+      padding-bottom: 34px;
+    }
 
     .hero {
-      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      padding: clamp(20px, 4vw, 34px);
       display: grid;
-      gap: 12px;
-      background: linear-gradient(155deg, #ffffff 0%, #f3f7ff 50%, #edf3ff 100%);
-      border-color: #cfdcf2;
+      gap: 18px;
+      background: linear-gradient(150deg, #ffffff 0%, #f4f8ff 56%, #eaf1ff 100%);
+      border-color: #c5d6ef;
+      box-shadow: 0 14px 34px rgba(15, 35, 75, 0.1);
     }
-    .hero-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
-    .hero h1 { margin: 0; font-size: 1.7rem; letter-spacing: .01em; }
-    .hero .sub { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.75; max-width: 64ch; }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: -70px;
+      right: -70px;
+      width: 190px;
+      height: 190px;
+      background: radial-gradient(circle at center, rgba(31, 79, 191, 0.2) 0%, rgba(31, 79, 191, 0) 72%);
+      pointer-events: none;
+    }
+
+    .hero-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 4.3vw, 2.2rem);
+      line-height: 1.25;
+      letter-spacing: .01em;
+      color: #102341;
+    }
+
+    .hero .sub {
+      margin: 0;
+      color: #30466d;
+      font-size: clamp(.95rem, 2.4vw, 1.05rem);
+      line-height: 1.85;
+      max-width: 68ch;
+      position: relative;
+      z-index: 1;
+    }
+
     .today {
-      color: #304a74;
-      font-size: .82rem;
-      padding: 5px 12px;
-      border: 1px solid #cad9f3;
-      background: #f8fbff;
+      color: #29436d;
+      font-size: .84rem;
+      padding: 6px 12px;
+      border: 1px solid #bfd0ec;
+      background: #ffffffcc;
+      backdrop-filter: blur(3px);
       border-radius: 999px;
       font-weight: 700;
       white-space: nowrap;
     }
 
-    .hero-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hero-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
 
     .quick-links {
       display: grid;
       gap: 10px;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      position: relative;
+      z-index: 1;
     }
+
     .quick-links a {
       display: inline-flex;
       justify-content: center;
       align-items: center;
-      min-height: 46px;
-      border-radius: 11px;
-      border: 1px solid #c3d5f5;
+      min-height: 48px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid #b8cbed;
       background: #fff;
-      color: #1e448f;
-      font-size: .88rem;
+      color: #193e87;
+      font-size: .9rem;
       font-weight: 700;
-      box-shadow: 0 5px 15px rgba(20, 45, 91, 0.06);
+      box-shadow: 0 6px 18px rgba(20, 45, 91, 0.08);
+      transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
+
     .quick-links a:hover,
-    .quick-links a:focus-visible { text-decoration: none; background: #f5f9ff; }
+    .quick-links a:focus-visible {
+      text-decoration: none;
+      background: #f5f9ff;
+      border-color: #9fb9e5;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(20, 45, 91, 0.11);
+    }
 
-    .section-title { margin: 0 0 10px; font-size: 1.08rem; }
-    .section-note { margin: -3px 0 12px; color: var(--muted); font-size: .85rem; }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
 
-    .menu-group { display: grid; gap: 10px; }
-    .menu-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .flow-step {
+      background: #fff;
+      border: 1px solid #d0ddef;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .flow-step strong {
+      display: block;
+      font-size: .8rem;
+      color: #3a5382;
+      margin-bottom: 3px;
+    }
+
+    .flow-step span {
+      font-size: .87rem;
+      line-height: 1.6;
+      color: #223554;
+    }
+
+    .menu-section {
+      display: grid;
+      gap: 12px;
+      background: #fff;
+      border: 1px solid #d4deec;
+      border-radius: 14px;
+      padding: clamp(14px, 3vw, 18px);
+      box-shadow: 0 6px 16px rgba(16, 40, 86, 0.05);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.16rem;
+      color: #152744;
+    }
+
+    .section-note {
+      margin: 0;
+      color: #556887;
+      font-size: .9rem;
+      line-height: 1.7;
+      max-width: 68ch;
+    }
+
+    .menu-grid {
+      display: grid;
+      gap: 11px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
     .menu-card {
       display: grid;
-      gap: 6px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      gap: 7px;
+      border: 1px solid #cfdbeb;
+      border-radius: 13px;
       padding: 14px;
       color: var(--text);
       background: #fff;
-      box-shadow: var(--shadow);
-      min-height: 96px;
+      min-height: 108px;
+      box-shadow: 0 5px 14px rgba(16, 40, 86, 0.05);
       transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
-    .menu-card strong { font-size: 1rem; }
-    .menu-card small { color: var(--muted); font-size: .84rem; line-height: 1.6; }
+
+    .menu-card strong { font-size: 1.02rem; line-height: 1.45; }
+    .menu-card small { color: #5c6e8b; font-size: .86rem; line-height: 1.7; }
+
     .menu-card:hover,
     .menu-card:focus-visible {
       text-decoration: none;
-      border-color: #a7bfe8;
-      box-shadow: 0 12px 24px rgba(16, 40, 86, 0.09);
+      border-color: #a4bbdf;
+      box-shadow: 0 12px 22px rgba(16, 40, 86, 0.11);
       transform: translateY(-1px);
     }
-    .menu-card.primary-link { border-color: #b9cbeb; background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%); }
+
+    .menu-card.primary-link {
+      border-color: #b7ccea;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+    }
 
     .help {
-      padding: 14px 16px;
+      padding: 14px;
       display: grid;
-      gap: 4px;
-      background: #f8fbff;
-      border: 1px solid #d8e4f5;
+      gap: 5px;
+      background: #f7faff;
+      border: 1px solid #d3dff1;
       border-radius: 12px;
     }
-    .help p { margin: 0; font-size: .83rem; color: #415778; }
 
-    .guide { margin: 2px 0 0; color: var(--muted); font-size: .82rem; text-align: center; }
+    .help p {
+      margin: 0;
+      font-size: .87rem;
+      color: #3e5578;
+      line-height: 1.75;
+    }
+
+    .guide {
+      margin: 2px 0 0;
+      color: #5a6d8d;
+      font-size: .84rem;
+      text-align: center;
+      line-height: 1.8;
+    }
 
     @media (max-width: 760px) {
-      .hero { padding: 16px; }
-      .hero h1 { font-size: 1.45rem; }
-      .quick-links { grid-template-columns: 1fr; }
-      .menu-grid { grid-template-columns: 1fr; }
-      .menu-card { min-height: 0; }
+      .home { gap: 14px; }
+      .hero { gap: 14px; }
+      .quick-links,
+      .menu-grid,
+      .flow { grid-template-columns: 1fr; }
+      .menu-card { min-height: 0; padding: 13px; }
+      .section-title { font-size: 1.06rem; }
+      .section-note { font-size: .88rem; }
     }
   </style>
 </head>
@@ -109,22 +252,30 @@
         <h1>作業メニュー</h1>
         <div class="today">本日 <span id="todayLabel">-</span></div>
       </div>
-      <p class="sub">労働衛生・作業環境測定の実務ページを、業務の流れに沿ってまとめています。まずは下の「よく使う3機能」から開始すると迷いません。</p>
+      <p class="sub">労働衛生・作業環境測定の実務ページを、業務の流れに沿って集約しています。まずは「よく使う3機能」から開始し、日次業務→分析確認→補助運用の順で進めると作業が途切れにくくなります。</p>
       <div class="hero-meta">
+        <span class="chip">白×ネイビー基調</span>
         <span class="chip">モバイル最適化</span>
-        <span class="chip">匿名コード運用</span>
-        <span class="chip">日次運用向け</span>
+        <span class="chip">現場運用向け</span>
       </div>
       <nav class="quick-links" aria-label="よく使う機能">
         <a href="inventory-memo.html">在庫メモを開く</a>
         <a href="gc-day-plan.html">GC当日プランを開く</a>
         <a href="gc-method-finder.html">GC条件提案を開く</a>
       </nav>
+      <div class="flow" aria-label="推奨利用フロー">
+        <div class="flow-step"><strong>STEP 1</strong><span>日次業務で入力・計画</span></div>
+        <div class="flow-step"><strong>STEP 2</strong><span>分析ツールで条件確認</span></div>
+        <div class="flow-step"><strong>STEP 3</strong><span>補助機能で印刷・更新</span></div>
+      </div>
     </section>
 
-    <section class="menu-group" aria-labelledby="dailyMenuTitle">
-      <h2 id="dailyMenuTitle" class="section-title">日次業務</h2>
-      <p class="section-note">日々の作業で使用頻度が高いページです。</p>
+    <section class="menu-section" aria-labelledby="dailyMenuTitle">
+      <div class="section-head">
+        <h2 id="dailyMenuTitle" class="section-title">日次業務</h2>
+        <span class="chip">使用頻度：高</span>
+      </div>
+      <p class="section-note">毎日の計画・確認に使うページです。入力→確認→保存までを短時間で回せる構成にしています。</p>
       <div class="menu-grid">
         <a href="inventory-memo.html" class="menu-card primary-link"><strong>在庫メモ</strong><small>箱数入力・発注点確認・CSV保存</small></a>
         <a href="gc-day-plan.html" class="menu-card primary-link"><strong>GC当日プラン</strong><small>複数の単位作業場所をGCへ割り振る</small></a>
@@ -132,9 +283,9 @@
       </div>
     </section>
 
-    <section class="menu-group" aria-labelledby="analysisMenuTitle">
+    <section class="menu-section" aria-labelledby="analysisMenuTitle">
       <h2 id="analysisMenuTitle" class="section-title">分析・確認ツール</h2>
-      <p class="section-note">GC条件の確認、標準液管理、濃度計算に使うページです。</p>
+      <p class="section-note">GC条件の照合、標準液管理、濃度計算を行うページです。測定の再現性確認や記録前チェックに活用できます。</p>
       <div class="menu-grid">
         <a href="gc-rt-library.html" class="menu-card"><strong>GC RTライブラリ</strong><small>条件ごとのRT一覧を確認</small></a>
         <a href="gc-std-master.html" class="menu-card"><strong>GC標準液マスタ</strong><small>STD値と要確認データを確認</small></a>
@@ -142,18 +293,19 @@
       </div>
     </section>
 
-    <section class="menu-group" aria-labelledby="utilityMenuTitle">
+    <section class="menu-section" aria-labelledby="utilityMenuTitle">
       <h2 id="utilityMenuTitle" class="section-title">補助・運用</h2>
+      <p class="section-note">掲示・更新作業向けの補助機能です。運用ルールの確認や周知作業をまとめて行えます。</p>
       <div class="menu-grid">
         <a href="qr-print.html" class="menu-card"><strong>QR印刷</strong><small>掲示用QRコードを印刷</small></a>
         <a href="docs/update-guide.md" class="menu-card"><strong>更新手順</strong><small>品目や発注点、GCデータの更新方法</small></a>
       </div>
       <div class="help">
-        <p><strong>使い方の目安：</strong>「日次業務」→「分析・確認ツール」→「補助・運用」の順で使うと、作業が分断しにくくなります。</p>
+        <p><strong>使い方の目安：</strong>上から順に使うと、記録漏れや参照漏れを減らしやすくなります。忙しい日は「よく使う3機能」だけでも先に実施してください。</p>
       </div>
     </section>
 
-    <p class="guide">作業環境測定・労働衛生業務の現場運用を想定した、シンプルな業務ハブです。</p>
+    <p class="guide">作業環境測定・労働衛生業務の現場運用を想定した、シンプルで見通しのよい業務ハブです。</p>
   </main>
   <script src="assets/js/app.js"></script>
 </body>
