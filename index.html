@@ -3,35 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>作業メニュー | 作業用ミニハブ</title>
+  <title>労働衛生・作業環境測定ハブ | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <style>
     .home {
       display: grid;
-      gap: 20px;
-      padding-top: 20px;
-      padding-bottom: 34px;
+      gap: 24px;
+      padding-top: 24px;
+      padding-bottom: 40px;
     }
 
     .hero {
       position: relative;
       overflow: hidden;
-      padding: clamp(20px, 4vw, 34px);
+      padding: clamp(22px, 5vw, 38px);
       display: grid;
-      gap: 18px;
-      background: linear-gradient(150deg, #ffffff 0%, #f4f8ff 56%, #eaf1ff 100%);
-      border-color: #c5d6ef;
-      box-shadow: 0 14px 34px rgba(15, 35, 75, 0.1);
+      gap: 20px;
+      background: linear-gradient(155deg, #ffffff 0%, #f4f7ff 55%, #e9f0ff 100%);
+      border: 1px solid #c1d2ec;
+      box-shadow: 0 18px 40px rgba(12, 30, 66, 0.11);
     }
 
     .hero::after {
       content: "";
       position: absolute;
-      top: -70px;
-      right: -70px;
-      width: 190px;
-      height: 190px;
-      background: radial-gradient(circle at center, rgba(31, 79, 191, 0.2) 0%, rgba(31, 79, 191, 0) 72%);
+      top: -88px;
+      right: -68px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle at center, rgba(31, 79, 191, 0.24) 0%, rgba(31, 79, 191, 0) 72%);
       pointer-events: none;
     }
 
@@ -47,29 +47,29 @@
 
     .hero h1 {
       margin: 0;
-      font-size: clamp(1.6rem, 4.3vw, 2.2rem);
-      line-height: 1.25;
+      font-size: clamp(1.75rem, 4.8vw, 2.45rem);
+      line-height: 1.2;
       letter-spacing: .01em;
-      color: #102341;
+      color: #0f2140;
     }
 
     .hero .sub {
       margin: 0;
-      color: #30466d;
-      font-size: clamp(.95rem, 2.4vw, 1.05rem);
-      line-height: 1.85;
+      color: #2e446b;
+      font-size: clamp(1rem, 2.7vw, 1.1rem);
+      line-height: 1.9;
       max-width: 68ch;
       position: relative;
       z-index: 1;
     }
 
     .today {
-      color: #29436d;
-      font-size: .84rem;
+      color: #213f70;
+      font-size: .85rem;
       padding: 6px 12px;
-      border: 1px solid #bfd0ec;
-      background: #ffffffcc;
-      backdrop-filter: blur(3px);
+      border: 1px solid #b8cae7;
+      background: #ffffffd4;
+      backdrop-filter: blur(4px);
       border-radius: 999px;
       font-weight: 700;
       white-space: nowrap;
@@ -95,61 +95,63 @@
       display: inline-flex;
       justify-content: center;
       align-items: center;
-      min-height: 48px;
-      padding: 8px 14px;
-      border-radius: 12px;
-      border: 1px solid #b8cbed;
+      min-height: 52px;
+      padding: 10px 14px;
+      border-radius: 13px;
+      border: 1px solid #a9bfe3;
       background: #fff;
-      color: #193e87;
-      font-size: .9rem;
+      color: #173b82;
+      font-size: .95rem;
       font-weight: 700;
-      box-shadow: 0 6px 18px rgba(20, 45, 91, 0.08);
+      text-align: center;
+      box-shadow: 0 8px 19px rgba(20, 45, 91, 0.1);
       transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
 
     .quick-links a:hover,
     .quick-links a:focus-visible {
       text-decoration: none;
-      background: #f5f9ff;
-      border-color: #9fb9e5;
+      background: #f4f8ff;
+      border-color: #92addc;
       transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(20, 45, 91, 0.11);
+      box-shadow: 0 11px 22px rgba(20, 45, 91, 0.12);
     }
 
     .flow {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
     }
 
     .flow-step {
       background: #fff;
-      border: 1px solid #d0ddef;
-      border-radius: 12px;
-      padding: 10px 12px;
+      border: 1px solid #cbd9ee;
+      border-radius: 14px;
+      padding: 12px;
     }
 
     .flow-step strong {
       display: block;
-      font-size: .8rem;
-      color: #3a5382;
-      margin-bottom: 3px;
+      font-size: .79rem;
+      color: #3b5486;
+      margin-bottom: 5px;
+      letter-spacing: .02em;
     }
 
     .flow-step span {
-      font-size: .87rem;
-      line-height: 1.6;
-      color: #223554;
+      font-size: .9rem;
+      line-height: 1.65;
+      color: #213453;
     }
 
     .menu-section {
       display: grid;
-      gap: 12px;
+      gap: 13px;
       background: #fff;
-      border: 1px solid #d4deec;
-      border-radius: 14px;
-      padding: clamp(14px, 3vw, 18px);
-      box-shadow: 0 6px 16px rgba(16, 40, 86, 0.05);
+      border: 1px solid #cedbec;
+      border-radius: 16px;
+      padding: clamp(16px, 3vw, 20px);
+      box-shadow: 0 8px 18px rgba(16, 40, 86, 0.06);
     }
 
     .section-head {
@@ -162,86 +164,94 @@
 
     .section-title {
       margin: 0;
-      font-size: 1.16rem;
-      color: #152744;
+      font-size: 1.24rem;
+      line-height: 1.35;
+      color: #122848;
     }
 
     .section-note {
       margin: 0;
-      color: #556887;
-      font-size: .9rem;
-      line-height: 1.7;
-      max-width: 68ch;
+      color: #526784;
+      font-size: .94rem;
+      line-height: 1.8;
+      max-width: 70ch;
     }
 
     .menu-grid {
       display: grid;
-      gap: 11px;
+      gap: 12px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .menu-card {
       display: grid;
-      gap: 7px;
-      border: 1px solid #cfdbeb;
-      border-radius: 13px;
-      padding: 14px;
+      gap: 8px;
+      border: 1px solid #c6d6eb;
+      border-radius: 14px;
+      padding: 15px;
       color: var(--text);
       background: #fff;
-      min-height: 108px;
-      box-shadow: 0 5px 14px rgba(16, 40, 86, 0.05);
+      min-height: 114px;
+      box-shadow: 0 6px 14px rgba(16, 40, 86, 0.05);
       transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
 
-    .menu-card strong { font-size: 1.02rem; line-height: 1.45; }
-    .menu-card small { color: #5c6e8b; font-size: .86rem; line-height: 1.7; }
+    .menu-card strong { font-size: 1.03rem; line-height: 1.45; color: #152948; }
+    .menu-card small { color: #576b8c; font-size: .88rem; line-height: 1.75; }
 
     .menu-card:hover,
     .menu-card:focus-visible {
       text-decoration: none;
-      border-color: #a4bbdf;
-      box-shadow: 0 12px 22px rgba(16, 40, 86, 0.11);
+      border-color: #99b5de;
+      box-shadow: 0 12px 24px rgba(16, 40, 86, 0.11);
       transform: translateY(-1px);
     }
 
     .menu-card.primary-link {
-      border-color: #b7ccea;
-      background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+      border-color: #adc3e6;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
     }
 
     .help {
-      padding: 14px;
+      padding: 15px;
       display: grid;
-      gap: 5px;
-      background: #f7faff;
-      border: 1px solid #d3dff1;
-      border-radius: 12px;
+      gap: 6px;
+      background: #f5f8ff;
+      border: 1px solid #d0def2;
+      border-radius: 13px;
     }
 
     .help p {
       margin: 0;
-      font-size: .87rem;
-      color: #3e5578;
-      line-height: 1.75;
+      font-size: .9rem;
+      color: #374f75;
+      line-height: 1.8;
     }
 
     .guide {
       margin: 2px 0 0;
-      color: #5a6d8d;
-      font-size: .84rem;
+      color: #4f6486;
+      font-size: .86rem;
       text-align: center;
       line-height: 1.8;
     }
 
     @media (max-width: 760px) {
-      .home { gap: 14px; }
-      .hero { gap: 14px; }
+      .home { gap: 16px; padding-top: 14px; }
+      .hero { gap: 16px; padding: 16px; border-radius: 16px; }
+      .hero h1 { font-size: 1.55rem; }
+      .hero .sub { font-size: .96rem; line-height: 1.8; }
+      .today { width: 100%; text-align: center; font-size: .8rem; }
+      .hero-meta { gap: 6px; }
       .quick-links,
       .menu-grid,
       .flow { grid-template-columns: 1fr; }
+      .quick-links a { justify-content: flex-start; padding-inline: 12px; font-size: .94rem; }
+      .flow-step { padding: 11px 12px; }
       .menu-card { min-height: 0; padding: 13px; }
-      .section-title { font-size: 1.06rem; }
-      .section-note { font-size: .88rem; }
+      .section-title { font-size: 1.1rem; }
+      .section-note { font-size: .89rem; line-height: 1.75; }
+      .chip { font-size: .75rem; }
     }
   </style>
 </head>
@@ -249,10 +259,10 @@
   <main class="wrap home">
     <section class="card hero">
       <div class="hero-head">
-        <h1>作業メニュー</h1>
+        <h1>労働衛生・作業環境測定ハブ</h1>
         <div class="today">本日 <span id="todayLabel">-</span></div>
       </div>
-      <p class="sub">労働衛生・作業環境測定の実務ページを、業務の流れに沿って集約しています。まずは「よく使う3機能」から開始し、日次業務→分析確認→補助運用の順で進めると作業が途切れにくくなります。</p>
+      <p class="sub">労働衛生・作業環境測定の実務ページを、現場の作業順に整理したホームです。まずは「よく使う3機能」から開始し、日次業務→分析確認→補助運用の順で進めると、測定記録までの流れを止めにくくなります。</p>
       <div class="hero-meta">
         <span class="chip">白×ネイビー基調</span>
         <span class="chip">モバイル最適化</span>
@@ -264,9 +274,9 @@
         <a href="gc-method-finder.html">GC条件提案を開く</a>
       </nav>
       <div class="flow" aria-label="推奨利用フロー">
-        <div class="flow-step"><strong>STEP 1</strong><span>日次業務で入力・計画</span></div>
-        <div class="flow-step"><strong>STEP 2</strong><span>分析ツールで条件確認</span></div>
-        <div class="flow-step"><strong>STEP 3</strong><span>補助機能で印刷・更新</span></div>
+        <div class="flow-step"><strong>STEP 1</strong><span>日次業務で入力と計画</span></div>
+        <div class="flow-step"><strong>STEP 2</strong><span>分析ツールで条件を確認</span></div>
+        <div class="flow-step"><strong>STEP 3</strong><span>補助機能で印刷と更新</span></div>
       </div>
     </section>
 
