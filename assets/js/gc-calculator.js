@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260826-std-sync-1';
+  const CACHE_VERSION = '20260827-selection-stable-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -190,7 +190,7 @@
   }
 
   function renderRows() {
-    els.rowsContainer.innerHTML = `${buildDatalistHtml()}${state.rows.map((r) => renderRow(r)).join('')}`;
+    els.rowsContainer.innerHTML = state.rows.map((r) => renderRow(r)).join('');
     state.rows.forEach((row) => {
       const root = els.rowsContainer.querySelector(`[data-row-id="${row.id}"]`);
       if (root) bindRowEvents(root, row.id);
@@ -198,13 +198,8 @@
     syncFavoriteChipState();
   }
 
-  function buildDatalistHtml() {
-    return `<datalist id="materialOptions">${state.materials.map((m) => `<option value="${escapeHtml(m.displayName)}"></option>`).join('')}</datalist>`;
-  }
-
   function renderRow(row) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
-    syncAutomaticStd(row, material);
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択してください');
@@ -214,25 +209,46 @@
     const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認してください</span>' : '';
     const manualBadge = row.stdManual ? '<span class="badge badge-manual">手入力</span>' : '';
     const unregisteredNote = `<div class="unregistered-note" ${isUnregistered ? '' : 'hidden'}><strong>この物質はマスタ未登録です。</strong><span>「STDを手入力する」で計算できます。繰り返し使う場合は、下の「一覧にない物質」へ保存できます。</span></div>`;
+    const unregisteredEntry = `<details class="unregistered-entry" ${isUnregistered ? 'open' : ''}>
+      <summary>一覧にない物質を一時的に使う</summary>
+      <div class="unregistered-entry__body">
+        <label>物質名<input type="text" class="unregistered-material-input" value="${escapeHtml(isUnregistered ? row.materialInput : '')}" placeholder="例：シクロヘキサノン" autocomplete="off" enterkeyhint="done"></label>
+        <button type="button" class="plain unregistered-material-apply">未登録として設定</button>
+        <p>STDは自動では入りません。設定後に「STDを手入力する」を押して入力します。</p>
+      </div>
+    </details>`;
     return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}" data-row-id="${escapeHtml(row.id)}">
       <div class="row-head"><h3 class="row-title">${escapeHtml(title)}</h3><button type="button" class="danger remove-row-btn">削除</button></div>
       <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : (isUnregistered ? '未登録物質の計算カード' : '空の計算カード'))}</div>
       <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
       <div class="row-grid">
-      <div class="field wide"><label>物質を検索・入力<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw_label / 別名で検索" autocomplete="off" enterkeyhint="next"></label></div>
+      <div class="field wide"><label>物質を選択<select class="material-select">${buildMaterialSelectOptions(material?.key || '')}</select></label></div>
       <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(row.stdInput)}" readonly></label></div>
       <div class="field"><label>当日STDエリア<input type="text" class="std-area-input" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}"></label></div>
       <div class="field"><label>係数<div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div></label></div>
       <div class="field"><label>検体エリア<input type="text" class="sample-area-input" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}"></label></div>
       <div class="field"><label>ppm<div class="result-box ppm-output">${escapeHtml(calc.ppmText || '—')}</div></label></div>
       <div class="field wide"><label>メモ欄<input type="text" class="memo-input" value="${escapeHtml(row.memo)}"></label></div>
-      </div>${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
+      </div>${unregisteredEntry}${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
     </article>`;
+  }
+
+  function buildMaterialSelectOptions(selectedKey) {
+    const common = findMaterialsByNames(MAIN_CHIP_NAMES);
+    const liquid = findMaterialsByNames(LIQUID_STD_NAMES);
+    const other = findMaterialsByNames(OTHER_CHIP_NAMES);
+    const used = new Set([...common, ...liquid, ...other].map((material) => material.key));
+    const custom = state.materials.filter((material) => material.isCustom && !used.has(material.key));
+    const remaining = state.materials.filter((material) => !material.isCustom && !used.has(material.key));
+    const group = (label, materials) => materials.length ? `<optgroup label="${escapeHtml(label)}">${materials.map((material) => `<option value="${escapeHtml(material.key)}" ${material.key === selectedKey ? 'selected' : ''}>${escapeHtml(material.displayName)}</option>`).join('')}</optgroup>` : '';
+    return `<option value="">選択してください</option>${group('よく使う物質', common)}${group('液体STD・その他', liquid)}${group('その他の登録済み物質', [...other, ...remaining])}${group('この端末の登録', custom)}`;
   }
 
   function bindRowEvents(root, rowId) {
     const row = state.rows.find((r) => r.id === rowId);
-    const materialInput = root.querySelector('.material-input');
+    const materialSelect = root.querySelector('.material-select');
+    const unregisteredMaterialInput = root.querySelector('.unregistered-material-input');
+    const unregisteredMaterialApply = root.querySelector('.unregistered-material-apply');
     const stdInput = root.querySelector('.std-input');
     const stdAreaInput = root.querySelector('.std-area-input');
     const sampleAreaInput = root.querySelector('.sample-area-input');
@@ -240,15 +256,19 @@
 
     const updateOnly = () => { updateRowComputedView(root, row); persist(); };
 
-    materialInput.addEventListener('focus', () => { state.activeRowId = rowId; });
-    materialInput.addEventListener('input', () => applyMaterialSelection(row, materialInput.value, root));
-    materialInput.addEventListener('change', () => applyMaterialSelection(row, materialInput.value, root));
-    materialInput.addEventListener('blur', () => applyMaterialSelection(row, materialInput.value, root));
+    root.addEventListener('focusin', () => { state.activeRowId = rowId; });
+    materialSelect.addEventListener('change', () => applyRegisteredMaterial(row, materialSelect.value, root));
+    unregisteredMaterialApply.addEventListener('click', () => applyUnregisteredMaterial(row, unregisteredMaterialInput.value, root));
+    unregisteredMaterialInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      applyUnregisteredMaterial(row, unregisteredMaterialInput.value, root);
+    });
 
-    stdInput.addEventListener('input', () => { state.activeRowId = rowId; row.stdInput = stdInput.value; row.stdManual = true; updateOnly(); });
+    stdInput.addEventListener('input', () => { row.stdInput = stdInput.value; row.stdManual = true; updateOnly(); });
     stdInput.addEventListener('focus', () => { if (stdInput.readOnly) showStatus('STDは自動反映です。手入力する場合は「STDを手入力する」を押してください。'); });
-    stdAreaInput.addEventListener('input', () => { state.activeRowId = rowId; row.stdAreaInput = stdAreaInput.value; updateOnly(); });
-    sampleAreaInput.addEventListener('input', () => { state.activeRowId = rowId; row.sampleAreaInput = sampleAreaInput.value; updateOnly(); });
+    stdAreaInput.addEventListener('input', () => { row.stdAreaInput = stdAreaInput.value; updateOnly(); });
+    sampleAreaInput.addEventListener('input', () => { row.sampleAreaInput = sampleAreaInput.value; updateOnly(); });
     memoInput.addEventListener('input', () => { row.memo = memoInput.value; persist(); });
 
     root.querySelector('.remove-row-btn').addEventListener('click', () => {
@@ -281,11 +301,11 @@
     toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
   }
 
-  function applyMaterialSelection(row, text, root) {
+  function applyRegisteredMaterial(row, materialKey, root) {
     state.activeRowId = row.id;
-    const selected = findStdEntry(text);
+    const selected = findMaterialByKey(materialKey);
     if (!selected) {
-      clearRowMaterialSelection(row, text);
+      clearRowMaterialSelection(row, '');
       updateRowComputedView(root, row, true);
       persist();
       return;
@@ -294,10 +314,28 @@
     const duplicate = state.rows.some((r) => r.id !== row.id && resolveMaterial(r.materialInput, r.materialKey)?.displayName === selected.displayName);
     if (!isSameMaterial && duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
     setRowMaterial(row, selected, { preserveManualStd: isSameMaterial && row.stdManual });
-    const materialInput = root.querySelector('.material-input');
-    if (materialInput) materialInput.value = row.materialInput;
+    const materialSelect = root.querySelector('.material-select');
+    if (materialSelect) materialSelect.value = selected.key;
+    const unregisteredMaterialInput = root.querySelector('.unregistered-material-input');
+    if (unregisteredMaterialInput) unregisteredMaterialInput.value = '';
     updateRowComputedView(root, row, true);
     persist();
+  }
+
+  function applyUnregisteredMaterial(row, text, root) {
+    const name = String(text || '').trim();
+    if (!name) {
+      showStatus('未登録として使う物質名を入力してください。', true);
+      root.querySelector('.unregistered-material-input')?.focus();
+      return;
+    }
+    state.activeRowId = row.id;
+    clearRowMaterialSelection(row, name);
+    const materialSelect = root.querySelector('.material-select');
+    if (materialSelect) materialSelect.value = '';
+    updateRowComputedView(root, row, true);
+    persist();
+    showStatus(`「${name}」を未登録物質として設定しました。`);
   }
 
   function clearRowMaterialSelection(row, text) {
@@ -333,7 +371,6 @@
 
   function updateRowComputedView(root, row, rerenderHead = false) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
-    syncAutomaticStd(row, material);
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     root.querySelector('.coefficient-output').textContent = calc.coefficientText;
@@ -368,10 +405,16 @@
   }
 
   function resolveMaterial(input, materialKey = '') {
+    if (materialKey) {
+      const byKey = findMaterialByKey(materialKey);
+      if (byKey) return byKey;
+    }
     const normalizedInput = normalize(input);
-    if (normalizedInput) return state.searchLookup.get(normalizedInput) || null;
-    if (materialKey) return state.materials.find((m) => m.key === materialKey) || null;
-    return null;
+    return normalizedInput ? state.searchLookup.get(normalizedInput) || null : null;
+  }
+
+  function findMaterialByKey(materialKey) {
+    return state.materials.find((material) => material.key === materialKey) || null;
   }
 
   function findStdEntry(input) {
@@ -389,12 +432,13 @@
   }
 
   function syncAutomaticStd(row, material) {
+    // 自動STDは物質を確定した時・自動値へ戻した時・起動時だけ設定する。
+    // エリアやメモの入力中に再計算で書き換えると、表示中のSTDが途中で変わる。
     if (!row.stdManual) row.stdInput = automaticStdText(material);
   }
 
   function calculate(row, material) {
-    const stdText = row.stdManual ? row.stdInput : automaticStdText(material);
-    const std = parseNumber(stdText); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
+    const std = parseNumber(row.stdInput); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
     if (!std.valid || !stdArea.valid || !sample.valid) return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
     if (std.empty) {
       const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
@@ -415,7 +459,6 @@
     const parts = ['GC濃度計算', `日付: ${todayIso()}`, ''];
     state.rows.forEach((row) => {
       const material = resolveMaterial(row.materialInput, row.materialKey);
-      syncAutomaticStd(row, material);
       const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
       const calc = calculate(row, material);
@@ -428,7 +471,6 @@
     const lines = [['日付', '物質', 'STD', 'STDエリア', '係数', '検体エリア', 'ppm', '状態', 'メモ'].join(',')];
     state.rows.forEach((row) => {
       const material = resolveMaterial(row.materialInput, row.materialKey);
-      syncAutomaticStd(row, material);
       const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
       const calc = calculate(row, material);
@@ -469,9 +511,9 @@
     normalizeCardsState();
     const row = state.rows.find((r) => r.id === state.activeRowId) || state.rows[0];
     const root = els.rowsContainer.querySelector(`[data-row-id="${row.id}"]`);
-    if (root) {
-      root.querySelector('.material-input').value = displayName;
-      applyMaterialSelection(row, displayName, root);
+    const material = findStdEntry(displayName);
+    if (root && material) {
+      applyRegisteredMaterial(row, material.key, root);
       showStatus('よく使う物質を反映しました。');
     }
   }
@@ -623,7 +665,6 @@
   }
   function persist() {
     normalizeCardsState();
-    state.rows.forEach((row) => syncAutomaticStd(row, resolveMaterial(row.materialInput, row.materialKey)));
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value }));
   }
   async function fetchJsonSafe(path, fallback) { try { const r = await fetch(path); return r.ok ? await r.json() : fallback; } catch { return fallback; } }
