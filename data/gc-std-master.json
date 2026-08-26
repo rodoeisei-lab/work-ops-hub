@@ -495,5 +495,22 @@
       "シクロヘキサン",
       "cyclohexane"
     ]
+  },
+  {
+    "raw_label": "cyclohexanone",
+    "normalized_name": "cyclohexanone",
+    "display_name": "シクロヘキサノン",
+    "std_value": null,
+    "rt": null,
+    "area": null,
+    "coefficient": null,
+    "nd_line": null,
+    "confidence": "low",
+    "status": "needs_review",
+    "note": "STD値は未登録。使用時は当日のSTD値を確認して手入力してください",
+    "aliases": [
+      "シクロヘキサノン",
+      "cyclohexanone"
+    ]
   }
 ]

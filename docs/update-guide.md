@@ -7,6 +7,7 @@
 - GC条件提案: `gc-method-finder.html`, `assets/js/gc-finder.js`, `assets/css/gc-finder.css`
 - RTライブラリ: `gc-rt-library.html`, `assets/js/gc-rt-library.js`, `assets/css/gc-rt-library.css`
 - STDマスタ: `gc-std-master.html`, `assets/js/gc-std-master.js`, `assets/css/gc-std-master.css`
+- GC係数・ppm計算: `gc-calculator.html`, `assets/js/gc-calculator.js`, `assets/css/gc-calculator.css`
 
 ## 2) 在庫関連更新
 - 品目追加: `data/inventory-items.json`
@@ -35,10 +36,16 @@
 - `要確認のみ表示` でレビュー対象を抽出
 - STD値は右寄せ表示、備考は折り返し
 
-## 7) 匿名コード運用の注意
+## 7) GC係数・ppm計算の使い方
+1. ホーム上部の「GC係数・ppm計算」を開く
+2. 計算カードを選び、よく使う物質または検索欄から物質を指定
+3. 当日STDエリア、検体エリアを入力
+4. 未登録物質は「STDを手入力する」を使う。繰り返し使う場合だけ端末内候補へ追加
+
+## 8) 匿名コード運用の注意
 - 公開データは匿名コードのみ（A01形式）
 - 実名対応表をリポジトリに置かない
 
-## 8) 補足
+## 9) 補足
 - 発注点・在庫データと、GCのRT/STDデータは別管理
 - 外部APIなし・ビルド不要・静的ファイルのみで運用

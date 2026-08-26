@@ -73,6 +73,10 @@
     {
       "normalized_name": "cyclohexane",
       "display_name": "シクロヘキサン"
+    },
+    {
+      "normalized_name": "cyclohexanone",
+      "display_name": "シクロヘキサノン"
     }
   ]
 }

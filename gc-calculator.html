@@ -10,37 +10,72 @@
 <body>
   <main class="wrap gc-calculator-page">
     <header class="card section-block page-header">
-      <a href="#rowsTitle" class="hint no-print">計算カードへ移動</a>
-      <h1>GC濃度計算</h1>
+      <a href="index.html" class="back-home-link no-print">← ホームへ戻る</a>
+      <h1>GC係数・ppm計算</h1>
       <p>STD値と当日のSTDエリアから係数を計算し、検体エリアからppmを算出します。</p>
-      <p class="hint">式: 係数 = STD ÷ STDエリア / ppm = 検体エリア × 係数</p>
+      <ol class="calc-steps" aria-label="計算の手順">
+        <li><strong>物質を選ぶ</strong></li>
+        <li><strong>当日STDエリアを入力</strong></li>
+        <li><strong>検体エリアを入力</strong></li>
+      </ol>
+      <p class="hint">式: 係数 = STD ÷ STDエリア ／ ppm = 検体エリア × 係数</p>
     </header>
 
-    <section class="card section-block actions-block no-print" aria-label="操作">
-      <div class="actions-grid">
-        <button id="addRowBtn" type="button" class="plain">計算カードを追加</button>
-        <button id="clearAllBtn" type="button" class="danger">入力を消す</button>
-        <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー用テキスト作成</button>
-        <button id="copyResultBtn" type="button" class="success">計算結果をコピー</button>
-        <button id="downloadCsvBtn" type="button" class="primary">CSV保存</button>
-      </div>
-      <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
-    </section>
-
-    <section class="card section-block" aria-labelledby="favoriteTitle">
+    <section class="card section-block quick-select-block no-print" aria-labelledby="favoriteTitle">
       <h2 id="favoriteTitle">よく使う物質</h2>
-      <p class="hint">タップすると現在の計算カードへ上書き反映します。</p>
-      <div id="favoriteCommonChips" class="quick-chips" aria-label="通常よく使う物質"></div>
-    </section>
-
-    <section class="card section-block" aria-labelledby="liquidStdTitle">
-      <h2 id="liquidStdTitle">液体STD</h2>
-      <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体STD"></div>
+      <p class="hint">計算カードを選んでからタップすると、そのカードへ反映します。</p>
+      <div id="favoriteCommonChips" class="quick-chips quick-chips--scroll" aria-label="通常よく使う物質"></div>
+      <details class="secondary-materials">
+        <summary>液体STD・その他の登録済み物質を選ぶ</summary>
+        <div class="secondary-materials__body">
+          <div>
+            <h3>液体STD</h3>
+            <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体STD"></div>
+          </div>
+          <div>
+            <h3>その他の物質</h3>
+            <div id="favoriteOtherChips" class="quick-chips" aria-label="その他のよく使う物質"></div>
+          </div>
+        </div>
+      </details>
     </section>
 
     <section class="card section-block" aria-labelledby="rowsTitle">
-      <h2 id="rowsTitle">計算カード</h2>
+      <div class="rows-heading">
+        <div>
+          <h2 id="rowsTitle">計算カード</h2>
+          <p class="hint">物質名は検索欄へ直接入力できます。</p>
+        </div>
+        <button id="addRowBtn" type="button" class="plain no-print">＋ 計算カードを追加</button>
+      </div>
       <div id="rowsContainer" class="rows-container"></div>
+    </section>
+
+    <section class="card section-block custom-material-block no-print" aria-labelledby="customMaterialTitle">
+      <h2 id="customMaterialTitle">一覧にない物質</h2>
+      <details>
+        <summary>物質名とSTD値を、この端末の候補に追加する</summary>
+        <div class="custom-material-block__body">
+          <p class="hint">共有マスタは変更しません。よく使う未登録物質だけを、この端末の候補として保存します。</p>
+          <div class="custom-material-form">
+            <label>物質名<input id="customMaterialName" type="text" autocomplete="off" placeholder="例：シクロヘキサノン"></label>
+            <label>STD値<input id="customStdValue" type="text" inputmode="decimal" autocomplete="off" placeholder="例：25.0"></label>
+            <button id="addCustomMaterialBtn" type="button" class="plain">この端末に追加</button>
+          </div>
+          <div id="customMaterialList" class="custom-material-list" aria-live="polite"></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card section-block actions-block no-print" aria-label="保存・出力">
+      <h2>保存・出力</h2>
+      <div class="actions-grid">
+        <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー用テキスト作成</button>
+        <button id="copyResultBtn" type="button" class="success">計算結果をコピー</button>
+        <button id="downloadCsvBtn" type="button" class="primary">CSV保存</button>
+        <button id="clearAllBtn" type="button" class="danger">入力を消す</button>
+      </div>
+      <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
     </section>
 
     <section class="card section-block" aria-labelledby="copyTitle">
