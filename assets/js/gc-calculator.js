@@ -3,12 +3,13 @@
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
   const STORAGE_KEY = 'gc-calculator-state-v4';
+  const CUSTOM_MATERIALS_STORAGE_KEY = 'gc-calculator-custom-materials-v1';
   const LEGACY_STORAGE_KEYS = ['gc-calculator-state-v3', 'gc-calculator-state-v2'];
-  const DEFAULT_ROWS = 1;
   const MAIN_CHIP_NAMES = ['メタノール', 'アセトン', 'IPA', 'n-ヘキサン', 'MEK', '酢酸エチル', 'イソブタノール', '1-ブタノール', 'MIBK', 'トルエン', '酢酸イソブチル', '酢酸ブチル', 'エチルベンゼン', 'p-キシレン', 'o-キシレン'];
-  const LIQUID_STD_NAMES = ['ブチセロ', 'スチレン', 'シクロヘキサン'];
+  const LIQUID_STD_NAMES = ['ブチルセロソルブ', 'スチレン', 'シクロヘキサン', 'シクロヘキサノン'];
+  const OTHER_CHIP_NAMES = ['ジクロロメタン', '2-ブタノール', 'エチルセロソルブ', 'メチルセロソルブ', 'セロソルブアセテート', '酢酸イソペンチル', 'トリクレン', 'THF', 'クレゾール'];
 
-  const STATUS_LABEL = { confirmed: '確定', provisional: '仮登録', needs_review: 'STD要確認' };
+  const STATUS_LABEL = { confirmed: '確定', provisional: '仮登録', needs_review: 'STD要確認', custom: 'この端末の登録' };
 
   const els = {
     rowsContainer: document.getElementById('rowsContainer'),
@@ -20,7 +21,12 @@
     copyTextOutput: document.getElementById('copyTextOutput'),
     statusMessage: document.getElementById('statusMessage'),
     favoriteCommonChips: document.getElementById('favoriteCommonChips'),
-    favoriteLiquidChips: document.getElementById('favoriteLiquidChips')
+    favoriteLiquidChips: document.getElementById('favoriteLiquidChips'),
+    favoriteOtherChips: document.getElementById('favoriteOtherChips'),
+    customMaterialName: document.getElementById('customMaterialName'),
+    customStdValue: document.getElementById('customStdValue'),
+    addCustomMaterialBtn: document.getElementById('addCustomMaterialBtn'),
+    customMaterialList: document.getElementById('customMaterialList')
   };
 
   const state = {
@@ -31,7 +37,8 @@
     activeRowId: null,
     favorites: { common: [], liquid_standard: [] },
     analyteAliases: {},
-    analyteDisplay: {}
+    analyteDisplay: {},
+    customMaterials: []
   };
 
   init();
@@ -44,6 +51,7 @@
     if (!state.rows.length) state.rows.push(createEmptyRow());
     renderRows();
     renderFavoriteChips();
+    renderCustomMaterialList();
     showStatus('入力内容はこの端末に自動保存されます。');
   }
 
@@ -98,17 +106,34 @@
     });
 
     els.copyTextOutput.addEventListener('input', persist);
+
+    els.addCustomMaterialBtn.addEventListener('click', addCustomMaterial);
+    [els.customMaterialName, els.customStdValue].forEach((input) => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        addCustomMaterial();
+      });
+    });
   }
 
   async function loadMaster() {
     const res = await fetch(DATA_PATH, { cache: 'no-cache' });
-    const rows = await res.json();
-    state.materials = (Array.isArray(rows) ? rows : []).map((item, index) => {
-      const displayName = item.display_name || item.normalized_name || item.raw_label || `物質${index + 1}`;
+    const masterRows = await res.json();
+    state.customMaterials = loadCustomMaterials();
+    state.optionLookup = new Map();
+    state.searchLookup = new Map();
+    const sourceRows = [
+      ...state.customMaterials.map((item, sourceIndex) => ({ item, isCustom: true, sourceIndex })),
+      ...(Array.isArray(masterRows) ? masterRows : []).map((item, sourceIndex) => ({ item, isCustom: false, sourceIndex }))
+    ];
+    const usedNames = new Set();
+    state.materials = sourceRows.map(({ item, isCustom, sourceIndex }) => {
+      const displayName = item.display_name || item.normalized_name || item.raw_label || `物質${sourceIndex + 1}`;
       const rawLabel = item.raw_label || '';
       const stdValue = Number(item.std_value);
       return {
-        key: `m_${index}`,
+        key: isCustom ? `c_${item.id}` : `m_${sourceIndex}`,
         optionLabel: displayName,
         displayName,
         rawLabel,
@@ -117,8 +142,14 @@
         stdValue: Number.isFinite(stdValue) ? stdValue : null,
         confidence: String(item.confidence || ''),
         status: String(item.status || ''),
-        note: String(item.note || '')
+        note: String(item.note || ''),
+        isCustom
       };
+    }).filter((material) => {
+      const key = normalize(material.displayName);
+      if (!key || usedNames.has(key)) return false;
+      usedNames.add(key);
+      return true;
     });
 
     state.materials.forEach((m) => {
@@ -170,24 +201,27 @@
   function renderRow(row) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
     const calc = calculate(row, material);
-    const title = material?.displayName || '物質を選択してください';
+    const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
+    const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択してください');
     const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
-    const statusBadge = material?.status && material.status !== 'confirmed' ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
+    const statusBadge = material?.status && !['confirmed', 'custom'].includes(material.status) ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
+    const customBadge = material?.isCustom ? '<span class="badge badge-custom">この端末の登録</span>' : '';
     const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認してください</span>' : '';
     const manualBadge = row.stdManual ? '<span class="badge badge-manual">手入力</span>' : '';
-    return `<article class="calc-row" data-row-id="${escapeHtml(row.id)}">
+    const unregisteredNote = `<div class="unregistered-note" ${isUnregistered ? '' : 'hidden'}><strong>この物質はマスタ未登録です。</strong><span>「STDを手入力する」で計算できます。繰り返し使う場合は、下の「一覧にない物質」へ保存できます。</span></div>`;
+    return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}" data-row-id="${escapeHtml(row.id)}">
       <div class="row-head"><h3 class="row-title">${escapeHtml(title)}</h3><button type="button" class="danger remove-row-btn">削除</button></div>
-      <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : '空の計算カード')}</div>
-      <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${stdNeedsCheck}${manualBadge}</div>
+      <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : (isUnregistered ? '未登録物質の計算カード' : '空の計算カード'))}</div>
+      <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
       <div class="row-grid">
-      <div class="field wide"><label>全物質から選択<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw_label / 別名で検索"></label></div>
+      <div class="field wide"><label>物質を検索・入力<input type="search" class="material-input" list="materialOptions" value="${escapeHtml(row.materialInput)}" placeholder="物質名 / raw_label / 別名で検索" autocomplete="off" enterkeyhint="next"></label></div>
       <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(row.stdInput)}" readonly></label></div>
       <div class="field"><label>当日STDエリア<input type="text" class="std-area-input" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}"></label></div>
       <div class="field"><label>係数<div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div></label></div>
       <div class="field"><label>検体エリア<input type="text" class="sample-area-input" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}"></label></div>
       <div class="field"><label>ppm<div class="result-box ppm-output">${escapeHtml(calc.ppmText || '—')}</div></label></div>
       <div class="field wide"><label>メモ欄<input type="text" class="memo-input" value="${escapeHtml(row.memo)}"></label></div>
-      </div><div class="error-text">${escapeHtml(calc.errorText)}</div>
+      </div>${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
     </article>`;
   }
 
@@ -202,11 +236,17 @@
     const updateOnly = () => { updateRowComputedView(root, row); persist(); };
 
     materialInput.addEventListener('focus', () => { state.activeRowId = rowId; });
+    materialInput.addEventListener('input', () => {
+      state.activeRowId = rowId;
+      row.materialInput = materialInput.value;
+      row.materialKey = '';
+      persist();
+    });
     materialInput.addEventListener('change', () => applyMaterialSelection(row, materialInput.value, root));
     materialInput.addEventListener('blur', () => applyMaterialSelection(row, materialInput.value, root));
 
     stdInput.addEventListener('input', () => { state.activeRowId = rowId; row.stdInput = stdInput.value; row.stdManual = true; updateOnly(); });
-    stdInput.addEventListener('focus', () => { if (stdInput.readOnly) showStatus('STDは自動反映です。手入力したい場合は「手入力に切替」を押してください。'); });
+    stdInput.addEventListener('focus', () => { if (stdInput.readOnly) showStatus('STDは自動反映です。手入力する場合は「STDを手入力する」を押してください。'); });
     stdAreaInput.addEventListener('input', () => { state.activeRowId = rowId; row.stdAreaInput = stdAreaInput.value; updateOnly(); });
     sampleAreaInput.addEventListener('input', () => { state.activeRowId = rowId; row.sampleAreaInput = sampleAreaInput.value; updateOnly(); });
     memoInput.addEventListener('input', () => { row.memo = memoInput.value; persist(); });
@@ -222,7 +262,7 @@
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn-ghost std-toggle-btn';
-    toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
+    toggleBtn.textContent = row.stdManual ? '自動値に戻す' : 'STDを手入力する';
     toggleBtn.addEventListener('click', () => {
       row.stdManual = !row.stdManual;
       if (!row.stdManual) {
@@ -231,12 +271,14 @@
       }
       stdInput.readOnly = !row.stdManual;
       stdInput.classList.toggle('std-auto', !row.stdManual);
-      toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
+      toggleBtn.textContent = row.stdManual ? '自動値に戻す' : 'STDを手入力する';
+      toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
       updateOnly();
     });
     const stdField = root.querySelector('.std-input')?.closest('.field');
     if (stdField) stdField.appendChild(toggleBtn);
     stdInput.readOnly = !row.stdManual;
+    toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
   }
 
   function applyMaterialSelection(row, text, root) {
@@ -252,12 +294,18 @@
       row.confidence = '';
       row.note = '';
       if (!row.stdManual) row.stdInput = '';
-      updateRowComputedView(root, row);
+      updateRowComputedView(root, row, true);
       persist();
       return;
     }
-    const duplicate = state.rows.some((r) => r.id !== row.id && resolveMaterial(r.materialInput)?.displayName === selected.displayName);
+    const duplicate = state.rows.some((r) => r.id !== row.id && resolveMaterial(r.materialInput, r.materialKey)?.displayName === selected.displayName);
     if (duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
+    setRowMaterial(row, selected);
+    updateRowComputedView(root, row, true);
+    persist();
+  }
+
+  function setRowMaterial(row, selected) {
     row.materialInput = selected.displayName;
     row.materialKey = selected.key;
     row.rawLabel = selected.rawLabel || '';
@@ -268,21 +316,23 @@
     row.confidence = selected.confidence || '';
     row.note = selected.note || '';
     row.stdManual = false;
-    updateRowComputedView(root, row, true);
-    persist();
   }
 
   function updateRowComputedView(root, row, rerenderHead = false) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
     const calc = calculate(row, material);
+    const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     root.querySelector('.coefficient-output').textContent = calc.coefficientText;
     root.querySelector('.ppm-output').textContent = calc.ppmText || '—';
     root.querySelector('.error-text').textContent = calc.errorText;
     if (rerenderHead) {
-      root.querySelector('.row-title').textContent = material?.displayName || '物質を選択';
-      root.querySelector('.card-caption').textContent = material ? `計算カード：${material.displayName}` : '計算カード（未選択）';
+      root.querySelector('.row-title').textContent = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択');
+      root.querySelector('.card-caption').textContent = material ? `計算カード：${material.displayName}` : (isUnregistered ? '未登録物質の計算カード' : '計算カード（未選択）');
       root.querySelector('.meta-note').textContent = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
     }
+    root.classList.toggle('is-unregistered', isUnregistered);
+    const unregisteredNote = root.querySelector('.unregistered-note');
+    if (unregisteredNote) unregisteredNote.hidden = !isUnregistered;
     const stdInput = root.querySelector('.std-input');
     if (stdInput) {
       stdInput.value = row.stdInput || '';
@@ -290,9 +340,13 @@
       stdInput.classList.toggle('std-auto', !row.stdManual);
     }
     const toggleBtn = root.querySelector('.std-toggle-btn');
-    if (toggleBtn) toggleBtn.textContent = row.stdManual ? '自動値に戻す' : '手入力に切替';
+    if (toggleBtn) {
+      toggleBtn.textContent = row.stdManual ? '自動値に戻す' : 'STDを手入力する';
+      toggleBtn.classList.toggle('is-required', isUnregistered);
+    }
     const badges = [];
-    if (material?.status && material.status !== 'confirmed') badges.push(`<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>`);
+    if (material?.status && !['confirmed', 'custom'].includes(material.status)) badges.push(`<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>`);
+    if (material?.isCustom) badges.push('<span class="badge badge-custom">この端末の登録</span>');
     if (!row.stdManual && material && material.stdValue == null) badges.push('<span class="badge badge-review">STD値を確認してください</span>');
     if (row.stdManual) badges.push('<span class="badge badge-manual">手入力</span>');
     root.querySelector('.badges').innerHTML = badges.join('');
@@ -328,7 +382,16 @@
   function calculate(row, material) {
     const std = parseNumber(row.stdInput); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
     if (!std.valid || !stdArea.valid || !sample.valid) return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
-    if (std.empty) return { coefficientText: '', ppmText: '', errorText: 'STD値を取得できませんでした。物質マスタとの紐づけを確認してください。' };
+    if (std.empty) {
+      const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
+      return {
+        coefficientText: '',
+        ppmText: '',
+        errorText: isUnregistered
+          ? '未登録物質です。「STDを手入力する」でSTD値を入力するか、下の一覧に追加してください。'
+          : 'STD値を取得できませんでした。STDを手入力するか、物質マスタとの紐づけを確認してください。'
+      };
+    }
     if (stdArea.empty || stdArea.value === 0) return { coefficientText: '', ppmText: '', errorText: 'STDエリアを入力してください。' };
     const c = std.value / stdArea.value; const ppm = sample.empty ? null : sample.value * c;
     return { coefficientText: Number(c.toPrecision(10)).toString(), ppmText: ppm == null ? '' : Number(ppm.toFixed(2)).toString(), errorText: '' };
@@ -358,29 +421,28 @@
   }
 
   function renderFavoriteChips() {
-    const merged = [...(state.favorites.common || []), ...(state.favorites.liquid_standard || [])];
-    const map = new Map();
-    merged.forEach((entry) => {
-      const matched = findMaterialByFavorite(entry);
-      if (!matched) return;
-      const label = matched.displayName;
-      if (!MAIN_CHIP_NAMES.includes(label) && !(label === 'n-ブタノール')) return;
-      if (!map.has(label)) map.set(label, { display_name: label, normalized_name: matched.normalizedName });
-    });
-    renderFavoriteGroup(els.favoriteCommonChips, Array.from(map.values()), false);
-    const liquid = LIQUID_STD_NAMES.map((name) => ({ display_name: name, normalized_name: name }));
-    renderFavoriteGroup(els.favoriteLiquidChips, liquid, true);
+    renderFavoriteGroup(els.favoriteCommonChips, findMaterialsByNames(MAIN_CHIP_NAMES), false);
+    renderFavoriteGroup(els.favoriteLiquidChips, findMaterialsByNames(LIQUID_STD_NAMES), true);
+    renderFavoriteGroup(els.favoriteOtherChips, findMaterialsByNames(OTHER_CHIP_NAMES), true);
   }
+
+  function findMaterialsByNames(names) {
+    const seen = new Set();
+    return names.map((name) => resolveMaterial(name)).filter((material) => {
+      if (!material || seen.has(material.key)) return false;
+      seen.add(material.key);
+      return true;
+    });
+  }
+
   function renderFavoriteGroup(container, list, secondary) {
     if (!container) return; container.innerHTML = '';
-    list.forEach((entry) => {
-      const matched = findMaterialByFavorite(entry);
+    list.forEach((material) => {
       const chip = document.createElement('button'); chip.type = 'button'; chip.className = `quick-chip${secondary ? ' secondary' : ''}`;
-      chip.textContent = entry.display_name || entry.normalized_name || '-';
-      chip.dataset.materialOption = matched?.displayName || entry.display_name || entry.normalized_name || '';
+      chip.textContent = material.displayName || '-';
+      chip.dataset.materialOption = material.displayName || '';
       chip.disabled = false;
       chip.addEventListener('click', () => applyFavoriteToActiveRow(chip.dataset.materialOption));
-      if (!matched) chip.classList.add('secondary');
       container.appendChild(chip);
     });
     syncFavoriteChipState();
@@ -398,15 +460,120 @@
   }
   function syncFavoriteChipState() {
     const selected = new Set(state.rows.map((r) => resolveMaterial(r.materialInput, r.materialKey)?.displayName).filter(Boolean));
-    [els.favoriteCommonChips, els.favoriteLiquidChips].forEach((c) => c && c.querySelectorAll('.quick-chip').forEach((chip) => chip.classList.toggle('active', selected.has(chip.dataset.materialOption))));
+    [els.favoriteCommonChips, els.favoriteLiquidChips, els.favoriteOtherChips].forEach((c) => c && c.querySelectorAll('.quick-chip').forEach((chip) => chip.classList.toggle('active', selected.has(chip.dataset.materialOption))));
   }
-  function findMaterialByFavorite(entry) {
-    const fromAlias = state.analyteAliases?.[entry?.normalized_name] || [];
-    const keys = [entry?.normalized_name, entry?.display_name, ...fromAlias, state.analyteDisplay?.[entry?.normalized_name]].map(normalize).filter(Boolean);
-    return state.materials.find((m) => {
-      const pool = [m.displayName, m.rawLabel, m.normalizedName, ...(m.aliases || [])].map(normalize);
-      return keys.some((k) => pool.includes(k));
-    }) || null;
+
+  function loadCustomMaterials() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(CUSTOM_MATERIALS_STORAGE_KEY) || '[]');
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((item, index) => {
+        const name = String(item?.display_name || item?.normalized_name || '').trim();
+        const std = parseNumber(item?.std_value);
+        if (!name || std.empty || !std.valid || std.value <= 0) return null;
+        return {
+          id: String(item?.id || `legacy_${index}`),
+          raw_label: 'この端末の登録',
+          normalized_name: String(item?.normalized_name || name),
+          display_name: name,
+          std_value: std.value,
+          confidence: 'user',
+          status: 'custom',
+          note: 'この端末で登録したSTD値',
+          aliases: [name, ...(Array.isArray(item?.aliases) ? item.aliases : [])]
+        };
+      }).filter(Boolean);
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  function saveCustomMaterials() {
+    localStorage.setItem(CUSTOM_MATERIALS_STORAGE_KEY, JSON.stringify(state.customMaterials));
+  }
+
+  async function addCustomMaterial() {
+    const name = String(els.customMaterialName.value || '').trim();
+    const std = parseNumber(els.customStdValue.value);
+    if (!name) {
+      showStatus('追加する物質名を入力してください。', true);
+      els.customMaterialName.focus();
+      return;
+    }
+    if (std.empty || !std.valid || std.value <= 0) {
+      showStatus('STD値には0より大きい数値を入力してください。', true);
+      els.customStdValue.focus();
+      return;
+    }
+
+    const sameName = state.materials.find((material) => normalize(material.displayName) === normalize(name));
+    if (sameName?.isCustom) {
+      const existing = state.customMaterials.find((item) => String(item.id) === sameName.key.replace(/^c_/, ''));
+      if (existing) existing.std_value = std.value;
+    } else if (sameName?.stdValue != null) {
+      showStatus('同じ物質はすでに登録済みです。一時的に変える場合は計算カードの「STDを手入力する」を使ってください。', true);
+      return;
+    } else {
+      state.customMaterials.push({
+        id: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        raw_label: 'この端末の登録',
+        normalized_name: name,
+        display_name: name,
+        std_value: std.value,
+        confidence: 'user',
+        status: 'custom',
+        note: 'この端末で登録したSTD値',
+        aliases: [name]
+      });
+    }
+
+    saveCustomMaterials();
+    await loadMaster();
+    const selected = state.materials.find((material) => normalize(material.displayName) === normalize(name) && material.isCustom);
+    const activeRow = state.rows.find((row) => row.id === state.activeRowId) || state.rows[0];
+    if (selected && activeRow) setRowMaterial(activeRow, selected);
+    els.customMaterialName.value = '';
+    els.customStdValue.value = '';
+    renderRows();
+    renderFavoriteChips();
+    renderCustomMaterialList();
+    persist();
+    showStatus(`「${name}」をこの端末の候補に追加しました。`);
+  }
+
+  function renderCustomMaterialList() {
+    if (!els.customMaterialList) return;
+    if (!state.customMaterials.length) {
+      els.customMaterialList.innerHTML = '<p class="custom-material-empty">この端末に追加した物質は、まだありません。</p>';
+      return;
+    }
+    els.customMaterialList.innerHTML = state.customMaterials.map((item) => `
+      <div class="custom-material-item">
+        <span><strong>${escapeHtml(item.display_name)}</strong>　STD: ${escapeHtml(item.std_value)}</span>
+        <button type="button" class="danger custom-material-delete" data-custom-id="${escapeHtml(item.id)}">削除</button>
+      </div>
+    `).join('');
+    els.customMaterialList.querySelectorAll('.custom-material-delete').forEach((button) => {
+      button.addEventListener('click', () => removeCustomMaterial(button.dataset.customId));
+    });
+  }
+
+  async function removeCustomMaterial(id) {
+    const material = state.materials.find((item) => item.key === `c_${id}`);
+    if (!window.confirm(`「${material?.displayName || 'この物質'}」をこの端末の候補から削除しますか？`)) return;
+    state.rows.forEach((row) => {
+      if (row.materialKey !== `c_${id}`) return;
+      row.materialKey = '';
+      row.stdManual = true;
+    });
+    state.customMaterials = state.customMaterials.filter((item) => String(item.id) !== String(id));
+    saveCustomMaterials();
+    await loadMaster();
+    renderRows();
+    renderFavoriteChips();
+    renderCustomMaterialList();
+    persist();
+    showStatus('この端末の候補から削除しました。');
   }
 
   function restoreState() {

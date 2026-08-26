@@ -117,6 +117,47 @@
       box-shadow: 0 11px 22px rgba(20, 45, 91, 0.12);
     }
 
+    .calculator-quick-link {
+      display: grid;
+      gap: 3px;
+      position: relative;
+      z-index: 1;
+      padding: 15px 17px;
+      border: 1px solid #173f93;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #173f93 0%, #1f5bc7 100%);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(23, 63, 147, 0.24);
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+
+    .calculator-quick-link:hover,
+    .calculator-quick-link:focus-visible {
+      color: #fff;
+      text-decoration: none;
+      background: linear-gradient(135deg, #12367f 0%, #1b50af 100%);
+      box-shadow: 0 16px 28px rgba(23, 63, 147, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .calculator-quick-link small {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      opacity: .88;
+    }
+
+    .calculator-quick-link strong {
+      font-size: 1.1rem;
+      line-height: 1.35;
+    }
+
+    .calculator-quick-link span {
+      font-size: .88rem;
+      line-height: 1.55;
+      opacity: .96;
+    }
+
     .flow {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -247,6 +288,7 @@
       .menu-grid,
       .flow { grid-template-columns: 1fr; }
       .quick-links a { justify-content: flex-start; padding-inline: 12px; font-size: .94rem; }
+      .calculator-quick-link { padding: 14px; }
       .flow-step { padding: 11px 12px; }
       .menu-card { min-height: 0; padding: 13px; }
       .section-title { font-size: 1.1rem; }
@@ -262,13 +304,18 @@
         <h1>労働衛生・作業環境測定ハブ</h1>
         <div class="today">本日 <span id="todayLabel">-</span></div>
       </div>
-      <p class="sub">労働衛生・作業環境測定の実務ページを、現場の作業順に整理したホームです。まずは「よく使う3機能」から開始し、日次業務→分析確認→補助運用の順で進めると、測定記録までの流れを止めにくくなります。</p>
+      <a class="calculator-quick-link" href="gc-calculator.html">
+        <small>いま計算する</small>
+        <strong>GC係数・ppm計算</strong>
+        <span>STDエリアと検体エリアから、係数・ppmをすぐ確認</span>
+      </a>
+      <p class="sub">労働衛生・作業環境測定の実務ページを、現場の作業順に整理したホームです。GCの計算は下の直通ボタンからすぐ開けます。</p>
       <div class="hero-meta">
         <span class="chip">白×ネイビー基調</span>
         <span class="chip">モバイル最適化</span>
         <span class="chip">現場運用向け</span>
       </div>
-      <nav class="quick-links" aria-label="よく使う機能">
+      <nav class="quick-links" aria-label="その他よく使う機能">
         <a href="inventory-memo.html">在庫メモを開く</a>
         <a href="gc-day-plan.html">GC当日プランを開く</a>
         <a href="gc-method-finder.html">GC条件提案を開く</a>
@@ -297,9 +344,9 @@
       <h2 id="analysisMenuTitle" class="section-title">分析・確認ツール</h2>
       <p class="section-note">GC条件の照合、標準液管理、濃度計算を行うページです。測定の再現性確認や記録前チェックに活用できます。</p>
       <div class="menu-grid">
+        <a href="gc-calculator.html" class="menu-card primary-link"><strong>GC係数・ppm計算</strong><small>STDエリアと検体エリアから、係数・ppmを計算</small></a>
         <a href="gc-rt-library.html" class="menu-card"><strong>GC RTライブラリ</strong><small>条件ごとのRT一覧を確認</small></a>
         <a href="gc-std-master.html" class="menu-card"><strong>GC標準液マスタ</strong><small>STD値と要確認データを確認</small></a>
-        <a href="gc-calculator.html" class="menu-card"><strong>GC濃度計算</strong><small>STDエリアと検体エリアから係数・ppmを計算</small></a>
       </div>
     </section>
 
