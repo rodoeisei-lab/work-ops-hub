@@ -1,6 +1,7 @@
 (() => {
-  const CACHE_VERSION = '20260826-std-sync-1';
+  const CACHE_VERSION = '20260826-cache-recovery-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
+  const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
   const STORAGE_KEY = 'gc-calculator-state-v4';
@@ -46,6 +47,7 @@
 
   async function init() {
     bindGlobalEvents();
+    if (await refreshIfStale()) return;
     await loadMaster();
     await loadFavoriteData();
     restoreState();
@@ -163,6 +165,26 @@
         if (key) state.searchLookup.set(key, m);
       });
     });
+  }
+
+  // GitHub Pages keeps static files in the browser cache for several minutes.
+  // Check a cache-busted, tiny manifest before the calculator starts so an
+  // already-opened older page can move itself to the latest page URL.
+  async function refreshIfStale() {
+    const nonce = Date.now().toString(36);
+    const manifest = await fetchJsonSafe(`${VERSION_MANIFEST_PATH}?t=${nonce}`, null, { cache: 'no-store' });
+    const publishedVersion = String(manifest?.version || '').trim();
+    if (!publishedVersion || publishedVersion === CACHE_VERSION) return false;
+
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('gc-version') === publishedVersion) return false;
+      url.searchParams.set('gc-version', publishedVersion);
+      window.location.replace(url.toString());
+      return true;
+    } catch (_error) {
+      return false;
+    }
   }
 
   async function loadFavoriteData() {
@@ -626,7 +648,7 @@
     state.rows.forEach((row) => syncAutomaticStd(row, resolveMaterial(row.materialInput, row.materialKey)));
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value }));
   }
-  async function fetchJsonSafe(path, fallback) { try { const r = await fetch(path); return r.ok ? await r.json() : fallback; } catch { return fallback; } }
+  async function fetchJsonSafe(path, fallback, options) { try { const r = await fetch(path, options); return r.ok ? await r.json() : fallback; } catch { return fallback; } }
   function csvEscape(v) { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replaceAll('"', '""')}"` : t; }
   function todayIso() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
   function showStatus(message, isError = false) { els.statusMessage.textContent = message; els.statusMessage.style.color = isError ? '#9b3f3f' : '#36507d'; }
