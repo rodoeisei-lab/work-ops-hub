@@ -1,5 +1,6 @@
 (() => {
-  const DATA_PATH = 'data/gc-std-master.json';
+  const CACHE_VERSION = '20260826-std-sync-1';
+  const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
   const STORAGE_KEY = 'gc-calculator-state-v4';
@@ -131,7 +132,10 @@
     state.materials = sourceRows.map(({ item, isCustom, sourceIndex }) => {
       const displayName = item.display_name || item.normalized_name || item.raw_label || `物質${sourceIndex + 1}`;
       const rawLabel = item.raw_label || '';
-      const stdValue = Number(item.std_value);
+      const rawStdValue = item.std_value;
+      const stdValue = rawStdValue === null || rawStdValue === undefined || String(rawStdValue).trim() === ''
+        ? null
+        : Number(rawStdValue);
       return {
         key: isCustom ? `c_${item.id}` : `m_${sourceIndex}`,
         optionLabel: displayName,
@@ -200,6 +204,7 @@
 
   function renderRow(row) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
+    syncAutomaticStd(row, material);
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択してください');
@@ -262,7 +267,7 @@
       row.stdManual = !row.stdManual;
       if (!row.stdManual) {
         const material = resolveMaterial(row.materialInput, row.materialKey);
-        row.stdInput = material?.stdValue == null ? '' : String(material.stdValue);
+        syncAutomaticStd(row, material);
       }
       stdInput.readOnly = !row.stdManual;
       stdInput.classList.toggle('std-auto', !row.stdManual);
@@ -321,13 +326,14 @@
     row.confidence = selected.confidence || '';
     row.note = selected.note || '';
     if (!preserveManualStd) {
-      row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
       row.stdManual = false;
+      syncAutomaticStd(row, selected);
     }
   }
 
   function updateRowComputedView(root, row, rerenderHead = false) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
+    syncAutomaticStd(row, material);
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     root.querySelector('.coefficient-output').textContent = calc.coefficientText;
@@ -362,13 +368,10 @@
   }
 
   function resolveMaterial(input, materialKey = '') {
-    if (materialKey) {
-      const byKey = state.materials.find((m) => m.key === materialKey);
-      if (byKey) return byKey;
-    }
     const normalizedInput = normalize(input);
-    if (!normalizedInput) return null;
-    return state.searchLookup.get(normalizedInput) || null;
+    if (normalizedInput) return state.searchLookup.get(normalizedInput) || null;
+    if (materialKey) return state.materials.find((m) => m.key === materialKey) || null;
+    return null;
   }
 
   function findStdEntry(input) {
@@ -381,8 +384,17 @@
     const n = Number(s.replace(/,/g, '')); return { empty: false, valid: Number.isFinite(n), value: n };
   };
 
+  function automaticStdText(material) {
+    return material?.stdValue == null ? '' : String(material.stdValue);
+  }
+
+  function syncAutomaticStd(row, material) {
+    if (!row.stdManual) row.stdInput = automaticStdText(material);
+  }
+
   function calculate(row, material) {
-    const std = parseNumber(row.stdInput); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
+    const stdText = row.stdManual ? row.stdInput : automaticStdText(material);
+    const std = parseNumber(stdText); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
     if (!std.valid || !stdArea.valid || !sample.valid) return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
     if (std.empty) {
       const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
@@ -403,6 +415,7 @@
     const parts = ['GC濃度計算', `日付: ${todayIso()}`, ''];
     state.rows.forEach((row) => {
       const material = resolveMaterial(row.materialInput, row.materialKey);
+      syncAutomaticStd(row, material);
       const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
       const calc = calculate(row, material);
@@ -414,9 +427,11 @@
   function buildCsv() {
     const lines = [['日付', '物質', 'STD', 'STDエリア', '係数', '検体エリア', 'ppm', '状態', 'メモ'].join(',')];
     state.rows.forEach((row) => {
+      const material = resolveMaterial(row.materialInput, row.materialKey);
+      syncAutomaticStd(row, material);
       const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
-      const material = resolveMaterial(row.materialInput, row.materialKey); const calc = calculate(row, material);
+      const calc = calculate(row, material);
       lines.push([todayIso(), material?.displayName || row.materialInput || '', row.stdInput || '', row.stdAreaInput || '', calc.coefficientText || '', row.sampleAreaInput || '', calc.ppmText || '', STATUS_LABEL[material?.status] || '', row.memo || ''].map(csvEscape).join(','));
     });
     return lines.join('\n');
@@ -587,7 +602,7 @@
         state.rows = parsed.rows.map((r) => {
           const row = { ...createEmptyRow(), ...r };
           const material = findStdEntry(row.materialInput);
-          if (material && !row.materialKey) row.materialKey = material.key;
+          if (material) row.materialKey = material.key;
           if (material) {
             row.rawLabel = material.rawLabel || '';
             row.displayName = material.displayName || '';
@@ -596,7 +611,7 @@
             row.confidence = material.confidence || '';
             row.note = material.note || '';
           }
-          if (material && !row.stdManual && !String(row.stdInput || '').trim()) row.stdInput = material.stdValue == null ? '' : String(material.stdValue);
+          syncAutomaticStd(row, material);
           return row;
         });
       }
@@ -606,7 +621,11 @@
       LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     } catch (_e) { state.rows = []; normalizeCardsState(); }
   }
-  function persist() { normalizeCardsState(); localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value })); }
+  function persist() {
+    normalizeCardsState();
+    state.rows.forEach((row) => syncAutomaticStd(row, resolveMaterial(row.materialInput, row.materialKey)));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value }));
+  }
   async function fetchJsonSafe(path, fallback) { try { const r = await fetch(path); return r.ok ? await r.json() : fallback; } catch { return fallback; } }
   function csvEscape(v) { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replaceAll('"', '""')}"` : t; }
   function todayIso() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
