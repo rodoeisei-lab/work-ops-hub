@@ -236,12 +236,7 @@
     const updateOnly = () => { updateRowComputedView(root, row); persist(); };
 
     materialInput.addEventListener('focus', () => { state.activeRowId = rowId; });
-    materialInput.addEventListener('input', () => {
-      state.activeRowId = rowId;
-      row.materialInput = materialInput.value;
-      row.materialKey = '';
-      persist();
-    });
+    materialInput.addEventListener('input', () => applyMaterialSelection(row, materialInput.value, root));
     materialInput.addEventListener('change', () => applyMaterialSelection(row, materialInput.value, root));
     materialInput.addEventListener('blur', () => applyMaterialSelection(row, materialInput.value, root));
 
@@ -283,39 +278,52 @@
 
   function applyMaterialSelection(row, text, root) {
     state.activeRowId = row.id;
-    const selected = findStdEntry(text, row);
+    const selected = findStdEntry(text);
     if (!selected) {
-      row.materialInput = text;
-      row.materialKey = '';
-      row.rawLabel = '';
-      row.displayName = text || '';
-      row.normalizedName = '';
-      row.status = '';
-      row.confidence = '';
-      row.note = '';
-      if (!row.stdManual) row.stdInput = '';
+      clearRowMaterialSelection(row, text);
       updateRowComputedView(root, row, true);
       persist();
       return;
     }
+    const isSameMaterial = row.materialKey === selected.key;
     const duplicate = state.rows.some((r) => r.id !== row.id && resolveMaterial(r.materialInput, r.materialKey)?.displayName === selected.displayName);
-    if (duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
-    setRowMaterial(row, selected);
+    if (!isSameMaterial && duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
+    setRowMaterial(row, selected, { preserveManualStd: isSameMaterial && row.stdManual });
+    const materialInput = root.querySelector('.material-input');
+    if (materialInput) materialInput.value = row.materialInput;
     updateRowComputedView(root, row, true);
     persist();
   }
 
-  function setRowMaterial(row, selected) {
+  function clearRowMaterialSelection(row, text) {
+    const materialChanged = Boolean(row.materialKey) || normalize(row.materialInput) !== normalize(text);
+    row.materialInput = text;
+    row.materialKey = '';
+    row.rawLabel = '';
+    row.displayName = text || '';
+    row.normalizedName = '';
+    row.status = '';
+    row.confidence = '';
+    row.note = '';
+    if (materialChanged) {
+      row.stdInput = '';
+      row.stdManual = false;
+    }
+  }
+
+  function setRowMaterial(row, selected, { preserveManualStd = false } = {}) {
     row.materialInput = selected.displayName;
     row.materialKey = selected.key;
     row.rawLabel = selected.rawLabel || '';
     row.displayName = selected.displayName || '';
     row.normalizedName = selected.normalizedName || '';
-    row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
     row.status = selected.status || '';
     row.confidence = selected.confidence || '';
     row.note = selected.note || '';
-    row.stdManual = false;
+    if (!preserveManualStd) {
+      row.stdInput = selected.stdValue == null ? '' : String(selected.stdValue);
+      row.stdManual = false;
+    }
   }
 
   function updateRowComputedView(root, row, rerenderHead = false) {
@@ -363,14 +371,8 @@
     return state.searchLookup.get(normalizedInput) || null;
   }
 
-  function findStdEntry(input, row = null) {
-    const keyCandidates = [row?.rawLabel, row?.normalizedName, row?.displayName, input];
-    for (const key of keyCandidates) {
-      const matched = resolveMaterial(key, row?.materialKey || '');
-      if (matched) return matched;
-    }
-    if (row?.materialKey) return resolveMaterial('', row.materialKey);
-    return null;
+  function findStdEntry(input) {
+    return resolveMaterial(input);
   }
 
   const normalize = (v) => String(v || '').trim().toLowerCase();
@@ -584,7 +586,7 @@
       if (Array.isArray(parsed.rows)) {
         state.rows = parsed.rows.map((r) => {
           const row = { ...createEmptyRow(), ...r };
-          const material = findStdEntry(row.materialInput, row);
+          const material = findStdEntry(row.materialInput);
           if (material && !row.materialKey) row.materialKey = material.key;
           if (material) {
             row.rawLabel = material.rawLabel || '';
