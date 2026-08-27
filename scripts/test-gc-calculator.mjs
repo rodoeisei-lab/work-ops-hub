@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-daily-std-multisample-1'
+  'gc-calculator.css?v=20260827-large-simple-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -98,7 +98,6 @@ for (const required of [
   'grid-template-areas:',
   '.result-primary',
   '.quick-chips--grid',
-  '.scroll-hint',
   '.action-primary.is-copied'
 ]) {
   if (!calculatorCss.includes(required)) {
@@ -132,21 +131,18 @@ for (const required of [
   'sample-ppm-output',
   'すでに当日STD登録済みです',
   '当日STDエリア',
-  '検体名・メモ'
+  '検体名'
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
   }
 }
 
-if (!calculatorHtml.includes('横にスワイプして続きを表示')) {
-  throw new Error('GC calculator scroll affordance text missing');
-}
 for (const required of [
-  '今日のSTD・検体を入力',
+  'STD・検体',
   '当日STD 1',
   '＋ 物質追加',
-  '複数の検体エリア'
+  'GC係数・ppm計算'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC daily STD / multi-sample UI marker missing: ${required}`);
@@ -156,10 +152,33 @@ for (const required of [
   '.samples-block',
   '.sample-row',
   '.sample-ppm-field',
-  '.add-sample-btn'
+  '.add-sample-btn',
+  '.version-line'
 ]) {
   if (!calculatorCss.includes(required)) {
     throw new Error(`GC multi-sample CSS marker missing: ${required}`);
+  }
+}
+
+for (const forbiddenHtml of [
+  'page-header__lead',
+  'calc-steps',
+  'formula-strip',
+  '横にスワイプして続きを表示',
+  '複数の検体エリアを同じ係数でまとめて計算します'
+]) {
+  if (calculatorHtml.includes(forbiddenHtml)) {
+    throw new Error(`GC large/simple UI guard failed: ${forbiddenHtml}`);
+  }
+}
+
+for (const requiredCss of [
+  '.page-header h1 { font-size:1.65rem;',
+  '.field select {\n  min-height:52px;',
+  '.sample-ppm-output { font-size:1.45rem;'
+]) {
+  if (!calculatorCss.includes(requiredCss)) {
+    throw new Error(`GC large text marker missing: ${requiredCss}`);
   }
 }
 
