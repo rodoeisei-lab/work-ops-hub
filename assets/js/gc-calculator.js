@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-selection-stable-1';
+  const CACHE_VERSION = '20260827-auto-std-source-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -200,6 +200,7 @@
 
   function renderRow(row) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
+    const stdText = resolvedStdText(row, material);
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択してください');
@@ -223,7 +224,7 @@
       <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
       <div class="row-grid">
       <div class="field wide"><label>物質を選択<select class="material-select">${buildMaterialSelectOptions(material?.key || '')}</select></label></div>
-      <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(row.stdInput)}" readonly></label></div>
+      <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label></div>
       <div class="field"><label>当日STDエリア<input type="text" class="std-area-input" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}"></label></div>
       <div class="field"><label>係数<div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div></label></div>
       <div class="field"><label>検体エリア<input type="text" class="sample-area-input" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}"></label></div>
@@ -284,10 +285,14 @@
     toggleBtn.className = 'btn-ghost std-toggle-btn';
     toggleBtn.textContent = row.stdManual ? '自動値に戻す' : 'STDを手入力する';
     toggleBtn.addEventListener('click', () => {
-      row.stdManual = !row.stdManual;
-      if (!row.stdManual) {
-        const material = resolveMaterial(row.materialInput, row.materialKey);
+      const material = resolveMaterial(row.materialInput, row.materialKey);
+      if (row.stdManual) {
+        row.stdManual = false;
         syncAutomaticStd(row, material);
+      } else {
+        // 手入力へ切り替える時も、画面に出ていた「現在選択中の物質」のSTDを初期値にする。
+        row.stdInput = resolvedStdText(row, material);
+        row.stdManual = true;
       }
       stdInput.readOnly = !row.stdManual;
       stdInput.classList.toggle('std-auto', !row.stdManual);
@@ -371,6 +376,10 @@
 
   function updateRowComputedView(root, row, rerenderHead = false) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
+    const stdText = resolvedStdText(row, material);
+    // 自動STDの保存値は互換用の控えであり、計算の正は常に現在の物質マスタ値。
+    // 旧版で保存された別物質の値（例: 9.8）も、この時点で正しい値に直す。
+    if (!row.stdManual) row.stdInput = stdText;
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     root.querySelector('.coefficient-output').textContent = calc.coefficientText;
@@ -386,7 +395,7 @@
     if (unregisteredNote) unregisteredNote.hidden = !isUnregistered;
     const stdInput = root.querySelector('.std-input');
     if (stdInput) {
-      stdInput.value = row.stdInput || '';
+      stdInput.value = stdText;
       stdInput.readOnly = !row.stdManual;
       stdInput.classList.toggle('std-auto', !row.stdManual);
     }
@@ -405,12 +414,16 @@
   }
 
   function resolveMaterial(input, materialKey = '') {
+    // 表示されている物質名を最優先にする。古い保存データのキーが残っていても、
+    // 選択欄と内部の物質が食い違わないようにする。
+    const normalizedInput = normalize(input);
+    const byInput = normalizedInput ? state.searchLookup.get(normalizedInput) : null;
+    if (byInput) return byInput;
     if (materialKey) {
       const byKey = findMaterialByKey(materialKey);
       if (byKey) return byKey;
     }
-    const normalizedInput = normalize(input);
-    return normalizedInput ? state.searchLookup.get(normalizedInput) || null : null;
+    return null;
   }
 
   function findMaterialByKey(materialKey) {
@@ -431,14 +444,20 @@
     return material?.stdValue == null ? '' : String(material.stdValue);
   }
 
+  function resolvedStdText(row, material) {
+    // 自動STDは row.stdInput を参照しない。選択中の物質のマスタ値が唯一の正しい値。
+    // row.stdInput は手入力モードの場合だけ使用する。
+    return row.stdManual ? String(row.stdInput ?? '') : automaticStdText(material);
+  }
+
   function syncAutomaticStd(row, material) {
-    // 自動STDは物質を確定した時・自動値へ戻した時・起動時だけ設定する。
-    // エリアやメモの入力中に再計算で書き換えると、表示中のSTDが途中で変わる。
+    // 保存データを最新マスタ値に正規化する。表示・計算は resolvedStdText を使うため、
+    // 途中の入力処理が古い保存値を拾ってSTDを変えることはない。
     if (!row.stdManual) row.stdInput = automaticStdText(material);
   }
 
   function calculate(row, material) {
-    const std = parseNumber(row.stdInput); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
+    const std = parseNumber(resolvedStdText(row, material)); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
     if (!std.valid || !stdArea.valid || !sample.valid) return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
     if (std.empty) {
       const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
@@ -459,10 +478,11 @@
     const parts = ['GC濃度計算', `日付: ${todayIso()}`, ''];
     state.rows.forEach((row) => {
       const material = resolveMaterial(row.materialInput, row.materialKey);
-      const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
+      const stdText = resolvedStdText(row, material);
+      const has = [row.materialInput, stdText, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
       const calc = calculate(row, material);
-      parts.push(material?.displayName || row.materialInput || '(未選択)', `STD: ${row.stdInput || '-'}`, `STDエリア: ${row.stdAreaInput || '-'}`, `係数: ${calc.coefficientText || '-'}`, `検体エリア: ${row.sampleAreaInput || '-'}`, `ppm: ${calc.ppmText || '-'}`, '');
+      parts.push(material?.displayName || row.materialInput || '(未選択)', `STD: ${stdText || '-'}`, `STDエリア: ${row.stdAreaInput || '-'}`, `係数: ${calc.coefficientText || '-'}`, `検体エリア: ${row.sampleAreaInput || '-'}`, `ppm: ${calc.ppmText || '-'}`, '');
     });
     return parts.join('\n').trim();
   }
@@ -471,10 +491,11 @@
     const lines = [['日付', '物質', 'STD', 'STDエリア', '係数', '検体エリア', 'ppm', '状態', 'メモ'].join(',')];
     state.rows.forEach((row) => {
       const material = resolveMaterial(row.materialInput, row.materialKey);
-      const has = [row.materialInput, row.stdInput, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
+      const stdText = resolvedStdText(row, material);
+      const has = [row.materialInput, stdText, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
       if (!has) return;
       const calc = calculate(row, material);
-      lines.push([todayIso(), material?.displayName || row.materialInput || '', row.stdInput || '', row.stdAreaInput || '', calc.coefficientText || '', row.sampleAreaInput || '', calc.ppmText || '', STATUS_LABEL[material?.status] || '', row.memo || ''].map(csvEscape).join(','));
+      lines.push([todayIso(), material?.displayName || row.materialInput || '', stdText || '', row.stdAreaInput || '', calc.coefficientText || '', row.sampleAreaInput || '', calc.ppmText || '', STATUS_LABEL[material?.status] || '', row.memo || ''].map(csvEscape).join(','));
     });
     return lines.join('\n');
   }
@@ -644,7 +665,8 @@
         state.rows = parsed.rows.map((r) => {
           const row = { ...createEmptyRow(), ...r };
           const material = findStdEntry(row.materialInput);
-          if (material) row.materialKey = material.key;
+          // 保存済みキーはマスタの並び替え等で古くなるため、物質名から必ず再解決する。
+          row.materialKey = material?.key || '';
           if (material) {
             row.rawLabel = material.rawLabel || '';
             row.displayName = material.displayName || '';
