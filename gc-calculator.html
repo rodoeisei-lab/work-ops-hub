@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-ios-input-scroll-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-daily-std-multisample-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -16,11 +16,11 @@
         <span class="tool-kicker">GC分析ツール</span>
       </div>
       <h1>GC係数・ppm計算</h1>
-      <p class="page-header__lead">物質を選び、2つのエリア値を入れるだけで係数とppmを自動計算します。</p>
+      <p class="page-header__lead">物質ごとに当日STDエリアを1回登録し、複数の検体エリアを同じ係数でまとめて計算します。</p>
       <ol class="calc-steps" aria-label="計算の手順">
         <li><strong>物質</strong><span>選択する</span></li>
-        <li><strong>STDエリア</strong><span>入力する</span></li>
-        <li><strong>検体エリア</strong><span>入力する</span></li>
+        <li><strong>当日STD</strong><span>1回登録</span></li>
+        <li><strong>検体</strong><span>複数入力</span></li>
       </ol>
       <div class="formula-strip">
         <span>係数 = STD ÷ STDエリア</span>
@@ -33,7 +33,7 @@
         <span class="section-number">1</span>
         <div>
           <h2 id="favoriteTitle">物質を選ぶ</h2>
-          <p class="hint"><strong id="activeCardLabel">計算カード1</strong> に反映します。よく使う物質はタップで選択できます。</p>
+          <p class="hint"><strong id="activeCardLabel">当日STD 1</strong> に反映します。1物質につき1つの当日STDを登録します。</p>
         </div>
       </div>
       <div id="favoriteCommonChips" class="quick-chips quick-chips--grid" aria-label="通常よく使う物質"></div>
@@ -58,11 +58,11 @@
         <div class="section-heading">
           <span class="section-number">2</span>
           <div>
-            <h2 id="rowsTitle">エリアを入力</h2>
-            <p class="hint">STDは物質マスタから自動反映。入力すると係数・ppmがその場で更新されます。</p>
+            <h2 id="rowsTitle">今日のSTD・検体を入力</h2>
+            <p class="hint">当日STDエリアは物質ごとに1回だけ入力。その下に検体を追加すると同じ係数でppmを計算します。</p>
           </div>
         </div>
-        <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ カード追加</button>
+        <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ 物質追加</button>
       </div>
       <div id="rowsContainer" class="rows-container"></div>
     </section>
@@ -123,7 +123,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260827-std-targets-1';
+      const FALLBACK_VERSION = '20260827-daily-std-multisample-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;

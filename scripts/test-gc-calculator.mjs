@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-ios-input-scroll-1'
+  'gc-calculator.css?v=20260827-daily-std-multisample-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -119,12 +119,20 @@ for (const required of [
   'focusRow',
   '正式な物質名を使用してください',
   'row.stdAreaInput = \'\'',
-  'row.sampleAreaInput = \'\'',
   'activeMaterialName',
-  'メモ: ${row.memo}',
   'setActiveRowForInput',
   'syncActiveRowUi',
-  "root.addEventListener('focusout'"
+  "root.addEventListener('focusout'",
+  'createEmptySample',
+  'normalizeSamples',
+  'renderSamples',
+  'bindSampleEvents',
+  'refreshSamples',
+  "row.samples.push(createEmptySample())",
+  'sample-ppm-output',
+  'すでに当日STD登録済みです',
+  '当日STDエリア',
+  '検体名・メモ'
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -134,11 +142,33 @@ for (const required of [
 if (!calculatorHtml.includes('横にスワイプして続きを表示')) {
   throw new Error('GC calculator scroll affordance text missing');
 }
+for (const required of [
+  '今日のSTD・検体を入力',
+  '当日STD 1',
+  '＋ 物質追加',
+  '複数の検体エリア'
+]) {
+  if (!calculatorHtml.includes(required)) {
+    throw new Error(`GC daily STD / multi-sample UI marker missing: ${required}`);
+  }
+}
+for (const required of [
+  '.samples-block',
+  '.sample-row',
+  '.sample-ppm-field',
+  '.add-sample-btn'
+]) {
+  if (!calculatorCss.includes(required)) {
+    throw new Error(`GC multi-sample CSS marker missing: ${required}`);
+  }
+}
 
 for (const forbidden of [
   "const selected = new Set(state.rows.map",
   "row.stdManual = true;\n    });\n    state.customMaterials",
-  "root.addEventListener('pointerdown', () => setActiveRow(rowId)"
+  "root.addEventListener('pointerdown', () => setActiveRow(rowId)",
+  'class="ppm-field result-field result-primary"',
+  'class="memo-input"'
 ]) {
   if (calculator.includes(forbidden)) {
     throw new Error(`GC calculator unsafe legacy pattern remains: ${forbidden}`);
@@ -153,4 +183,4 @@ if (updateViewBlock.includes('syncFavoriteChipState();\n    syncActiveRowState()
   throw new Error('Input-time upper UI mutation remains');
 }
 
-console.log('GC calculator regression, UI, safety, and iOS input checks passed.');
+console.log('GC calculator regression, UI, safety, iOS input, and multi-sample checks passed.');

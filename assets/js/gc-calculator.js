@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-std-targets-1';
+  const CACHE_VERSION = '20260827-daily-std-multisample-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -227,14 +227,52 @@
     state.analyteDisplay = analyteDisplay || {};
   }
 
-  function createEmptyRow() {
-    return { id: `r_${Math.random().toString(36).slice(2)}`, materialInput: '', stdInput: '', stdAreaInput: '', sampleAreaInput: '', memo: '', stdManual: false, materialKey: '', rawLabel: '', displayName: '', normalizedName: '', status: '', confidence: '', note: '' };
+  function createEmptySample() {
+    return { id: `s_${Math.random().toString(36).slice(2)}`, label: '', areaInput: '' };
   }
 
+  function createEmptyRow() {
+    return {
+      id: `r_${Math.random().toString(36).slice(2)}`,
+      materialInput: '',
+      stdInput: '',
+      stdAreaInput: '',
+      stdManual: false,
+      materialKey: '',
+      rawLabel: '',
+      displayName: '',
+      normalizedName: '',
+      status: '',
+      confidence: '',
+      note: '',
+      samples: [createEmptySample()]
+    };
+  }
+
+  function normalizeSamples(row, hadSamples = true) {
+    const legacyArea = String(row.sampleAreaInput || '');
+    const legacyMemo = String(row.memo || '');
+    if (hadSamples && Array.isArray(row.samples) && row.samples.length) {
+      row.samples = row.samples.map((sample) => ({ ...createEmptySample(), ...sample }));
+    } else {
+      row.samples = [createEmptySample()];
+      if (legacyArea || legacyMemo) {
+        row.samples[0].areaInput = legacyArea;
+        row.samples[0].label = legacyMemo;
+      }
+    }
+    delete row.sampleAreaInput;
+    delete row.memo;
+  }
 
   function normalizeCardsState() {
     if (!Array.isArray(state.rows)) state.rows = [];
-    state.rows = state.rows.map((row) => ({ ...createEmptyRow(), ...row }));
+    state.rows = state.rows.map((rawRow) => {
+      const hadSamples = Array.isArray(rawRow?.samples);
+      const row = { ...createEmptyRow(), ...rawRow };
+      normalizeSamples(row, hadSamples);
+      return row;
+    });
     if (!state.rows.length) state.rows.push(createEmptyRow());
     if (!state.rows.some((r) => r.id === state.activeRowId)) state.activeRowId = state.rows[0].id;
   }
@@ -252,7 +290,7 @@
   function renderRow(row, index) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
     const stdText = resolvedStdText(row, material);
-    const calc = calculate(row, material);
+    const calc = calculate(row, material, '');
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     const cardNumber = index + 1;
     const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質未選択');
@@ -272,8 +310,8 @@
     </details>`;
     return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}${row.id === state.activeRowId ? ' is-active' : ''}" data-row-id="${escapeHtml(row.id)}" data-card-number="${cardNumber}">
       <div class="card-topline">
-        <span class="card-caption">計算カード ${cardNumber}</span>
-        <button type="button" class="remove-row-btn" aria-label="計算カード${cardNumber}を削除">削除</button>
+        <span class="card-caption">当日STD ${cardNumber}</span>
+        <button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">削除</button>
       </div>
       <div class="row-head">
         <div>
@@ -296,19 +334,35 @@
           <div class="result-label"><span>係数</span><small>STD ÷ STDエリア</small></div>
           <div class="result-box coefficient-output" aria-label="係数">${escapeHtml(calc.coefficientText || '—')}</div>
         </div>
-        <div class="field sample-area-field">
-          <label><span class="field-heading"><span class="step-mini">3</span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}" placeholder="例：3200"></label>
-        </div>
-        <div class="field ppm-field result-field result-primary">
-          <div class="result-label"><span>ppm</span><small>計算結果</small></div>
-          <div class="result-box ppm-output" aria-label="ppm">${escapeHtml(calc.ppmText || '—')}</div>
-        </div>
-        <div class="field memo-field">
-          <label><span class="field-heading">メモ <small>任意</small></span><input type="text" class="memo-input" value="${escapeHtml(row.memo)}" placeholder="試料名・条件など"></label>
-        </div>
       </div>
+      <section class="samples-block" aria-label="${escapeHtml(title)}の検体">
+        <div class="samples-heading">
+          <div><strong>検体</strong><span>同じ係数でまとめて計算</span></div>
+          <button type="button" class="plain add-sample-btn no-print">＋ 検体追加</button>
+        </div>
+        <div class="samples-list">${renderSamples(row, material)}</div>
+      </section>
       ${unregisteredEntry}${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
     </article>`;
+  }
+
+  function renderSamples(row, material) {
+    return row.samples.map((sample, index) => renderSample(row, sample, index, material)).join('');
+  }
+
+  function renderSample(row, sample, index, material) {
+    const calc = calculate(row, material, sample.areaInput);
+    return `<div class="sample-row" data-sample-id="${escapeHtml(sample.id)}">
+      <div class="sample-index">検体${index + 1}</div>
+      <label class="sample-label-field"><span>検体名・メモ <small>任意</small></span><input type="text" class="sample-label-input" value="${escapeHtml(sample.label)}" placeholder="例：試料A"></label>
+      <label class="sample-area-field"><span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(sample.areaInput)}" placeholder="例：3200"></label>
+      <div class="sample-ppm-field">
+        <span>ppm</span>
+        <strong class="sample-ppm-output">${escapeHtml(calc.ppmText || '—')}</strong>
+      </div>
+      <button type="button" class="sample-delete-btn no-print" aria-label="検体${index + 1}を削除">削除</button>
+      <div class="sample-error">${escapeHtml(calc.sampleErrorText || '')}</div>
+    </div>`;
   }
 
   function buildMaterialSelectOptions(selectedKey) {
@@ -329,14 +383,11 @@
     const unregisteredMaterialApply = root.querySelector('.unregistered-material-apply');
     const stdInput = root.querySelector('.std-input');
     const stdAreaInput = root.querySelector('.std-area-input');
-    const sampleAreaInput = root.querySelector('.sample-area-input');
-    const memoInput = root.querySelector('.memo-input');
 
     const updateOnly = () => { updateRowComputedView(root, row); persist(); };
 
     // iPhone Safariでは、フォーカス直前にページ上部のDOMを更新すると
     // 入力欄へフォーカスした瞬間にスクロール位置が上へ跳ぶことがある。
-    // 入力中はアクティブ行の内部表示だけ更新し、上部UIは触らない。
     root.addEventListener('focusin', () => setActiveRowForInput(rowId));
     root.addEventListener('focusout', (event) => {
       if (event.relatedTarget && root.contains(event.relatedTarget)) return;
@@ -353,14 +404,21 @@
     stdInput.addEventListener('input', () => { row.stdInput = stdInput.value; row.stdManual = true; updateOnly(); });
     stdInput.addEventListener('focus', () => { if (stdInput.readOnly) showStatus('STDは自動反映です。手入力する場合は「STDを手入力する」を押してください。'); });
     stdAreaInput.addEventListener('input', () => { row.stdAreaInput = stdAreaInput.value; updateOnly(); });
-    sampleAreaInput.addEventListener('input', () => { row.sampleAreaInput = sampleAreaInput.value; updateOnly(); });
-    memoInput.addEventListener('input', () => { row.memo = memoInput.value; persist(); });
+
+    root.querySelector('.add-sample-btn')?.addEventListener('click', () => {
+      row.samples.push(createEmptySample());
+      refreshSamples(root, row);
+      persist();
+      showStatus('検体を追加しました。');
+    });
+
+    bindSampleEvents(root, row);
 
     root.querySelector('.remove-row-btn').addEventListener('click', () => {
       if (rowHasContent(row)) {
         const material = resolveMaterial(row.materialInput, row.materialKey);
-        const label = material?.displayName || String(row.materialInput || '').trim() || 'この計算カード';
-        if (!window.confirm(`「${label}」の計算カードを削除しますか？入力内容も削除されます。`)) return;
+        const label = material?.displayName || String(row.materialInput || '').trim() || 'この物質';
+        if (!window.confirm(`「${label}」の当日STDと検体を削除しますか？入力内容も削除されます。`)) return;
       }
       state.rows = state.rows.filter((r) => r.id !== rowId);
       normalizeCardsState();
@@ -379,7 +437,6 @@
         row.stdManual = false;
         syncAutomaticStd(row, material);
       } else {
-        // 手入力へ切り替える時も、画面に出ていた「現在選択中の物質」のSTDを初期値にする。
         row.stdInput = resolvedStdText(row, material);
         row.stdManual = true;
       }
@@ -395,14 +452,49 @@
     toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
   }
 
+  function bindSampleEvents(root, row) {
+    root.querySelectorAll('.sample-row').forEach((sampleRoot) => {
+      const sample = row.samples.find((item) => item.id === sampleRoot.dataset.sampleId);
+      if (!sample) return;
+      const labelInput = sampleRoot.querySelector('.sample-label-input');
+      const areaInput = sampleRoot.querySelector('.sample-area-input');
+      labelInput?.addEventListener('input', () => {
+        sample.label = labelInput.value;
+        persist();
+      });
+      areaInput?.addEventListener('input', () => {
+        sample.areaInput = areaInput.value;
+        updateSampleComputedView(sampleRoot, row, sample);
+        persist();
+      });
+      sampleRoot.querySelector('.sample-delete-btn')?.addEventListener('click', () => {
+        if (row.samples.length === 1) {
+          sample.label = '';
+          sample.areaInput = '';
+        } else {
+          row.samples = row.samples.filter((item) => item.id !== sample.id);
+        }
+        refreshSamples(root, row);
+        persist();
+      });
+    });
+  }
+
+  function refreshSamples(root, row) {
+    const material = resolveMaterial(row.materialInput, row.materialKey);
+    const list = root.querySelector('.samples-list');
+    if (!list) return;
+    list.innerHTML = renderSamples(row, material);
+    bindSampleEvents(root, row);
+  }
+
   function rowHasContent(row) {
+    const sampleHasContent = row.samples.some((sample) => [sample.label, sample.areaInput].some((value) => String(value || '').trim()));
     return [
       row.materialInput,
       row.stdManual ? row.stdInput : '',
-      row.stdAreaInput,
-      row.sampleAreaInput,
-      row.memo
-    ].some((value) => String(value || '').trim());
+      row.stdAreaInput
+    ].some((value) => String(value || '').trim()) || sampleHasContent;
   }
 
   function setActiveRowForInput(rowId) {
@@ -433,17 +525,18 @@
     const index = state.rows.findIndex((row) => row.id === state.activeRowId);
     const row = index >= 0 ? state.rows[index] : state.rows[0];
     if (!row) {
-      els.activeCardLabel.textContent = '計算カード1';
+      els.activeCardLabel.textContent = '当日STD 1';
       return;
     }
     const material = resolveMaterial(row.materialInput, row.materialKey);
     els.activeCardLabel.textContent = material
-      ? `計算カード${index + 1}（${material.displayName}）`
-      : `計算カード${index + 1}`;
+      ? `当日STD ${index + 1}（${material.displayName}）`
+      : `当日STD ${index + 1}`;
   }
 
   function applyRegisteredMaterial(row, materialKey, root) {
     setActiveRow(row.id);
+    const materialSelect = root.querySelector('.material-select');
     const selected = findMaterialByKey(materialKey);
     if (!selected) {
       clearRowMaterialSelection(row, '');
@@ -453,11 +546,15 @@
       return;
     }
     const isSameMaterial = row.materialKey === selected.key;
-    const duplicate = state.rows.some((r) => r.id !== row.id && resolveMaterial(r.materialInput, r.materialKey)?.displayName === selected.displayName);
-    if (!isSameMaterial && duplicate) showStatus(`同じ物質「${selected.displayName}」が別カードにあります。`, true);
+    const duplicateRow = state.rows.find((r) => r.id !== row.id && resolveMaterial(r.materialInput, r.materialKey)?.displayName === selected.displayName);
+    if (!isSameMaterial && duplicateRow) {
+      showStatus(`「${selected.displayName}」はすでに当日STD登録済みです。既存カードを使用します。`);
+      focusRow(duplicateRow.id);
+      materialSelect.value = row.materialKey || '';
+      return;
+    }
     if (!isSameMaterial) clearAreaInputs(row, root);
     setRowMaterial(row, selected, { preserveManualStd: isSameMaterial && row.stdManual });
-    const materialSelect = root.querySelector('.material-select');
     if (materialSelect) materialSelect.value = selected.key;
     const unregisteredMaterialInput = root.querySelector('.unregistered-material-input');
     if (unregisteredMaterialInput) unregisteredMaterialInput.value = '';
@@ -501,11 +598,13 @@
 
   function clearAreaInputs(row, root) {
     row.stdAreaInput = '';
-    row.sampleAreaInput = '';
+    row.samples.forEach((sample) => {
+      sample.areaInput = '';
+      sample.label = '';
+    });
     const stdAreaInput = root?.querySelector('.std-area-input');
-    const sampleAreaInput = root?.querySelector('.sample-area-input');
     if (stdAreaInput) stdAreaInput.value = '';
-    if (sampleAreaInput) sampleAreaInput.value = '';
+    if (root) refreshSamples(root, row);
   }
 
   function setRowMaterial(row, selected, { preserveManualStd = false } = {}) {
@@ -526,14 +625,15 @@
   function updateRowComputedView(root, row, rerenderHead = false) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
     const stdText = resolvedStdText(row, material);
-    // 自動STDの保存値は互換用の控えであり、計算の正は常に現在の物質マスタ値。
-    // 旧版で保存された別物質の値（例: 9.8）も、この時点で正しい値に直す。
     if (!row.stdManual) row.stdInput = stdText;
-    const calc = calculate(row, material);
+    const calc = calculate(row, material, '');
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     root.querySelector('.coefficient-output').textContent = calc.coefficientText || '—';
-    root.querySelector('.ppm-output').textContent = calc.ppmText || '—';
     root.querySelector('.error-text').textContent = calc.errorText;
+    root.querySelectorAll('.sample-row').forEach((sampleRoot) => {
+      const sample = row.samples.find((item) => item.id === sampleRoot.dataset.sampleId);
+      if (sample) updateSampleComputedView(sampleRoot, row, sample);
+    });
     if (rerenderHead) {
       root.querySelector('.row-title').textContent = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択');
       root.querySelector('.meta-note').textContent = material?.rawLabel ? `raw: ${material.rawLabel}` : '';
@@ -559,6 +659,13 @@
     if (row.stdManual) badges.push('<span class="badge badge-manual">手入力</span>');
     root.querySelector('.badges').innerHTML = badges.join('');
     if (rerenderHead) syncActiveRowUi();
+  }
+
+  function updateSampleComputedView(sampleRoot, row, sample) {
+    const material = resolveMaterial(row.materialInput, row.materialKey);
+    const calc = calculate(row, material, sample.areaInput);
+    sampleRoot.querySelector('.sample-ppm-output').textContent = calc.ppmText || '—';
+    sampleRoot.querySelector('.sample-error').textContent = calc.sampleErrorText || '';
   }
 
   function resolveMaterial(input, materialKey = '') {
@@ -604,16 +711,16 @@
     if (!row.stdManual) row.stdInput = automaticStdText(material);
   }
 
-  function calculate(row, material) {
+  function calculate(row, material, sampleAreaInput = '') {
     const std = parseNumber(resolvedStdText(row, material));
     const stdArea = parseNumber(row.stdAreaInput);
-    const sample = parseNumber(row.sampleAreaInput);
-    if (!std.valid || !stdArea.valid || !sample.valid) {
-      return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
+    const sample = parseNumber(sampleAreaInput);
+    if (!std.valid || !stdArea.valid) {
+      return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。', sampleErrorText: '' };
     }
     const noMaterial = !String(row.materialInput || '').trim();
     if (noMaterial && std.empty && stdArea.empty && sample.empty) {
-      return { coefficientText: '', ppmText: '', errorText: '' };
+      return { coefficientText: '', ppmText: '', errorText: '', sampleErrorText: '' };
     }
     if (std.empty) {
       const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
@@ -622,27 +729,42 @@
         ppmText: '',
         errorText: isUnregistered
           ? '未登録物質です。「STDを手入力する」でSTD値を入力するか、下の一覧に追加してください。'
-          : 'STD値を取得できませんでした。STDを手入力するか、物質マスタとの紐づけを確認してください。'
+          : 'STD値を取得できませんでした。STDを手入力するか、物質マスタとの紐づけを確認してください。',
+        sampleErrorText: ''
       };
     }
     if (std.value <= 0) {
-      return { coefficientText: '', ppmText: '', errorText: 'STD値には0より大きい数値を入力してください。' };
+      return { coefficientText: '', ppmText: '', errorText: 'STD値には0より大きい数値を入力してください。', sampleErrorText: '' };
     }
     if (stdArea.empty) {
-      return { coefficientText: '', ppmText: '', errorText: 'STDエリアを入力してください。' };
+      return { coefficientText: '', ppmText: '', errorText: '当日STDエリアを入力してください。', sampleErrorText: '' };
     }
     if (stdArea.value <= 0) {
-      return { coefficientText: '', ppmText: '', errorText: 'STDエリアには0より大きい数値を入力してください。' };
+      return { coefficientText: '', ppmText: '', errorText: 'STDエリアには0より大きい数値を入力してください。', sampleErrorText: '' };
+    }
+    const coefficient = std.value / stdArea.value;
+    if (!sample.valid) {
+      return {
+        coefficientText: Number(coefficient.toPrecision(10)).toString(),
+        ppmText: '',
+        errorText: '',
+        sampleErrorText: '数値を入力してください。'
+      };
     }
     if (!sample.empty && sample.value < 0) {
-      return { coefficientText: '', ppmText: '', errorText: '検体エリアには0以上の数値を入力してください。' };
+      return {
+        coefficientText: Number(coefficient.toPrecision(10)).toString(),
+        ppmText: '',
+        errorText: '',
+        sampleErrorText: '検体エリアには0以上の数値を入力してください。'
+      };
     }
-    const c = std.value / stdArea.value;
-    const ppm = sample.empty ? null : sample.value * c;
+    const ppm = sample.empty ? null : sample.value * coefficient;
     return {
-      coefficientText: Number(c.toPrecision(10)).toString(),
+      coefficientText: Number(coefficient.toPrecision(10)).toString(),
       ppmText: ppm == null ? '' : Number(ppm.toFixed(2)).toString(),
-      errorText: ''
+      errorText: '',
+      sampleErrorText: ''
     };
   }
 
@@ -654,11 +776,22 @@
     for (const row of rows) {
       const material = resolveMaterial(row.materialInput, row.materialKey);
       if (!material && !String(row.materialInput || '').trim()) {
-        return { ok: false, rowId: row.id, message: '物質が未選択の計算カードがあります。物質を選択してください。' };
+        return { ok: false, rowId: row.id, message: '物質が未選択の当日STDがあります。物質を選択してください。' };
       }
-      const calc = calculate(row, material);
-      if (calc.errorText) {
-        return { ok: false, rowId: row.id, message: `計算エラーのあるカードがあります：${calc.errorText}` };
+      const baseCalc = calculate(row, material, '');
+      if (baseCalc.errorText) {
+        return { ok: false, rowId: row.id, message: `計算エラーのある当日STDがあります：${baseCalc.errorText}` };
+      }
+      for (const sample of row.samples) {
+        const hasSample = [sample.label, sample.areaInput].some((value) => String(value || '').trim());
+        if (!hasSample) continue;
+        const calc = calculate(row, material, sample.areaInput);
+        if (calc.sampleErrorText) {
+          return { ok: false, rowId: row.id, message: `検体の入力エラーがあります：${calc.sampleErrorText}` };
+        }
+        if (!String(sample.areaInput || '').trim()) {
+          return { ok: false, rowId: row.id, message: '検体名・メモを入力した検体には、検体エリアも入力してください。' };
+        }
       }
     }
     return { ok: true, rowId: null, message: '' };
@@ -674,34 +807,54 @@
   function buildCopyText() {
     const parts = ['GC濃度計算', `日付: ${todayIso()}`, ''];
     state.rows.forEach((row) => {
+      if (!rowHasContent(row)) return;
       const material = resolveMaterial(row.materialInput, row.materialKey);
       const stdText = resolvedStdText(row, material);
-      const has = [row.materialInput, stdText, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
-      if (!has) return;
-      const calc = calculate(row, material);
+      const baseCalc = calculate(row, material, '');
       parts.push(
         material?.displayName || row.materialInput || '(未選択)',
         `STD: ${stdText || '-'}`,
-        `STDエリア: ${row.stdAreaInput || '-'}`,
-        `係数: ${calc.coefficientText || '-'}`,
-        `検体エリア: ${row.sampleAreaInput || '-'}`,
-        `ppm: ${calc.ppmText || '-'}`,
-        ...(String(row.memo || '').trim() ? [`メモ: ${row.memo}`] : []),
-        ''
+        `当日STDエリア: ${row.stdAreaInput || '-'}`,
+        `係数: ${baseCalc.coefficientText || '-'}`
       );
+      const samples = row.samples.filter((sample) => [sample.label, sample.areaInput].some((value) => String(value || '').trim()));
+      samples.forEach((sample, index) => {
+        const calc = calculate(row, material, sample.areaInput);
+        parts.push(
+          `検体${index + 1}${sample.label ? `（${sample.label}）` : ''}: エリア ${sample.areaInput || '-'} / ${calc.ppmText || '-'} ppm`
+        );
+      });
+      parts.push('');
     });
     return parts.join('\n').trim();
   }
 
   function buildCsv() {
-    const lines = [['日付', '物質', 'STD', 'STDエリア', '係数', '検体エリア', 'ppm', '状態', 'メモ'].join(',')];
+    const lines = [['日付', '物質', 'STD', '当日STDエリア', '係数', '検体', '検体エリア', 'ppm', '状態'].join(',')];
     state.rows.forEach((row) => {
+      if (!rowHasContent(row)) return;
       const material = resolveMaterial(row.materialInput, row.materialKey);
       const stdText = resolvedStdText(row, material);
-      const has = [row.materialInput, stdText, row.stdAreaInput, row.sampleAreaInput, row.memo].some((x) => String(x || '').trim());
-      if (!has) return;
-      const calc = calculate(row, material);
-      lines.push([todayIso(), material?.displayName || row.materialInput || '', stdText || '', row.stdAreaInput || '', calc.coefficientText || '', row.sampleAreaInput || '', calc.ppmText || '', STATUS_LABEL[material?.status] || '', row.memo || ''].map(csvEscape).join(','));
+      const baseCalc = calculate(row, material, '');
+      const samples = row.samples.filter((sample) => [sample.label, sample.areaInput].some((value) => String(value || '').trim()));
+      if (!samples.length) {
+        lines.push([todayIso(), material?.displayName || row.materialInput || '', stdText || '', row.stdAreaInput || '', baseCalc.coefficientText || '', '', '', '', STATUS_LABEL[material?.status] || ''].map(csvEscape).join(','));
+        return;
+      }
+      samples.forEach((sample, index) => {
+        const calc = calculate(row, material, sample.areaInput);
+        lines.push([
+          todayIso(),
+          material?.displayName || row.materialInput || '',
+          stdText || '',
+          row.stdAreaInput || '',
+          baseCalc.coefficientText || '',
+          sample.label || `検体${index + 1}`,
+          sample.areaInput || '',
+          calc.ppmText || '',
+          STATUS_LABEL[material?.status] || ''
+        ].map(csvEscape).join(','));
+      });
     });
     return lines.join('\n');
   }
@@ -905,7 +1058,7 @@
       row.stdInput = '';
       row.stdManual = false;
       row.stdAreaInput = '';
-      row.sampleAreaInput = '';
+      row.samples = [createEmptySample()];
     });
     state.customMaterials = state.customMaterials.filter((item) => String(item.id) !== String(id));
     saveCustomMaterials();
