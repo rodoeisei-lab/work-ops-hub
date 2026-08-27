@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-auto-std-source-1';
+  const CACHE_VERSION = '20260827-version-loader-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -45,6 +45,7 @@
   init();
 
   async function init() {
+    document.documentElement.dataset.gcCalculatorVersion = CACHE_VERSION;
     bindGlobalEvents();
     await loadMaster();
     await loadFavoriteData();
