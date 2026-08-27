@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-safety-state-1';
+  const CACHE_VERSION = '20260827-ios-input-scroll-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -334,8 +334,14 @@
 
     const updateOnly = () => { updateRowComputedView(root, row); persist(); };
 
-    root.addEventListener('focusin', () => setActiveRow(rowId));
-    root.addEventListener('pointerdown', () => setActiveRow(rowId), { passive: true });
+    // iPhone Safariでは、フォーカス直前にページ上部のDOMを更新すると
+    // 入力欄へフォーカスした瞬間にスクロール位置が上へ跳ぶことがある。
+    // 入力中はアクティブ行の内部表示だけ更新し、上部UIは触らない。
+    root.addEventListener('focusin', () => setActiveRowForInput(rowId));
+    root.addEventListener('focusout', (event) => {
+      if (event.relatedTarget && root.contains(event.relatedTarget)) return;
+      window.requestAnimationFrame(() => syncActiveRowUi());
+    });
     materialSelect.addEventListener('change', () => applyRegisteredMaterial(row, materialSelect.value, root));
     unregisteredMaterialApply.addEventListener('click', () => applyUnregisteredMaterial(row, unregisteredMaterialInput.value, root));
     unregisteredMaterialInput.addEventListener('keydown', (event) => {
@@ -399,9 +405,22 @@
     ].some((value) => String(value || '').trim());
   }
 
+  function setActiveRowForInput(rowId) {
+    if (!state.rows.some((row) => row.id === rowId)) return;
+    if (state.activeRowId === rowId) return;
+    state.activeRowId = rowId;
+    els.rowsContainer?.querySelectorAll('.calc-row').forEach((root) => {
+      root.classList.toggle('is-active', root.dataset.rowId === state.activeRowId);
+    });
+  }
+
   function setActiveRow(rowId) {
     if (!state.rows.some((row) => row.id === rowId)) return;
     state.activeRowId = rowId;
+    syncActiveRowUi();
+  }
+
+  function syncActiveRowUi() {
     syncActiveRowState();
     syncFavoriteChipState();
   }
@@ -539,8 +558,7 @@
     if (!row.stdManual && material && material.stdValue == null) badges.push('<span class="badge badge-review">STD値を確認してください</span>');
     if (row.stdManual) badges.push('<span class="badge badge-manual">手入力</span>');
     root.querySelector('.badges').innerHTML = badges.join('');
-    syncFavoriteChipState();
-    syncActiveRowState();
+    if (rerenderHead) syncActiveRowUi();
   }
 
   function resolveMaterial(input, materialKey = '') {

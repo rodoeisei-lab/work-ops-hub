@@ -59,7 +59,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-ui-polish-1'
+  'gc-calculator.css?v=20260827-ios-input-scroll-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -94,7 +94,10 @@ for (const required of [
   'row.stdAreaInput = \'\'',
   'row.sampleAreaInput = \'\'',
   'activeMaterialName',
-  'メモ: ${row.memo}'
+  'メモ: ${row.memo}',
+  'setActiveRowForInput',
+  'syncActiveRowUi',
+  "root.addEventListener('focusout'"
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -107,11 +110,20 @@ if (!calculatorHtml.includes('横にスワイプして続きを表示')) {
 
 for (const forbidden of [
   "const selected = new Set(state.rows.map",
-  "row.stdManual = true;\n    });\n    state.customMaterials"
+  "row.stdManual = true;\n    });\n    state.customMaterials",
+  "root.addEventListener('pointerdown', () => setActiveRow(rowId)"
 ]) {
   if (calculator.includes(forbidden)) {
     throw new Error(`GC calculator unsafe legacy pattern remains: ${forbidden}`);
   }
 }
 
-console.log('GC calculator regression, UI, and safety checks passed.');
+const updateViewBlock = calculator.match(/function updateRowComputedView\([\s\S]*?\n  }\n\n  function resolveMaterial/)?.[0] || '';
+if (!updateViewBlock.includes('if (rerenderHead) syncActiveRowUi();')) {
+  throw new Error('Input-time upper UI mutation guard is missing');
+}
+if (updateViewBlock.includes('syncFavoriteChipState();\n    syncActiveRowState();')) {
+  throw new Error('Input-time upper UI mutation remains');
+}
+
+console.log('GC calculator regression, UI, safety, and iOS input checks passed.');
