@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-manual-collapse-1';
+  const CACHE_VERSION = '20260827-design-refresh-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -326,24 +326,22 @@
       : '';
     return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}${row.id === state.activeRowId ? ' is-active' : ''}" data-row-id="${escapeHtml(row.id)}" data-card-number="${cardNumber}">
       <div class="card-topline">
-        <span class="card-caption">当日STD ${cardNumber}</span>
-        <div class="card-topline-actions">${closeButton}<button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">×</button></div>
-      </div>
-      <div class="row-head">
-        <div>
-          <h3 class="row-title">${escapeHtml(title)}</h3>
+        <div class="card-identity">
+          <span class="card-caption">STD ${cardNumber}</span>
+          <strong class="card-material-title">${escapeHtml(title)}</strong>
           <div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
         </div>
+        <div class="card-topline-actions">${closeButton}<button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">×</button></div>
       </div>
       <div class="row-grid">
         <div class="field material-field">
-          <label><span class="field-heading"><span class="step-mini">1</span>物質</span><select class="material-select">${buildMaterialSelectOptions(material?.key || '')}</select></label>
+          <label><span class="field-heading">物質</span><select class="material-select" aria-label="物質">${buildMaterialSelectOptions(material?.key || '')}</select></label>
         </div>
         <div class="field std-field">
           <label><span class="field-heading">STD</span><input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label>
         </div>
         <div class="field std-area-field">
-          <label><span class="field-heading"><span class="step-mini">2</span>当日STDエリア</span><input type="text" class="std-area-input input-main" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}" placeholder="例：125000"></label>
+          <label><span class="field-heading">STDエリア</span><input type="text" class="std-area-input input-main" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}" placeholder="例：125000"></label>
         </div>
         <div class="field coefficient-field result-field">
           <div class="result-label"><span>係数</span></div>
@@ -352,7 +350,7 @@
       </div>
       <section class="samples-block" aria-label="${escapeHtml(title)}の検体">
         <div class="samples-heading">
-          <div><strong>検体</strong></div>
+          <div class="samples-title"><strong>検体</strong><span>エリア → ppm</span></div>
           <button type="button" class="plain add-sample-btn no-print">＋ 検体</button>
         </div>
         <div class="samples-list">${renderSamples(row, material)}</div>
