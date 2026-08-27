@@ -43,6 +43,33 @@ if (!master.some((item) => item.display_name === '酢酸ブチル')) {
   throw new Error('酢酸ブチル must exist in GC STD master');
 }
 
+const stdExpectations = new Map([
+  ['酢酸ブチル', 15],
+  ['シクロヘキサノン', 25.5]
+]);
+for (const [name, expected] of stdExpectations) {
+  const item = master.find((row) => row.display_name === name);
+  if (!item || Number(item.std_value) !== expected || item.status !== 'confirmed') {
+    throw new Error(`${name} STD must be confirmed at ${expected}`);
+  }
+}
+if (master.some((item) => item.display_name === 'シクロヘキサン')) {
+  throw new Error('シクロヘキサン must not exist in GC STD master');
+}
+if ((favorites.liquid_standard || []).some((item) => item.display_name === 'シクロヘキサン' || item.normalized_name === 'cyclohexane')) {
+  throw new Error('シクロヘキサン must not exist in GC favorites');
+}
+if (Object.prototype.hasOwnProperty.call(aliases, 'cyclohexane')) {
+  throw new Error('cyclohexane alias mapping must be removed');
+}
+const display = JSON.parse(fs.readFileSync('data/gc-analyte-display.json', 'utf8'));
+if (Object.prototype.hasOwnProperty.call(display, 'cyclohexane')) {
+  throw new Error('cyclohexane display mapping must be removed');
+}
+if (calculator.includes("'シクロヘキサン'")) {
+  throw new Error('シクロヘキサン must not remain in calculator target lists');
+}
+
 for (const required of [
   'std.value <= 0',
   'stdArea.value <= 0',
