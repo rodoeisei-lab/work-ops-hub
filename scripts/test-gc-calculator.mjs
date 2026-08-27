@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-manual-collapse-1'
+  'gc-calculator.css?v=20260827-ios-focus-fit-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -245,6 +245,18 @@ for (const forbiddenAutoCollapse of [
 ]) {
   if (calculator.includes(forbiddenAutoCollapse)) {
     throw new Error('GC cards must not auto-collapse: ' + forbiddenAutoCollapse);
+  }
+}
+
+for (const requiredCss of [
+  'font-size:16px !important;',
+  'overflow-x:hidden;',
+  'max-width:100%;',
+  '.gc-calculator-page .sample-area-field',
+  '.gc-calculator-page input[type="text"]'
+]) {
+  if (!calculatorCss.includes(requiredCss)) {
+    throw new Error('GC iPhone focus-fit CSS marker missing: ' + requiredCss);
   }
 }
 

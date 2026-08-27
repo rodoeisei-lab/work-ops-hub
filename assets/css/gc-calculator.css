@@ -1358,3 +1358,43 @@
   .collapsed-count,
   .collapsed-open-label { font-size:.66rem; }
 }
+
+
+/* iPhone Safari: 入力フォーカス時の自動ズーム・横ズレ防止 */
+html,
+body {
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+.gc-calculator-page,
+.gc-calculator-page .section-block,
+.gc-calculator-page .calc-row,
+.gc-calculator-page .row-grid,
+.gc-calculator-page .sample-row,
+.gc-calculator-page .field,
+.gc-calculator-page label {
+  min-width:0;
+  max-width:100%;
+}
+
+@media (max-width:580px) {
+  .gc-calculator-page input[type="text"],
+  .gc-calculator-page input[type="number"],
+  .gc-calculator-page input[type="search"],
+  .gc-calculator-page select,
+  .gc-calculator-page textarea {
+    min-width:0;
+    max-width:100%;
+    font-size:16px !important;
+  }
+
+  .gc-calculator-page .sample-area-field,
+  .gc-calculator-page .std-field,
+  .gc-calculator-page .std-area-field,
+  .gc-calculator-page .material-field,
+  .gc-calculator-page .coefficient-field {
+    min-width:0;
+    max-width:100%;
+  }
+}
