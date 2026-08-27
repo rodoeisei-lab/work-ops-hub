@@ -941,7 +941,13 @@
   function applyFavoriteToActiveRow(displayName) {
     if (!displayName) return;
     normalizeCardsState();
-    const row = state.rows.find((r) => r.id === state.activeRowId) || state.rows[0];
+    let row = state.rows.find((r) => r.id === state.activeRowId) || state.rows[0];
+    if (row?.collapsed) {
+      row = createEmptyRow();
+      state.rows.push(row);
+      state.activeRowId = row.id;
+      renderRows();
+    }
     const root = els.rowsContainer.querySelector(`[data-row-id="${row.id}"]`);
     const material = findStdEntry(displayName);
     if (root && material) {
