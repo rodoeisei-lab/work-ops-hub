@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-ios-focus-fit-1'
+  'gc-calculator.css?v=20260827-design-refresh-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -147,7 +147,7 @@ for (const required of [
 
 for (const required of [
   'STD・検体',
-  '当日STD 1',
+  'STD 1',
   '＋ 物質',
   'GC計算'
 ]) {
@@ -171,6 +171,51 @@ for (const required of [
   if (!calculatorCss.includes(required)) {
     throw new Error(`GC multi-sample CSS marker missing: ${required}`);
   }
+}
+
+for (const required of [
+  'class="card section-block custom-material-block utility-panel no-print"',
+  'class="card section-block copy-preview-block utility-panel no-print"',
+  '>物質を追加</summary>',
+  '<summary>コピー確認</summary>'
+]) {
+  if (!calculatorHtml.includes(required)) {
+    throw new Error('GC design refresh HTML marker missing: ' + required);
+  }
+}
+
+for (const required of [
+  'card-material-title',
+  'samples-title',
+  '<span>エリア → ppm</span>',
+  '<span class="field-heading">STDエリア</span>'
+]) {
+  if (!calculator.includes(required)) {
+    throw new Error('GC design refresh JS marker missing: ' + required);
+  }
+}
+
+const designRefreshBlock = calculatorCss.split('/* 20260827 design refresh: 実務用の視覚階層・配色・配置 */')[1] || '';
+for (const requiredCss of [
+  '--gc-blue-soft:#edf4ff;',
+  '.quick-chip.active,',
+  'background:var(--gc-blue-soft);',
+  '.card-material-title',
+  '.coefficient-output',
+  'white-space:nowrap;',
+  '.sample-ppm-field',
+  'background:#e9f1ff;',
+  '.action-primary',
+  'background:var(--gc-blue-strong);',
+  '.custom-material-block,',
+  '.copy-preview-block'
+]) {
+  if (!designRefreshBlock.includes(requiredCss)) {
+    throw new Error('GC design refresh CSS marker missing: ' + requiredCss);
+  }
+}
+if (designRefreshBlock.includes('.sample-ppm-field {\n  background:#173a8e')) {
+  throw new Error('GC design refresh must not use the old dark ppm block');
 }
 
 for (const forbiddenHtml of [
