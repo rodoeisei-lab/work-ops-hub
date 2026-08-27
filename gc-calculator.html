@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-large-simple-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-compact-grid-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -15,7 +15,7 @@
         <a href="index.html" class="back-home-link no-print">← ホームへ戻る</a>
         <span class="tool-kicker">GC分析ツール</span>
       </div>
-      <h1>GC係数・ppm計算</h1>
+      <h1>GC計算</h1>
     </header>
 
     <section class="card section-block quick-select-block no-print" aria-labelledby="favoriteTitle">
@@ -50,7 +50,7 @@
             <h2 id="rowsTitle">STD・検体</h2>
           </div>
         </div>
-        <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ 物質追加</button>
+        <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ 物質</button>
       </div>
       <div id="rowsContainer" class="rows-container"></div>
     </section>
@@ -106,7 +106,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260827-large-simple-1';
+      const FALLBACK_VERSION = '20260827-compact-grid-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
