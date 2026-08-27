@@ -903,3 +903,356 @@
   .sample-row input { font-size:1.05rem; }
   .sample-ppm-output { font-size:1.3rem; }
 }
+
+
+/* 20260827 compact-grid: 横スクロール廃止・縦方向を圧縮 */
+.gc-calculator-page {
+  gap:7px;
+  padding-bottom:12px;
+}
+.page-header {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:8px 10px;
+}
+.page-header__top {
+  display:contents;
+}
+.page-header .tool-kicker { display:none; }
+.page-header .back-home-link {
+  order:0;
+  font-size:.82rem;
+}
+.page-header h1 {
+  order:1;
+  margin:0;
+  font-size:1.18rem;
+}
+.section-block { padding:9px; }
+.section-number { display:none; }
+.section-heading {
+  align-items:center;
+  gap:6px;
+}
+.section-heading > div {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.section-heading h2 { font-size:.98rem; }
+.active-card-line {
+  margin:0;
+  font-size:.78rem;
+  color:#71829b;
+}
+.quick-select-block { gap:6px; }
+
+.quick-chips--grid {
+  display:grid;
+  grid-auto-flow:row;
+  grid-template-rows:none;
+  grid-auto-columns:auto;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:4px;
+  overflow:visible;
+  padding:0;
+  scroll-snap-type:none;
+  scrollbar-width:auto;
+  -webkit-mask-image:none;
+  mask-image:none;
+}
+.quick-chips--grid .quick-chip {
+  width:100%;
+  min-width:0;
+  height:36px;
+  min-height:36px;
+  padding:3px 4px;
+  border-radius:7px;
+  font-size:.72rem;
+  line-height:1.05;
+  white-space:normal;
+  overflow:hidden;
+  scroll-snap-align:none;
+}
+.secondary-materials summary,
+.more-actions summary,
+.copy-preview-block summary,
+.custom-material-block summary {
+  padding:6px 8px;
+  font-size:.82rem;
+}
+.secondary-materials__body {
+  gap:7px;
+  padding:0 8px 8px;
+}
+.secondary-materials__body h3 {
+  margin-bottom:4px;
+  font-size:.74rem;
+}
+.quick-chips:not(.quick-chips--grid) {
+  gap:4px;
+}
+.quick-chips:not(.quick-chips--grid) .quick-chip {
+  min-height:32px;
+  padding:4px 7px;
+  font-size:.76rem;
+}
+
+.rows-heading {
+  align-items:center;
+  flex-direction:row;
+  gap:7px;
+  margin-bottom:6px;
+}
+.add-card-btn {
+  width:auto;
+  min-height:34px;
+  padding:5px 8px;
+  font-size:.78rem;
+}
+.rows-container { gap:7px; }
+
+.calc-row {
+  padding:7px;
+  border-radius:10px;
+}
+.card-topline {
+  min-height:24px;
+  margin:0;
+}
+.card-caption { font-size:.72rem; }
+.remove-row-btn {
+  width:28px;
+  min-height:28px;
+  padding:0;
+  font-size:1.05rem;
+  line-height:1;
+}
+.row-head { display:none; }
+.badges { margin-top:2px; }
+.badge {
+  padding:1px 5px;
+  font-size:.68rem;
+}
+
+.row-grid {
+  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,.95fr);
+  grid-template-areas:
+    "material material material"
+    "std stdarea coefficient";
+  gap:5px;
+  margin-top:3px;
+}
+.field label { gap:3px; }
+.field-heading,
+.result-label {
+  min-height:16px;
+  font-size:.72rem;
+}
+.step-mini { display:none; }
+.field input,
+.field select {
+  min-height:38px;
+  height:38px;
+  padding:5px 7px;
+  font-size:.94rem;
+}
+.std-toggle-btn {
+  min-height:25px;
+  margin-top:3px;
+  padding:2px 5px;
+  font-size:.68rem;
+}
+.result-field {
+  gap:3px;
+  padding:4px 6px;
+  border-radius:8px;
+}
+.coefficient-field {
+  display:grid;
+  grid-template-columns:1fr;
+  align-content:end;
+}
+.result-box {
+  min-height:38px;
+  padding:4px 2px;
+  justify-content:flex-start;
+  font-size:.94rem;
+}
+
+.samples-block {
+  gap:5px;
+  margin-top:6px;
+  padding-top:6px;
+}
+.samples-heading {
+  min-height:30px;
+}
+.samples-heading strong { font-size:.86rem; }
+.add-sample-btn {
+  min-height:30px;
+  padding:3px 7px;
+  font-size:.76rem;
+}
+.samples-list { gap:4px; }
+.sample-row {
+  display:grid;
+  grid-template-columns:36px minmax(72px,1fr) minmax(74px,.82fr) 66px 28px;
+  grid-template-areas:"index label area ppm delete";
+  align-items:center;
+  gap:4px;
+  padding:4px 5px;
+  border-radius:8px;
+}
+.sample-index {
+  font-size:.7rem;
+  text-align:center;
+}
+.sample-row label {
+  display:block;
+}
+.sample-row label > span { display:none; }
+.sample-row input {
+  min-height:36px;
+  height:36px;
+  padding:4px 6px;
+  font-size:.9rem;
+}
+.sample-ppm-field {
+  min-height:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:4px 5px;
+  border-radius:7px;
+}
+.sample-ppm-field > span { display:none; }
+.sample-ppm-output {
+  font-size:1rem;
+  line-height:1;
+}
+.sample-delete-btn {
+  width:28px;
+  min-height:28px;
+  padding:0;
+  font-size:1rem;
+  line-height:1;
+}
+.sample-error {
+  grid-column:2 / 5;
+  grid-row:2;
+  font-size:.7rem;
+}
+.error-text {
+  margin-top:4px;
+  font-size:.75rem;
+}
+
+.actions-block {
+  gap:6px;
+}
+.actions-block .section-heading { display:none; }
+.actions-grid { gap:5px; }
+.actions-grid button {
+  min-height:40px;
+  font-size:.88rem;
+}
+.more-actions__buttons {
+  gap:5px;
+  padding:0 7px 7px;
+}
+.more-actions__buttons button {
+  min-height:34px;
+  font-size:.74rem;
+}
+.status-message {
+  min-height:0;
+  font-size:.76rem;
+}
+.status-message:empty { display:none; }
+
+.custom-material-block,
+.copy-preview-block {
+  padding:6px 9px;
+}
+.custom-material-block__body {
+  gap:6px;
+  padding:6px 0 0;
+}
+.custom-material-form { gap:5px; }
+.custom-material-form label,
+.unregistered-entry__body label {
+  font-size:.76rem;
+}
+.custom-material-form input,
+.unregistered-entry__body input {
+  min-height:36px;
+  font-size:.9rem;
+}
+.custom-material-form button {
+  min-height:36px;
+  font-size:.76rem;
+}
+.version-line {
+  margin:0 2px;
+  font-size:.62rem;
+}
+
+@media (max-width:580px) {
+  .section-block { padding:8px; }
+  .page-header { padding:7px 8px; }
+  .page-header h1 { font-size:1.12rem; }
+  .quick-chips--grid {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-auto-columns:auto;
+    grid-template-rows:none;
+    overflow:visible;
+    padding:0;
+    mask-image:none;
+    -webkit-mask-image:none;
+  }
+  .rows-heading {
+    align-items:center;
+    flex-direction:row;
+    gap:6px;
+  }
+  .add-card-btn {
+    width:auto;
+    min-height:32px;
+  }
+  .calc-row { padding:6px; }
+  .row-grid { gap:4px; }
+  .sample-row {
+    grid-template-columns:34px minmax(68px,1fr) minmax(70px,.8fr) 64px 26px;
+    grid-template-areas:"index label area ppm delete";
+    gap:3px;
+  }
+  .sample-ppm-field { min-height:34px; height:34px; }
+  .more-actions__buttons { grid-template-columns:1fr 1fr; }
+}
+
+@media (max-width:360px) {
+  .quick-chips--grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .row-grid {
+    grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);
+    grid-template-areas:
+      "material material"
+      "std stdarea"
+      "coefficient coefficient";
+  }
+  .coefficient-field {
+    grid-template-columns:56px 1fr;
+    align-items:center;
+  }
+  .sample-row {
+    grid-template-columns:30px minmax(58px,1fr) minmax(64px,.82fr) 58px 24px;
+    grid-template-areas:"index label area ppm delete";
+  }
+  .sample-row input { font-size:.84rem; padding-inline:4px; }
+  .sample-ppm-output { font-size:.9rem; }
+  .sample-delete-btn { width:24px; }
+}
