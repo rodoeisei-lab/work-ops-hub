@@ -751,3 +751,155 @@
 @media (min-width:700px) {
   .scroll-hint { display:none; }
 }
+
+
+/* 自分用・視認性優先の大きめ表示 */
+.gc-calculator-page { gap:10px; }
+.page-header { padding:14px 16px; }
+.page-header__top { margin-bottom:4px; }
+.page-header h1 { font-size:1.65rem; }
+.tool-kicker { font-size:.82rem; }
+.back-home-link { font-size:.92rem; }
+
+.section-block { padding:15px; }
+.section-heading { align-items:center; }
+.section-heading h2 { font-size:1.2rem; }
+.section-number {
+  width:32px;
+  height:32px;
+  font-size:.95rem;
+}
+.active-card-line {
+  margin:4px 0 0;
+  color:#36507d;
+  font-size:1rem;
+}
+.quick-chip {
+  min-height:46px;
+  padding:9px 12px;
+  font-size:1rem;
+}
+.quick-chips--grid {
+  grid-template-rows:repeat(2,48px);
+  grid-auto-columns:minmax(145px,46vw);
+}
+.secondary-materials summary,
+.more-actions summary,
+.copy-preview-block summary,
+.custom-material-block summary {
+  font-size:1rem;
+}
+
+.add-card-btn {
+  min-height:44px;
+  font-size:1rem;
+}
+.calc-row { padding:13px; }
+.card-caption { font-size:.9rem; }
+.remove-row-btn {
+  min-height:38px;
+  font-size:.9rem;
+}
+.row-title { font-size:1.3rem; }
+.badge { font-size:.82rem; }
+
+.field-heading,
+.result-label {
+  font-size:1rem;
+}
+.step-mini {
+  width:24px;
+  height:24px;
+  font-size:.82rem;
+}
+.field input,
+.field select {
+  min-height:52px;
+  font-size:1.12rem;
+}
+.std-toggle-btn {
+  min-height:36px;
+  font-size:.86rem;
+}
+.result-field { padding:11px 12px; }
+.result-box {
+  min-height:42px;
+  font-size:1.3rem;
+}
+
+.samples-heading strong { font-size:1.15rem; }
+.add-sample-btn {
+  min-height:42px;
+  padding:7px 11px;
+  font-size:.95rem;
+}
+.sample-index { font-size:.95rem; }
+.sample-row label { font-size:.95rem; }
+.sample-row input {
+  min-height:48px;
+  font-size:1.12rem;
+}
+.sample-ppm-field {
+  min-height:48px;
+  padding:7px 10px;
+}
+.sample-ppm-field > span { font-size:.82rem; }
+.sample-ppm-output { font-size:1.45rem; }
+.sample-delete-btn {
+  min-height:38px;
+  font-size:.85rem;
+}
+.sample-error,
+.error-text {
+  font-size:.9rem;
+}
+.actions-grid button {
+  min-height:52px;
+  font-size:1rem;
+}
+.action-primary { font-size:1.05rem; }
+.status-message {
+  min-height:1.35em;
+  font-size:.92rem;
+}
+.custom-material-form label,
+.unregistered-entry__body label {
+  font-size:.95rem;
+}
+.custom-material-form input,
+.unregistered-entry__body input {
+  min-height:48px;
+  font-size:1.08rem;
+}
+.version-line {
+  margin:0 4px 8px;
+  color:#8491a3;
+  font-size:.72rem;
+  text-align:right;
+}
+
+@media (max-width:580px) {
+  .section-block { padding:13px; }
+  .page-header { padding:12px 13px; }
+  .page-header h1 { font-size:1.55rem; }
+  .section-heading h2 { font-size:1.15rem; }
+  .quick-chips--grid {
+    grid-auto-columns:minmax(145px,48vw);
+    grid-template-rows:repeat(2,48px);
+  }
+  .sample-row {
+    grid-template-columns:58px minmax(0,1fr) auto;
+    grid-template-areas:
+      "index label delete"
+      "area area ppm"
+      "error error error";
+  }
+  .sample-index { font-size:.92rem; }
+}
+
+@media (max-width:360px) {
+  .field input,
+  .field select,
+  .sample-row input { font-size:1.05rem; }
+  .sample-ppm-output { font-size:1.3rem; }
+}
