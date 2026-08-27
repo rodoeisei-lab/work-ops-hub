@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-numbered-samples-1'
+  'gc-calculator.css?v=20260827-coefficient-7dp-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -131,6 +131,7 @@ for (const required of [
   'sample-ppm-output',
   'すでに当日STD登録済みです',
   '当日STDエリア',
+  'formatCoefficient',
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -209,6 +210,13 @@ for (const requiredJs of [
   }
 }
 
+
+if (!calculator.includes('return Number(value).toFixed(7);')) {
+  throw new Error('GC coefficient must be formatted to 7 decimal places');
+}
+if (calculator.includes('toPrecision(10)')) {
+  throw new Error('Legacy coefficient precision formatting remains');
+}
 
 for (const forbidden of [
   "const selected = new Set(state.rows.map",
