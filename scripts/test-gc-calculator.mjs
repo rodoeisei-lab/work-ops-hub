@@ -215,7 +215,7 @@ for (const forbidden of [
   "row.stdManual = true;\n    });\n    state.customMaterials",
   "root.addEventListener('pointerdown', () => setActiveRow(rowId)",
   'class="ppm-field result-field result-primary"',
-  'class="memo-input"'
+  'class="memo-input"',
   'sample-label-input',
   'sample-label-field',
   '例：試料A',
