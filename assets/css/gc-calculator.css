@@ -306,9 +306,7 @@
   grid-template-areas:
     "material material"
     "std stdarea"
-    "coefficient coefficient"
-    "sample ppm"
-    "memo memo";
+    "coefficient coefficient";
   gap:9px;
   margin-top:10px;
 }
@@ -317,9 +315,6 @@
 .std-field { grid-area:std; }
 .std-area-field { grid-area:stdarea; }
 .coefficient-field { grid-area:coefficient; }
-.sample-area-field { grid-area:sample; }
-.ppm-field { grid-area:ppm; }
-.memo-field { grid-area:memo; }
 
 .field label { display:grid; gap:5px; }
 .field-heading,
@@ -427,6 +422,123 @@
   font-size:1.38rem;
   line-height:1.1;
 }
+
+.samples-block {
+  display:grid;
+  gap:9px;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #dfe7f2;
+}
+.samples-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.samples-heading > div {
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  min-width:0;
+}
+.samples-heading strong {
+  color:#1b3459;
+  font-size:.92rem;
+}
+.samples-heading span {
+  color:#7788a0;
+  font-size:.7rem;
+}
+.add-sample-btn {
+  flex:0 0 auto;
+  min-height:34px;
+  padding:5px 9px;
+  font-size:.74rem;
+}
+.samples-list { display:grid; gap:8px; }
+.sample-row {
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr) minmax(112px,.75fr) minmax(86px,.55fr) auto;
+  grid-template-areas:
+    "index label area ppm delete"
+    ". error error error .";
+  align-items:end;
+  gap:7px;
+  padding:9px;
+  border:1px solid #dbe5f2;
+  border-radius:11px;
+  background:#fafcff;
+}
+.sample-index {
+  grid-area:index;
+  align-self:center;
+  color:#49617f;
+  font-size:.74rem;
+  font-weight:900;
+}
+.sample-label-field { grid-area:label; }
+.sample-row .sample-area-field { grid-area:area; }
+.sample-ppm-field {
+  grid-area:ppm;
+  display:grid;
+  gap:4px;
+  align-self:stretch;
+  padding:6px 9px;
+  border-radius:9px;
+  background:#173a8e;
+}
+.sample-ppm-field > span {
+  color:rgba(255,255,255,.76);
+  font-size:.66rem;
+  font-weight:750;
+}
+.sample-ppm-output {
+  align-self:center;
+  color:#fff;
+  font-size:1.14rem;
+  font-variant-numeric:tabular-nums;
+}
+.sample-row label {
+  display:grid;
+  gap:5px;
+  color:#435877;
+  font-size:.75rem;
+  font-weight:800;
+}
+.sample-row label small {
+  color:#8995a8;
+  font-size:.63rem;
+}
+.sample-row input {
+  min-height:42px;
+  font-size:1rem;
+  font-variant-numeric:tabular-nums;
+}
+.sample-row input.input-main {
+  border-color:#aec3df;
+  background:#fff;
+  font-weight:750;
+}
+.sample-delete-btn {
+  grid-area:delete;
+  align-self:center;
+  min-height:32px;
+  padding:4px 6px;
+  border:0;
+  background:transparent;
+  color:#a34c4c;
+  font-size:.69rem;
+  font-weight:750;
+}
+.sample-error {
+  grid-area:error;
+  min-height:0;
+  color:#9b3f3f;
+  font-size:.72rem;
+  font-weight:650;
+}
+.sample-error:empty { display:none; }
 
 .error-text {
   min-height:0;
@@ -585,6 +697,15 @@
   .add-card-btn { width:100%; }
   .calc-row { padding:10px; }
   .row-grid { gap:8px; }
+  .sample-row {
+    grid-template-columns:48px minmax(0,1fr) minmax(100px,.72fr);
+    grid-template-areas:
+      "index label delete"
+      "area area ppm"
+      "error error error";
+    align-items:end;
+  }
+  .sample-ppm-field { min-height:42px; }
   .field input,
   .field select { padding-inline:9px; }
   .more-actions__buttons { grid-template-columns:1fr; }
@@ -599,10 +720,15 @@
       "material"
       "std"
       "stdarea"
-      "coefficient"
-      "sample"
-      "ppm"
-      "memo";
+      "coefficient";
+  }
+  .sample-row {
+    grid-template-columns:1fr auto;
+    grid-template-areas:
+      "index delete"
+      "label label"
+      "area ppm"
+      "error error";
   }
   .actions-grid { grid-template-columns:1fr; }
 }
