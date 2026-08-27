@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-design-refresh-1'
+  'gc-calculator.css?v=20260827-material-sync-fix-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -327,6 +327,12 @@ if (!updateViewBlock.includes('if (rerenderHead) syncActiveRowUi();')) {
 }
 if (updateViewBlock.includes('syncFavoriteChipState();\n    syncActiveRowState();')) {
   throw new Error('Input-time upper UI mutation remains');
+}
+if (!updateViewBlock.includes("root.querySelector('.card-material-title')")) {
+  throw new Error('Material title must update via .card-material-title');
+}
+if (updateViewBlock.includes("root.querySelector('.row-title')")) {
+  throw new Error('Legacy .row-title material sync remains');
 }
 
 console.log('GC calculator regression, UI, safety, iOS input, and multi-sample checks passed.');
