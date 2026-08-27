@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-compact-grid-1';
+  const CACHE_VERSION = '20260827-numbered-samples-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -228,7 +228,7 @@
   }
 
   function createEmptySample() {
-    return { id: `s_${Math.random().toString(36).slice(2)}`, label: '', areaInput: '' };
+    return { id: `s_${Math.random().toString(36).slice(2)}`, areaInput: '' };
   }
 
   function createEmptyRow() {
@@ -251,15 +251,14 @@
 
   function normalizeSamples(row, hadSamples = true) {
     const legacyArea = String(row.sampleAreaInput || '');
-    const legacyMemo = String(row.memo || '');
     if (hadSamples && Array.isArray(row.samples) && row.samples.length) {
-      row.samples = row.samples.map((sample) => ({ ...createEmptySample(), ...sample }));
+      row.samples = row.samples.map((sample) => ({
+        id: String(sample?.id || createEmptySample().id),
+        areaInput: String(sample?.areaInput || '')
+      }));
     } else {
       row.samples = [createEmptySample()];
-      if (legacyArea || legacyMemo) {
-        row.samples[0].areaInput = legacyArea;
-        row.samples[0].label = legacyMemo;
-      }
+      if (legacyArea) row.samples[0].areaInput = legacyArea;
     }
     delete row.sampleAreaInput;
     delete row.memo;
@@ -351,9 +350,8 @@
   function renderSample(row, sample, index, material) {
     const calc = calculate(row, material, sample.areaInput);
     return `<div class="sample-row" data-sample-id="${escapeHtml(sample.id)}">
-      <div class="sample-index">検体${index + 1}</div>
-      <label class="sample-label-field"><span>検体名</span><input type="text" class="sample-label-input" value="${escapeHtml(sample.label)}" placeholder="例：試料A"></label>
-      <label class="sample-area-field"><span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(sample.areaInput)}" placeholder="例：3200"></label>
+      <div class="sample-index">${index + 1}</div>
+      <label class="sample-area-field"><span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(sample.areaInput)}" placeholder="エリア"></label>
       <div class="sample-ppm-field">
         <span>ppm</span>
         <strong class="sample-ppm-output">${escapeHtml(calc.ppmText || '—')}</strong>
@@ -454,12 +452,7 @@
     root.querySelectorAll('.sample-row').forEach((sampleRoot) => {
       const sample = row.samples.find((item) => item.id === sampleRoot.dataset.sampleId);
       if (!sample) return;
-      const labelInput = sampleRoot.querySelector('.sample-label-input');
       const areaInput = sampleRoot.querySelector('.sample-area-input');
-      labelInput?.addEventListener('input', () => {
-        sample.label = labelInput.value;
-        persist();
-      });
       areaInput?.addEventListener('input', () => {
         sample.areaInput = areaInput.value;
         updateSampleComputedView(sampleRoot, row, sample);
@@ -467,7 +460,6 @@
       });
       sampleRoot.querySelector('.sample-delete-btn')?.addEventListener('click', () => {
         if (row.samples.length === 1) {
-          sample.label = '';
           sample.areaInput = '';
         } else {
           row.samples = row.samples.filter((item) => item.id !== sample.id);
@@ -487,7 +479,7 @@
   }
 
   function rowHasContent(row) {
-    const sampleHasContent = row.samples.some((sample) => [sample.label, sample.areaInput].some((value) => String(value || '').trim()));
+    const sampleHasContent = row.samples.some((sample) => String(sample.areaInput || '').trim());
     return [
       row.materialInput,
       row.stdManual ? row.stdInput : '',
@@ -780,14 +772,10 @@
         return { ok: false, rowId: row.id, message: `計算エラーのある当日STDがあります：${baseCalc.errorText}` };
       }
       for (const sample of row.samples) {
-        const hasSample = [sample.label, sample.areaInput].some((value) => String(value || '').trim());
-        if (!hasSample) continue;
+        if (!String(sample.areaInput || '').trim()) continue;
         const calc = calculate(row, material, sample.areaInput);
         if (calc.sampleErrorText) {
           return { ok: false, rowId: row.id, message: `検体の入力エラーがあります：${calc.sampleErrorText}` };
-        }
-        if (!String(sample.areaInput || '').trim()) {
-          return { ok: false, rowId: row.id, message: '検体名・メモを入力した検体には、検体エリアも入力してください。' };
         }
       }
     }
@@ -814,12 +802,10 @@
         `当日STDエリア: ${row.stdAreaInput || '-'}`,
         `係数: ${baseCalc.coefficientText || '-'}`
       );
-      const samples = row.samples.filter((sample) => [sample.label, sample.areaInput].some((value) => String(value || '').trim()));
-      samples.forEach((sample, index) => {
+      row.samples.forEach((sample, index) => {
+        if (!String(sample.areaInput || '').trim()) return;
         const calc = calculate(row, material, sample.areaInput);
-        parts.push(
-          `検体${index + 1}${sample.label ? `（${sample.label}）` : ''}: エリア ${sample.areaInput || '-'} / ${calc.ppmText || '-'} ppm`
-        );
+        parts.push(`${index + 1}: エリア ${sample.areaInput} / ${calc.ppmText || '-'} ppm`);
       });
       parts.push('');
     });
@@ -833,12 +819,14 @@
       const material = resolveMaterial(row.materialInput, row.materialKey);
       const stdText = resolvedStdText(row, material);
       const baseCalc = calculate(row, material, '');
-      const samples = row.samples.filter((sample) => [sample.label, sample.areaInput].some((value) => String(value || '').trim()));
-      if (!samples.length) {
+      const filledSamples = row.samples
+        .map((sample, index) => ({ sample, index }))
+        .filter(({ sample }) => String(sample.areaInput || '').trim());
+      if (!filledSamples.length) {
         lines.push([todayIso(), material?.displayName || row.materialInput || '', stdText || '', row.stdAreaInput || '', baseCalc.coefficientText || '', '', '', '', STATUS_LABEL[material?.status] || ''].map(csvEscape).join(','));
         return;
       }
-      samples.forEach((sample, index) => {
+      filledSamples.forEach(({ sample, index }) => {
         const calc = calculate(row, material, sample.areaInput);
         lines.push([
           todayIso(),
@@ -846,7 +834,7 @@
           stdText || '',
           row.stdAreaInput || '',
           baseCalc.coefficientText || '',
-          sample.label || `検体${index + 1}`,
+          String(index + 1),
           sample.areaInput || '',
           calc.ppmText || '',
           STATUS_LABEL[material?.status] || ''
