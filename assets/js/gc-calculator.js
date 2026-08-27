@@ -550,13 +550,13 @@
     const index = state.rows.findIndex((row) => row.id === state.activeRowId);
     const row = index >= 0 ? state.rows[index] : state.rows[0];
     if (!row) {
-      els.activeCardLabel.textContent = '当日STD 1';
+      els.activeCardLabel.textContent = 'STD 1';
       return;
     }
     const material = resolveMaterial(row.materialInput, row.materialKey);
     els.activeCardLabel.textContent = material
-      ? `当日STD ${index + 1}（${material.displayName}）`
-      : `当日STD ${index + 1}`;
+      ? `STD ${index + 1}（${material.displayName}）`
+      : `STD ${index + 1}`;
   }
 
   function applyRegisteredMaterial(row, materialKey, root) {
