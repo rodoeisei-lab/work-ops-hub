@@ -156,14 +156,14 @@
     "raw_label": "酢酸ブチル",
     "normalized_name": "酢酸ブチル",
     "display_name": "酢酸ブチル",
-    "std_value": null,
+    "std_value": 15,
     "rt": null,
     "area": null,
     "coefficient": null,
     "nd_line": null,
-    "confidence": "low",
-    "status": "needs_review",
-    "note": "STD値は未登録。使用時は当日のSTD値を確認して手入力してください",
+    "confidence": "high",
+    "status": "confirmed",
+    "note": "STD値確認済み",
     "aliases": [
       "酢酸ブチル",
       "butyl acetate"
@@ -497,34 +497,17 @@
     "note": "重複行。最新画像でも末尾にあり"
   },
   {
-    "raw_label": "cyclohexane",
-    "normalized_name": "cyclohexane",
-    "display_name": "シクロヘキサン",
-    "std_value": null,
-    "rt": null,
-    "area": null,
-    "coefficient": null,
-    "nd_line": null,
-    "confidence": "low",
-    "status": "needs_review",
-    "note": "STD値を確認してください",
-    "aliases": [
-      "シクロヘキサン",
-      "cyclohexane"
-    ]
-  },
-  {
     "raw_label": "cyclohexanone",
     "normalized_name": "cyclohexanone",
     "display_name": "シクロヘキサノン",
-    "std_value": null,
+    "std_value": 25.5,
     "rt": null,
     "area": null,
     "coefficient": null,
     "nd_line": null,
-    "confidence": "low",
-    "status": "needs_review",
-    "note": "STD値は未登録。使用時は当日のSTD値を確認して手入力してください",
+    "confidence": "high",
+    "status": "confirmed",
+    "note": "STD値確認済み",
     "aliases": [
       "シクロヘキサノン",
       "cyclohexanone"
