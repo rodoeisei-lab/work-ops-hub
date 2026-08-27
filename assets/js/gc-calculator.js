@@ -590,7 +590,6 @@
     row.stdAreaInput = '';
     row.samples.forEach((sample) => {
       sample.areaInput = '';
-      sample.label = '';
     });
     const stdAreaInput = root?.querySelector('.std-area-input');
     if (stdAreaInput) stdAreaInput.value = '';
