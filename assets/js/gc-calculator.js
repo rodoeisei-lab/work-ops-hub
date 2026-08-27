@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-ui-refresh-1';
+  const CACHE_VERSION = '20260827-ui-polish-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -42,6 +42,8 @@
     analyteDisplay: {},
     customMaterials: []
   };
+
+  let copyFeedbackTimer = null;
 
   init();
 
@@ -95,8 +97,10 @@
       persist();
       try {
         await navigator.clipboard.writeText(els.copyTextOutput.value);
+        showCopySuccess();
         showStatus('計算結果をコピーしました。');
       } catch (_error) {
+        resetCopyButton();
         showStatus('コピーに失敗しました。テキストを手動でコピーしてください。');
       }
     });
@@ -330,6 +334,11 @@
     memoInput.addEventListener('input', () => { row.memo = memoInput.value; persist(); });
 
     root.querySelector('.remove-row-btn').addEventListener('click', () => {
+      if (rowHasContent(row)) {
+        const material = resolveMaterial(row.materialInput, row.materialKey);
+        const label = material?.displayName || String(row.materialInput || '').trim() || 'この計算カード';
+        if (!window.confirm(`「${label}」の計算カードを削除しますか？入力内容も削除されます。`)) return;
+      }
       state.rows = state.rows.filter((r) => r.id !== rowId);
       normalizeCardsState();
       renderRows();
@@ -361,6 +370,16 @@
     if (stdField) stdField.appendChild(toggleBtn);
     stdInput.readOnly = !row.stdManual;
     toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
+  }
+
+  function rowHasContent(row) {
+    return [
+      row.materialInput,
+      row.stdManual ? row.stdInput : '',
+      row.stdAreaInput,
+      row.sampleAreaInput,
+      row.memo
+    ].some((value) => String(value || '').trim());
   }
 
   function setActiveRow(rowId) {
@@ -816,6 +835,24 @@
     normalizeCardsState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value }));
   }
+  function showCopySuccess() {
+    if (!els.copyResultBtn) return;
+    if (copyFeedbackTimer) window.clearTimeout(copyFeedbackTimer);
+    els.copyResultBtn.textContent = '✓ コピーしました';
+    els.copyResultBtn.classList.add('is-copied');
+    copyFeedbackTimer = window.setTimeout(resetCopyButton, 1600);
+  }
+
+  function resetCopyButton() {
+    if (copyFeedbackTimer) {
+      window.clearTimeout(copyFeedbackTimer);
+      copyFeedbackTimer = null;
+    }
+    if (!els.copyResultBtn) return;
+    els.copyResultBtn.textContent = '計算結果をコピー';
+    els.copyResultBtn.classList.remove('is-copied');
+  }
+
   async function fetchJsonSafe(path, fallback) { try { const r = await fetch(path); return r.ok ? await r.json() : fallback; } catch { return fallback; } }
   function csvEscape(v) { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replaceAll('"', '""')}"` : t; }
   function todayIso() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }

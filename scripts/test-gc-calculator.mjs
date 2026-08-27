@@ -59,7 +59,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-ui-refresh-1'
+  'gc-calculator.css?v=20260827-ui-polish-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -70,7 +70,9 @@ for (const required of [
   '.calc-row.is-active',
   'grid-template-areas:',
   '.result-primary',
-  '.quick-chips--grid'
+  '.quick-chips--grid',
+  '.scroll-hint',
+  '.action-primary.is-copied'
 ]) {
   if (!calculatorCss.includes(required)) {
     throw new Error(`GC calculator CSS marker missing: ${required}`);
@@ -80,11 +82,19 @@ for (const required of [
 for (const required of [
   'syncActiveRowState',
   'setActiveRow',
-  "calc.coefficientText || '—'"
+  "calc.coefficientText || '—'",
+  'showCopySuccess',
+  'resetCopyButton',
+  'rowHasContent',
+  '入力内容も削除されます'
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
   }
+}
+
+if (!calculatorHtml.includes('横にスワイプして続きを表示')) {
+  throw new Error('GC calculator scroll affordance text missing');
 }
 
 console.log('GC calculator regression and UI checks passed.');
