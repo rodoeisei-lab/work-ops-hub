@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-ios-input-scroll-1';
+  const CACHE_VERSION = '20260827-std-targets-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -7,7 +7,7 @@
   const CUSTOM_MATERIALS_STORAGE_KEY = 'gc-calculator-custom-materials-v1';
   const LEGACY_STORAGE_KEYS = ['gc-calculator-state-v3', 'gc-calculator-state-v2'];
   const MAIN_CHIP_NAMES = ['メタノール', 'アセトン', 'IPA', 'n-ヘキサン', 'MEK', '酢酸エチル', 'イソブタノール', '1-ブタノール', 'MIBK', 'トルエン', '酢酸イソブチル', '酢酸ブチル', 'エチルベンゼン', 'p-キシレン', 'o-キシレン'];
-  const LIQUID_STD_NAMES = ['ブチルセロソルブ', 'スチレン', 'シクロヘキサン', 'シクロヘキサノン'];
+  const LIQUID_STD_NAMES = ['ブチルセロソルブ', 'スチレン', 'シクロヘキサノン'];
   const OTHER_CHIP_NAMES = ['ジクロロメタン', '2-ブタノール', 'エチルセロソルブ', 'メチルセロソルブ', 'セロソルブアセテート', '酢酸イソペンチル', 'トリクレン', 'THF', 'クレゾール'];
 
   const STATUS_LABEL = { confirmed: '確定', provisional: '仮登録', needs_review: 'STD要確認', custom: 'この端末の登録' };
