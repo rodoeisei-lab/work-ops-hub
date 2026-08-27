@@ -233,34 +233,60 @@
     const stdText = resolvedStdText(row, material);
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
-    const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択してください');
-    const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
+    const cardNumber = index + 1;
+    const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質未選択');
+    const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : '';
     const statusBadge = material?.status && !['confirmed', 'custom'].includes(material.status) ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
     const customBadge = material?.isCustom ? '<span class="badge badge-custom">この端末の登録</span>' : '';
-    const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認してください</span>' : '';
-    const manualBadge = row.stdManual ? '<span class="badge badge-manual">手入力</span>' : '';
-    const unregisteredNote = `<div class="unregistered-note" ${isUnregistered ? '' : 'hidden'}><strong>この物質はマスタ未登録です。</strong><span>「STDを手入力する」で計算できます。繰り返し使う場合は、下の「一覧にない物質」へ保存できます。</span></div>`;
+    const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認</span>' : '';
+    const manualBadge = row.stdManual ? '<span class="badge badge-manual">STD手入力</span>' : '';
+    const unregisteredNote = `<div class="unregistered-note" ${isUnregistered ? '' : 'hidden'}><strong>マスタ未登録の物質です。</strong><span>「STDを手入力する」で計算できます。繰り返し使う場合は「一覧にない物質」へ保存できます。</span></div>`;
     const unregisteredEntry = `<details class="unregistered-entry" ${isUnregistered ? 'open' : ''}>
       <summary>一覧にない物質を一時的に使う</summary>
       <div class="unregistered-entry__body">
         <label>物質名<input type="text" class="unregistered-material-input" value="${escapeHtml(isUnregistered ? row.materialInput : '')}" placeholder="例：シクロヘキサノン" autocomplete="off" enterkeyhint="done"></label>
         <button type="button" class="plain unregistered-material-apply">未登録として設定</button>
-        <p>STDは自動では入りません。設定後に「STDを手入力する」を押して入力します。</p>
+        <p>設定後に「STDを手入力する」でSTD値を入力します。</p>
       </div>
     </details>`;
-    return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}" data-row-id="${escapeHtml(row.id)}">
-      <div class="row-head"><h3 class="row-title">${escapeHtml(title)}</h3><button type="button" class="danger remove-row-btn">削除</button></div>
-      <div class="card-caption">${escapeHtml(material ? `計算カード：${material.displayName}` : (isUnregistered ? '未登録物質の計算カード' : '空の計算カード'))}</div>
-      <div class="meta-note">${escapeHtml(raw)}</div><div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
+    return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}${row.id === state.activeRowId ? ' is-active' : ''}" data-row-id="${escapeHtml(row.id)}" data-card-number="${cardNumber}">
+      <div class="card-topline">
+        <span class="card-caption">計算カード ${cardNumber}</span>
+        <button type="button" class="remove-row-btn" aria-label="計算カード${cardNumber}を削除">削除</button>
+      </div>
+      <div class="row-head">
+        <div>
+          <h3 class="row-title">${escapeHtml(title)}</h3>
+          <div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
+          <div class="meta-note">${escapeHtml(raw)}</div>
+        </div>
+      </div>
       <div class="row-grid">
-      <div class="field wide"><label>物質を選択<select class="material-select">${buildMaterialSelectOptions(material?.key || '')}</select></label></div>
-      <div class="field"><label>STD<input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label></div>
-      <div class="field"><label>当日STDエリア<input type="text" class="std-area-input" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}"></label></div>
-      <div class="field"><label>係数<div class="result-box coefficient-output">${escapeHtml(calc.coefficientText)}</div></label></div>
-      <div class="field"><label>検体エリア<input type="text" class="sample-area-input" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}"></label></div>
-      <div class="field"><label>ppm<div class="result-box ppm-output">${escapeHtml(calc.ppmText || '—')}</div></label></div>
-      <div class="field wide"><label>メモ欄<input type="text" class="memo-input" value="${escapeHtml(row.memo)}"></label></div>
-      </div>${unregisteredEntry}${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
+        <div class="field material-field">
+          <label><span class="field-heading"><span class="step-mini">1</span>物質</span><select class="material-select">${buildMaterialSelectOptions(material?.key || '')}</select></label>
+        </div>
+        <div class="field std-field">
+          <label><span class="field-heading">STD <small>自動値</small></span><input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label>
+        </div>
+        <div class="field std-area-field">
+          <label><span class="field-heading"><span class="step-mini">2</span>当日STDエリア</span><input type="text" class="std-area-input input-main" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}" placeholder="例：125000"></label>
+        </div>
+        <div class="field coefficient-field result-field">
+          <div class="result-label"><span>係数</span><small>STD ÷ STDエリア</small></div>
+          <div class="result-box coefficient-output" aria-label="係数">${escapeHtml(calc.coefficientText || '—')}</div>
+        </div>
+        <div class="field sample-area-field">
+          <label><span class="field-heading"><span class="step-mini">3</span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(row.sampleAreaInput)}" placeholder="例：3200"></label>
+        </div>
+        <div class="field ppm-field result-field result-primary">
+          <div class="result-label"><span>ppm</span><small>計算結果</small></div>
+          <div class="result-box ppm-output" aria-label="ppm">${escapeHtml(calc.ppmText || '—')}</div>
+        </div>
+        <div class="field memo-field">
+          <label><span class="field-heading">メモ <small>任意</small></span><input type="text" class="memo-input" value="${escapeHtml(row.memo)}" placeholder="試料名・条件など"></label>
+        </div>
+      </div>
+      ${unregisteredEntry}${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
     </article>`;
   }
 
