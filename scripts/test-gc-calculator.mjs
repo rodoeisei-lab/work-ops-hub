@@ -86,7 +86,15 @@ for (const required of [
   'showCopySuccess',
   'resetCopyButton',
   'rowHasContent',
-  '入力内容も削除されます'
+  '入力内容も削除されます',
+  'clearAreaInputs',
+  'validateOutputRows',
+  'focusRow',
+  '正式な物質名を使用してください',
+  'row.stdAreaInput = \'\'',
+  'row.sampleAreaInput = \'\'',
+  'activeMaterialName',
+  'メモ: ${row.memo}'
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -97,4 +105,13 @@ if (!calculatorHtml.includes('横にスワイプして続きを表示')) {
   throw new Error('GC calculator scroll affordance text missing');
 }
 
-console.log('GC calculator regression and UI checks passed.');
+for (const forbidden of [
+  "const selected = new Set(state.rows.map",
+  "row.stdManual = true;\n    });\n    state.customMaterials"
+]) {
+  if (calculator.includes(forbidden)) {
+    throw new Error(`GC calculator unsafe legacy pattern remains: ${forbidden}`);
+  }
+}
+
+console.log('GC calculator regression, UI, and safety checks passed.');
