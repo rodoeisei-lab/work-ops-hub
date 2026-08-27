@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'assets/js/gc-calculator.js'
+      - 'assets/css/gc-calculator.css'
+      - 'gc-calculator.html'
       - 'data/gc-std-master.json'
       - 'data/gc-favorite-analytes.json'
       - 'data/gc-analyte-aliases.json'
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - 'assets/js/gc-calculator.js'
+      - 'assets/css/gc-calculator.css'
+      - 'gc-calculator.html'
       - 'data/gc-std-master.json'
       - 'data/gc-favorite-analytes.json'
       - 'data/gc-analyte-aliases.json'
