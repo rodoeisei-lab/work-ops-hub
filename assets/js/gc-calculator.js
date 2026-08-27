@@ -249,17 +249,17 @@
     };
   }
 
-  function normalizeSamples(row) {
-    if (Array.isArray(row.samples) && row.samples.length) {
-      row.samples = row.samples.map((sample) => ({ ...createEmptySample(), ...sample }));
-      return;
-    }
+  function normalizeSamples(row, hadSamples = true) {
     const legacyArea = String(row.sampleAreaInput || '');
     const legacyMemo = String(row.memo || '');
-    row.samples = [createEmptySample()];
-    if (legacyArea || legacyMemo) {
-      row.samples[0].areaInput = legacyArea;
-      row.samples[0].label = legacyMemo;
+    if (hadSamples && Array.isArray(row.samples) && row.samples.length) {
+      row.samples = row.samples.map((sample) => ({ ...createEmptySample(), ...sample }));
+    } else {
+      row.samples = [createEmptySample()];
+      if (legacyArea || legacyMemo) {
+        row.samples[0].areaInput = legacyArea;
+        row.samples[0].label = legacyMemo;
+      }
     }
     delete row.sampleAreaInput;
     delete row.memo;
@@ -268,8 +268,9 @@
   function normalizeCardsState() {
     if (!Array.isArray(state.rows)) state.rows = [];
     state.rows = state.rows.map((rawRow) => {
+      const hadSamples = Array.isArray(rawRow?.samples);
       const row = { ...createEmptyRow(), ...rawRow };
-      normalizeSamples(row);
+      normalizeSamples(row, hadSamples);
       return row;
     });
     if (!state.rows.length) state.rows.push(createEmptyRow());
@@ -408,9 +409,7 @@
       row.samples.push(createEmptySample());
       refreshSamples(root, row);
       persist();
-      requestAnimationFrame(() => {
-        root.querySelector('.sample-row:last-child .sample-area-input')?.focus({ preventScroll: true });
-      });
+      showStatus('検体を追加しました。');
     });
 
     bindSampleEvents(root, row);
@@ -526,17 +525,18 @@
     const index = state.rows.findIndex((row) => row.id === state.activeRowId);
     const row = index >= 0 ? state.rows[index] : state.rows[0];
     if (!row) {
-      els.activeCardLabel.textContent = '計算カード1';
+      els.activeCardLabel.textContent = '当日STD 1';
       return;
     }
     const material = resolveMaterial(row.materialInput, row.materialKey);
     els.activeCardLabel.textContent = material
-      ? `計算カード${index + 1}（${material.displayName}）`
-      : `計算カード${index + 1}`;
+      ? `当日STD ${index + 1}（${material.displayName}）`
+      : `当日STD ${index + 1}`;
   }
 
   function applyRegisteredMaterial(row, materialKey, root) {
     setActiveRow(row.id);
+    const materialSelect = root.querySelector('.material-select');
     const selected = findMaterialByKey(materialKey);
     if (!selected) {
       clearRowMaterialSelection(row, '');
@@ -555,7 +555,6 @@
     }
     if (!isSameMaterial) clearAreaInputs(row, root);
     setRowMaterial(row, selected, { preserveManualStd: isSameMaterial && row.stdManual });
-    const materialSelect = root.querySelector('.material-select');
     if (materialSelect) materialSelect.value = selected.key;
     const unregisteredMaterialInput = root.querySelector('.unregistered-material-input');
     if (unregisteredMaterialInput) unregisteredMaterialInput.value = '';
