@@ -141,13 +141,15 @@ for (const required of [
 for (const required of [
   'STD・検体',
   '当日STD 1',
-  '＋ 物質追加',
-  'GC計算',
-  '＋ 検体'
+  '＋ 物質',
+  'GC計算'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC daily STD / multi-sample UI marker missing: ${required}`);
   }
+}
+if (!calculator.includes('＋ 検体')) {
+  throw new Error('GC compact sample-add label missing');
 }
 for (const required of [
   '.samples-block',
