@@ -6,58 +6,93 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-ui-refresh-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
     <header class="card section-block page-header">
-      <a href="index.html" class="back-home-link no-print">← ホームへ戻る</a>
+      <div class="page-header__top">
+        <a href="index.html" class="back-home-link no-print">← ホームへ戻る</a>
+        <span class="tool-kicker">GC分析ツール</span>
+      </div>
       <h1>GC係数・ppm計算</h1>
-      <p>STD値と当日のSTDエリアから係数を計算し、検体エリアからppmを算出します。</p>
+      <p class="page-header__lead">物質を選び、2つのエリア値を入れるだけで係数とppmを自動計算します。</p>
       <ol class="calc-steps" aria-label="計算の手順">
-        <li><strong>物質を選ぶ</strong></li>
-        <li><strong>当日STDエリアを入力</strong></li>
-        <li><strong>検体エリアを入力</strong></li>
+        <li><strong>物質</strong><span>選択する</span></li>
+        <li><strong>STDエリア</strong><span>入力する</span></li>
+        <li><strong>検体エリア</strong><span>入力する</span></li>
       </ol>
-      <p class="hint">式: 係数 = STD ÷ STDエリア ／ ppm = 検体エリア × 係数</p>
+      <div class="formula-strip">
+        <span>係数 = STD ÷ STDエリア</span>
+        <span>ppm = 検体エリア × 係数</span>
+      </div>
     </header>
 
     <section class="card section-block quick-select-block no-print" aria-labelledby="favoriteTitle">
-      <h2 id="favoriteTitle">よく使う物質</h2>
-      <p class="hint">計算カードを選んでからタップすると、そのカードへ反映します。</p>
+      <div class="section-heading">
+        <span class="section-number">1</span>
+        <div>
+          <h2 id="favoriteTitle">物質を選ぶ</h2>
+          <p class="hint"><strong id="activeCardLabel">計算カード1</strong> に反映します。よく使う物質はタップで選択できます。</p>
+        </div>
+      </div>
       <div id="favoriteCommonChips" class="quick-chips quick-chips--grid" aria-label="通常よく使う物質"></div>
       <details class="secondary-materials">
-        <summary>液体STD・その他の登録済み物質を選ぶ</summary>
+        <summary>液体STD・その他の物質</summary>
         <div class="secondary-materials__body">
           <div>
             <h3>液体STD</h3>
             <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体STD"></div>
           </div>
           <div>
-            <h3>その他の物質</h3>
+            <h3>その他</h3>
             <div id="favoriteOtherChips" class="quick-chips" aria-label="その他のよく使う物質"></div>
           </div>
         </div>
       </details>
     </section>
 
-    <section class="card section-block" aria-labelledby="rowsTitle">
+    <section class="card section-block calculator-section" aria-labelledby="rowsTitle">
       <div class="rows-heading">
-        <div>
-          <h2 id="rowsTitle">計算カード</h2>
-          <p class="hint">物質は選択欄から確定します。入力中にSTD値が変わることはありません。</p>
+        <div class="section-heading">
+          <span class="section-number">2</span>
+          <div>
+            <h2 id="rowsTitle">エリアを入力</h2>
+            <p class="hint">STDは物質マスタから自動反映。入力すると係数・ppmがその場で更新されます。</p>
+          </div>
         </div>
-        <button id="addRowBtn" type="button" class="plain no-print">＋ 計算カードを追加</button>
+        <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ カード追加</button>
       </div>
       <div id="rowsContainer" class="rows-container"></div>
     </section>
 
+    <section class="card section-block actions-block no-print" aria-label="結果を保存・出力">
+      <div class="section-heading">
+        <span class="section-number">3</span>
+        <div>
+          <h2>結果を使う</h2>
+          <p class="hint">現在の入力値から、最新の結果を出力します。</p>
+        </div>
+      </div>
+      <div class="actions-grid">
+        <button id="copyResultBtn" type="button" class="primary action-primary">計算結果をコピー</button>
+        <button id="downloadCsvBtn" type="button" class="btn-ghost">CSV保存</button>
+      </div>
+      <details class="more-actions">
+        <summary>その他の操作</summary>
+        <div class="more-actions__buttons">
+          <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー内容を更新</button>
+          <button id="clearAllBtn" type="button" class="danger">入力をすべて消す</button>
+        </div>
+      </details>
+      <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="card section-block custom-material-block no-print" aria-labelledby="customMaterialTitle">
-      <h2 id="customMaterialTitle">一覧にない物質</h2>
       <details>
-        <summary>物質名とSTD値を、この端末の候補に追加する</summary>
+        <summary id="customMaterialTitle">一覧にない物質を使う</summary>
         <div class="custom-material-block__body">
-          <p class="hint">共有マスタは変更しません。よく使う未登録物質だけを、この端末の候補として保存します。</p>
+          <p class="hint">共有マスタは変更しません。必要な物質だけ、この端末の候補として保存できます。</p>
           <div class="custom-material-form">
             <label>物質名<input id="customMaterialName" type="text" autocomplete="off" placeholder="例：シクロヘキサノン"></label>
             <label>STD値<input id="customStdValue" type="text" inputmode="decimal" autocomplete="off" placeholder="例：25.0"></label>
@@ -68,24 +103,17 @@
       </details>
     </section>
 
-    <section class="card section-block actions-block no-print" aria-label="保存・出力">
-      <h2>保存・出力</h2>
-      <div class="actions-grid">
-        <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー用テキスト作成</button>
-        <button id="copyResultBtn" type="button" class="success">計算結果をコピー</button>
-        <button id="downloadCsvBtn" type="button" class="primary">CSV保存</button>
-        <button id="clearAllBtn" type="button" class="danger">入力を消す</button>
-      </div>
-      <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
-    </section>
-
-    <section class="card section-block" aria-labelledby="copyTitle">
-      <h2 id="copyTitle">コピー用テキスト</h2>
-      <textarea id="copyTextOutput" rows="14" placeholder="「コピー用テキスト作成」を押すと作成されます。"></textarea>
+    <section class="card section-block copy-preview-block no-print">
+      <details>
+        <summary>コピー内容を確認</summary>
+        <div class="copy-preview__body">
+          <textarea id="copyTextOutput" rows="12" aria-label="コピー用テキスト" placeholder="「計算結果をコピー」または「コピー内容を更新」で作成されます。"></textarea>
+        </div>
+      </details>
     </section>
 
     <section class="card section-block caution-block">
-      <p>この計算は、登録されたSTD値と入力エリアに基づく簡易計算です。STD値やピーク同定に誤りがないか確認して使用してください。</p>
+      <p><strong>確認：</strong>STD値とピーク同定に誤りがないことを確認して使用してください。</p>
       <p class="hint no-print">計算機バージョン: <span id="gcCalculatorVersionLabel">確認中...</span></p>
     </section>
   </main>
@@ -94,7 +122,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260827-regression-fix-1';
+      const FALLBACK_VERSION = '20260827-ui-refresh-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
