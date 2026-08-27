@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-numbered-samples-1';
+  const CACHE_VERSION = '20260827-coefficient-7dp-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -683,6 +683,10 @@
     const n = Number(s.replace(/,/g, '')); return { empty: false, valid: Number.isFinite(n), value: n };
   };
 
+  function formatCoefficient(value) {
+    return Number(value).toFixed(7);
+  }
+
   function automaticStdText(material) {
     return material?.stdValue == null ? '' : String(material.stdValue);
   }
@@ -733,7 +737,7 @@
     const coefficient = std.value / stdArea.value;
     if (!sample.valid) {
       return {
-        coefficientText: Number(coefficient.toPrecision(10)).toString(),
+        coefficientText: formatCoefficient(coefficient),
         ppmText: '',
         errorText: '',
         sampleErrorText: '数値を入力してください。'
@@ -741,7 +745,7 @@
     }
     if (!sample.empty && sample.value < 0) {
       return {
-        coefficientText: Number(coefficient.toPrecision(10)).toString(),
+        coefficientText: formatCoefficient(coefficient),
         ppmText: '',
         errorText: '',
         sampleErrorText: '検体エリアには0以上の数値を入力してください。'
@@ -749,7 +753,7 @@
     }
     const ppm = sample.empty ? null : sample.value * coefficient;
     return {
-      coefficientText: Number(coefficient.toPrecision(10)).toString(),
+      coefficientText: formatCoefficient(coefficient),
       ppmText: ppm == null ? '' : Number(ppm.toFixed(2)).toString(),
       errorText: '',
       sampleErrorText: ''
