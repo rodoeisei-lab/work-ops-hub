@@ -1286,3 +1286,75 @@
     grid-template-areas:"index area ppm delete";
   }
 }
+
+
+/* manual collapse: 物質カードを手動で1行にする */
+.card-topline-actions {
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.collapse-row-btn {
+  min-height:28px;
+  padding:3px 7px;
+  border:1px solid #cdd8e8;
+  border-radius:7px;
+  background:#f7f9fc;
+  color:#3e587c;
+  font-size:.72rem;
+  font-weight:800;
+}
+.calc-row--collapsed {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 28px;
+  gap:4px;
+  align-items:center;
+  padding:4px 5px;
+}
+.collapsed-open-btn {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto auto;
+  gap:7px;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  padding:4px 6px;
+  border:0;
+  background:transparent;
+  color:#27466f;
+  text-align:left;
+}
+.collapsed-material {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.84rem;
+}
+.collapsed-coefficient,
+.collapsed-count,
+.collapsed-open-label {
+  white-space:nowrap;
+  font-size:.72rem;
+  font-weight:800;
+}
+.collapsed-coefficient { color:#50698d; }
+.collapsed-count { color:#1f4fbf; }
+.collapsed-open-label { color:#1f4fbf; }
+.collapsed-remove-btn {
+  position:static;
+  width:28px;
+  min-height:28px;
+}
+
+@media (max-width:360px) {
+  .collapsed-open-btn {
+    gap:5px;
+    padding-inline:4px;
+  }
+  .collapsed-material { font-size:.8rem; }
+  .collapsed-coefficient,
+  .collapsed-count,
+  .collapsed-open-label { font-size:.66rem; }
+}
