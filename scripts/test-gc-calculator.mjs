@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-coefficient-7dp-1'
+  'gc-calculator.css?v=20260827-manual-collapse-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -132,6 +132,13 @@ for (const required of [
   'すでに当日STD登録済みです',
   '当日STDエリア',
   'formatCoefficient',
+  'collapsed: false',
+  'collapse-row-btn',
+  'collapsed-open-btn',
+  'row.collapsed = true',
+  'row.collapsed = false',
+  'filledSampleCount',
+  'if (row?.collapsed)',
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -156,7 +163,10 @@ for (const required of [
   '.sample-row',
   '.sample-ppm-field',
   '.add-sample-btn',
-  '.version-line'
+  '.version-line',
+  '.calc-row--collapsed',
+  '.collapsed-open-btn',
+  '.collapse-row-btn'
 ]) {
   if (!calculatorCss.includes(required)) {
     throw new Error(`GC multi-sample CSS marker missing: ${required}`);
@@ -216,6 +226,26 @@ if (!calculator.includes('return Number(value).toFixed(7);')) {
 }
 if (calculator.includes('toPrecision(10)')) {
   throw new Error('Legacy coefficient precision formatting remains');
+}
+
+for (const requiredText of [
+  '係数 ${escapeHtml(calc.coefficientText || \'—\')}',
+  '${filledSampleCount}件',
+  '>開く</span>'
+]) {
+  if (!calculator.includes(requiredText)) {
+    throw new Error('GC collapsed summary marker missing: ' + requiredText);
+  }
+}
+for (const forbiddenAutoCollapse of [
+  'autoCollapse',
+  'isRowComplete',
+  'isCompleteRow',
+  'completedSampleCount'
+]) {
+  if (calculator.includes(forbiddenAutoCollapse)) {
+    throw new Error('GC cards must not auto-collapse: ' + forbiddenAutoCollapse);
+  }
 }
 
 for (const forbidden of [
