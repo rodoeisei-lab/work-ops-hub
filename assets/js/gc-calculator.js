@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-daily-std-multisample-1';
+  const CACHE_VERSION = '20260827-large-simple-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -294,7 +294,6 @@
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     const cardNumber = index + 1;
     const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質未選択');
-    const raw = material?.rawLabel ? `raw: ${material.rawLabel}` : '';
     const statusBadge = material?.status && !['confirmed', 'custom'].includes(material.status) ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
     const customBadge = material?.isCustom ? '<span class="badge badge-custom">この端末の登録</span>' : '';
     const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認</span>' : '';
@@ -317,7 +316,6 @@
         <div>
           <h3 class="row-title">${escapeHtml(title)}</h3>
           <div class="badges">${statusBadge}${customBadge}${stdNeedsCheck}${manualBadge}</div>
-          <div class="meta-note">${escapeHtml(raw)}</div>
         </div>
       </div>
       <div class="row-grid">
@@ -325,19 +323,19 @@
           <label><span class="field-heading"><span class="step-mini">1</span>物質</span><select class="material-select">${buildMaterialSelectOptions(material?.key || '')}</select></label>
         </div>
         <div class="field std-field">
-          <label><span class="field-heading">STD <small>自動値</small></span><input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label>
+          <label><span class="field-heading">STD</span><input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label>
         </div>
         <div class="field std-area-field">
           <label><span class="field-heading"><span class="step-mini">2</span>当日STDエリア</span><input type="text" class="std-area-input input-main" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}" placeholder="例：125000"></label>
         </div>
         <div class="field coefficient-field result-field">
-          <div class="result-label"><span>係数</span><small>STD ÷ STDエリア</small></div>
+          <div class="result-label"><span>係数</span></div>
           <div class="result-box coefficient-output" aria-label="係数">${escapeHtml(calc.coefficientText || '—')}</div>
         </div>
       </div>
       <section class="samples-block" aria-label="${escapeHtml(title)}の検体">
         <div class="samples-heading">
-          <div><strong>検体</strong><span>同じ係数でまとめて計算</span></div>
+          <div><strong>検体</strong></div>
           <button type="button" class="plain add-sample-btn no-print">＋ 検体追加</button>
         </div>
         <div class="samples-list">${renderSamples(row, material)}</div>
@@ -354,7 +352,7 @@
     const calc = calculate(row, material, sample.areaInput);
     return `<div class="sample-row" data-sample-id="${escapeHtml(sample.id)}">
       <div class="sample-index">検体${index + 1}</div>
-      <label class="sample-label-field"><span>検体名・メモ <small>任意</small></span><input type="text" class="sample-label-input" value="${escapeHtml(sample.label)}" placeholder="例：試料A"></label>
+      <label class="sample-label-field"><span>検体名</span><input type="text" class="sample-label-input" value="${escapeHtml(sample.label)}" placeholder="例：試料A"></label>
       <label class="sample-area-field"><span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(sample.areaInput)}" placeholder="例：3200"></label>
       <div class="sample-ppm-field">
         <span>ppm</span>
@@ -636,7 +634,6 @@
     });
     if (rerenderHead) {
       root.querySelector('.row-title').textContent = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択');
-      root.querySelector('.meta-note').textContent = material?.rawLabel ? `raw: ${material.rawLabel}` : '';
     }
     root.classList.toggle('is-unregistered', isUnregistered);
     const unregisteredNote = root.querySelector('.unregistered-note');
