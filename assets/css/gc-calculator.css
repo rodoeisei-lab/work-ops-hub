@@ -1398,3 +1398,456 @@ body {
     max-width:100%;
   }
 }
+
+
+/* 20260827 design refresh: 実務用の視覚階層・配色・配置 */
+.gc-calculator-page {
+  --gc-navy:#17345f;
+  --gc-text:#21344f;
+  --gc-muted:#73839a;
+  --gc-blue:#2456b4;
+  --gc-blue-strong:#1f4fbf;
+  --gc-blue-soft:#edf4ff;
+  --gc-blue-soft-2:#f6f9fe;
+  --gc-line:#dbe4ef;
+  --gc-line-strong:#c8d5e6;
+  --gc-danger:#a34c4c;
+  --gc-danger-soft:#fff3f2;
+  gap:8px;
+}
+
+/* 上位カードは装飾を抑え、操作領域を優先 */
+.gc-calculator-page > .card {
+  border-color:var(--gc-line);
+  border-radius:14px;
+  box-shadow:0 2px 8px rgba(22,52,95,.035);
+}
+.page-header {
+  min-height:48px;
+  padding:8px 11px;
+  background:#fff;
+  border-color:var(--gc-line);
+}
+.page-header::after { display:none; }
+.page-header h1 {
+  color:var(--gc-navy);
+  font-size:1.15rem;
+  font-weight:850;
+}
+.page-header .back-home-link {
+  color:#526b8d;
+  font-size:.8rem;
+  font-weight:750;
+}
+.section-heading h2,
+.rows-heading h2 {
+  color:var(--gc-navy);
+  font-size:1rem;
+  font-weight:850;
+}
+.active-card-line {
+  color:var(--gc-muted);
+  font-size:.74rem;
+  font-weight:750;
+}
+
+/* 物質選択：通常は静か、選択中だけ淡い青 */
+.quick-select-block {
+  padding:9px;
+  background:#fff;
+}
+.quick-chips--grid {
+  gap:5px;
+}
+.quick-chips--grid .quick-chip,
+.quick-chips:not(.quick-chips--grid) .quick-chip {
+  border:1px solid var(--gc-line);
+  background:#fff;
+  color:#31527e;
+  box-shadow:none;
+  font-weight:800;
+}
+.quick-chips--grid .quick-chip:hover,
+.quick-chips:not(.quick-chips--grid) .quick-chip:hover {
+  background:#f8fbff;
+  border-color:var(--gc-line-strong);
+}
+.quick-chip.active,
+.quick-chip.active:hover {
+  border-color:#adc4ea;
+  background:var(--gc-blue-soft);
+  color:var(--gc-blue-strong);
+  box-shadow:inset 0 0 0 1px rgba(36,86,180,.04);
+}
+.secondary-materials,
+.more-actions,
+.copy-preview-block details,
+.custom-material-block > details {
+  border-color:#e3e9f1;
+  background:#fbfcfe;
+}
+.secondary-materials summary,
+.more-actions summary,
+.copy-preview-block summary,
+.custom-material-block summary {
+  color:#566b88;
+  font-weight:750;
+}
+
+/* STDカード：情報階層を明確に */
+.calculator-section {
+  padding:9px;
+  background:#fff;
+}
+.rows-heading {
+  min-height:34px;
+  margin-bottom:7px;
+}
+.add-card-btn,
+.add-sample-btn {
+  border-color:#cbd9ec;
+  background:#f2f6fc;
+  color:#315b96;
+  box-shadow:none;
+  font-weight:800;
+}
+.add-card-btn:hover,
+.add-sample-btn:hover {
+  background:#eaf1fb;
+  border-color:#b8cbe6;
+}
+.calc-row {
+  padding:8px;
+  border:1px solid var(--gc-line);
+  border-radius:11px;
+  background:#fff;
+  box-shadow:none;
+}
+.calc-row.is-active {
+  border-color:#a9c1e8;
+  box-shadow:0 0 0 1px rgba(36,86,180,.05);
+}
+.card-topline {
+  min-height:30px;
+  gap:8px;
+  padding-bottom:6px;
+  border-bottom:1px solid #edf1f6;
+}
+.card-identity {
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:7px;
+}
+.card-caption {
+  flex:0 0 auto;
+  color:#8290a4;
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.card-material-title {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--gc-navy);
+  font-size:.94rem;
+  font-weight:900;
+}
+.card-identity .badges {
+  margin:0;
+}
+.collapse-row-btn {
+  min-height:27px;
+  padding:3px 7px;
+  border-color:#d8e0eb;
+  background:#fff;
+  color:#61738d;
+  font-size:.7rem;
+  box-shadow:none;
+}
+.collapse-row-btn:hover {
+  background:#f7f9fc;
+}
+.remove-row-btn,
+.sample-delete-btn {
+  border:0;
+  background:transparent;
+  color:var(--gc-danger);
+  box-shadow:none;
+}
+.remove-row-btn:hover,
+.sample-delete-btn:hover {
+  background:var(--gc-danger-soft);
+}
+
+/* 物質選択とSTD値は入力、係数は結果として分離 */
+.row-grid {
+  grid-template-columns:minmax(70px,.72fr) minmax(112px,1.25fr) minmax(100px,1fr);
+  grid-template-areas:
+    "material material material"
+    "std stdarea coefficient";
+  gap:6px;
+  margin-top:7px;
+}
+.field-heading,
+.result-label {
+  color:#657690;
+  font-size:.7rem;
+  font-weight:800;
+}
+.field input,
+.field select {
+  border-color:var(--gc-line-strong);
+  border-radius:8px;
+  background:#fff;
+  color:#172840;
+  font-weight:750;
+}
+.field input.std-auto {
+  border-color:#e0e6ef;
+  background:#f4f6f9;
+  color:#4f637e;
+}
+.field input.input-main {
+  border-color:#b9cce6;
+  background:#fff;
+  color:#172840;
+}
+.field input.input-main:focus-visible,
+.field select:focus-visible {
+  border-color:#8aace1;
+  box-shadow:0 0 0 2px rgba(36,86,180,.08);
+}
+.std-toggle-btn {
+  border-color:#e1e6ed;
+  background:transparent;
+  color:#667991;
+  font-weight:750;
+}
+.coefficient-field {
+  align-content:end;
+  border:1px solid #dbe5f2;
+  background:var(--gc-blue-soft-2);
+}
+.coefficient-field .result-label {
+  color:#6b7d94;
+}
+.coefficient-output {
+  min-width:0;
+  color:#315fa9;
+  font-size:.88rem;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
+}
+
+/* 検体は表として読む */
+.samples-block {
+  margin-top:7px;
+  padding-top:7px;
+  border-top:1px solid #edf1f6;
+}
+.samples-heading {
+  min-height:28px;
+}
+.samples-title {
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+}
+.samples-title strong {
+  color:var(--gc-navy);
+  font-size:.86rem;
+}
+.samples-title span {
+  color:#8996a8;
+  font-size:.64rem;
+  font-weight:700;
+}
+.sample-row {
+  grid-template-columns:28px minmax(0,1fr) 72px 26px;
+  grid-template-areas:"index area ppm delete";
+  gap:5px;
+  padding:4px 5px;
+  border:1px solid #e1e8f1;
+  border-radius:8px;
+  background:#fbfcfe;
+}
+.sample-index {
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  margin:auto;
+  border-radius:7px;
+  background:#eef2f7;
+  color:#536982;
+  font-size:.76rem;
+  font-weight:900;
+}
+.sample-row input {
+  border-color:#c9d6e6;
+  border-radius:7px;
+  background:#fff;
+  color:#172840;
+  font-weight:800;
+}
+.sample-ppm-field {
+  min-height:36px;
+  height:36px;
+  border:1px solid #c7d8f3;
+  border-radius:7px;
+  background:#e9f1ff;
+  color:#1f4fbf;
+  box-shadow:none;
+}
+.sample-ppm-output {
+  color:#1f4fbf;
+  font-size:1rem;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+}
+
+/* 閉じたカードも同じ視覚階層 */
+.calc-row--collapsed {
+  border-color:#e0e7f0;
+  background:#fbfcfe;
+}
+.collapsed-open-btn {
+  color:var(--gc-text);
+}
+.collapsed-material {
+  color:var(--gc-navy);
+  font-weight:900;
+}
+.collapsed-coefficient {
+  color:#6a7e99;
+  font-weight:750;
+}
+.collapsed-count {
+  color:#315fa9;
+}
+.collapsed-open-label {
+  color:#315fa9;
+}
+
+/* 結果：コピーだけ主役 */
+.actions-block {
+  padding:9px;
+  border-color:var(--gc-line);
+  background:#fff;
+}
+.actions-grid {
+  grid-template-columns:minmax(0,1.7fr) minmax(100px,.8fr);
+  gap:6px;
+}
+.action-primary {
+  border-color:var(--gc-blue-strong);
+  background:var(--gc-blue-strong);
+  color:#fff;
+  box-shadow:none;
+  font-weight:900;
+}
+.action-primary:hover {
+  background:#193f99;
+}
+.action-primary.is-copied {
+  background:#2f6d50;
+  border-color:#2f6d50;
+  box-shadow:none;
+}
+#downloadCsvBtn {
+  border-color:#cfd9e6;
+  background:#fff;
+  color:#405876;
+  font-weight:850;
+}
+#downloadCsvBtn:hover {
+  background:#f8fafc;
+}
+
+/* 補助操作は視覚的に後退 */
+.more-actions,
+.custom-material-block,
+.copy-preview-block {
+  box-shadow:none !important;
+}
+.more-actions {
+  border-color:#e7ebf1;
+  background:#fcfdfe;
+}
+.custom-material-block,
+.copy-preview-block {
+  border-color:#e7ebf1 !important;
+  background:transparent !important;
+}
+.custom-material-block > details,
+.copy-preview-block > details {
+  background:transparent;
+}
+.custom-material-block summary,
+.copy-preview-block summary,
+.more-actions summary {
+  color:#718097;
+  font-size:.76rem;
+  font-weight:750;
+}
+.more-actions__buttons button,
+.custom-material-form button {
+  box-shadow:none;
+}
+.status-message {
+  color:#526983;
+}
+
+/* iPhone：密度を保ったまま、フォーカス時16pxは維持 */
+@media (max-width:580px) {
+  .gc-calculator-page { gap:7px; }
+  .quick-chips--grid {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:4px;
+  }
+  .quick-chips--grid .quick-chip {
+    height:38px;
+    min-height:38px;
+    font-size:.7rem;
+  }
+  .row-grid {
+    grid-template-columns:minmax(68px,.7fr) minmax(108px,1.22fr) minmax(96px,.94fr);
+    gap:5px;
+  }
+  .coefficient-output {
+    font-size:.82rem;
+  }
+  .sample-row {
+    grid-template-columns:27px minmax(0,1fr) 68px 25px;
+    gap:4px;
+  }
+  .sample-ppm-field {
+    min-height:35px;
+    height:35px;
+  }
+  .actions-grid {
+    grid-template-columns:minmax(0,1.65fr) minmax(96px,.8fr);
+  }
+}
+
+@media (max-width:360px) {
+  .quick-chips--grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .row-grid {
+    grid-template-columns:64px minmax(102px,1.2fr) 94px;
+    grid-template-areas:
+      "material material material"
+      "std stdarea coefficient";
+  }
+  .coefficient-output { font-size:.78rem; }
+  .sample-row {
+    grid-template-columns:25px minmax(0,1fr) 62px 24px;
+  }
+}
