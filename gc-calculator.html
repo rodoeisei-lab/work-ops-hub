@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/gc-calculator.css">
@@ -90,6 +91,67 @@
 
   <script src="assets/js/app.js"></script>
   <script src="assets/js/gc-favorites.js" defer></script>
-  <script src="assets/js/gc-calculator.js?v=20260827-auto-std-source-1" defer></script>
+  <script>
+    (() => {
+      const FALLBACK_VERSION = '20260827-version-loader-1';
+      const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
+      const CHECK_INTERVAL_MS = 30000;
+      const MAX_VERSION_CHECKS = 20;
+
+      async function fetchPublishedVersion() {
+        try {
+          const response = await fetch(`${VERSION_MANIFEST_PATH}?t=${Date.now()}`, { cache: 'no-store' });
+          if (!response.ok) return '';
+          const manifest = await response.json();
+          return String(manifest?.version || '').trim();
+        } catch (_error) {
+          return '';
+        }
+      }
+
+      function loadCalculator(version) {
+        const script = document.createElement('script');
+        script.src = `assets/js/gc-calculator.js?v=${encodeURIComponent(version)}`;
+        script.dataset.gcCalculatorVersion = version;
+        script.async = false;
+        script.addEventListener('error', () => {
+          const status = document.getElementById('statusMessage');
+          if (status) status.textContent = '計算機の読み込みに失敗しました。通信状態を確認して、ページを開き直してください。';
+        });
+        document.body.appendChild(script);
+      }
+
+      function reloadForVersion(version) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('gc-version', version);
+        url.searchParams.set('refresh', Date.now().toString(36));
+        window.location.replace(url.toString());
+      }
+
+      async function startCalculator() {
+        const publishedVersion = await fetchPublishedVersion();
+        const loadedVersion = publishedVersion || FALLBACK_VERSION;
+        loadCalculator(loadedVersion);
+
+        let checks = 0;
+        const timer = window.setInterval(async () => {
+          checks += 1;
+          const latestVersion = await fetchPublishedVersion();
+          if (latestVersion && latestVersion !== loadedVersion) {
+            window.clearInterval(timer);
+            reloadForVersion(latestVersion);
+            return;
+          }
+          if (checks >= MAX_VERSION_CHECKS) window.clearInterval(timer);
+        }, CHECK_INTERVAL_MS);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startCalculator, { once: true });
+      } else {
+        startCalculator();
+      }
+    })();
+  </script>
 </body>
 </html>
