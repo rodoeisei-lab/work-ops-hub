@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-ios-focus-fit-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-design-refresh-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -23,7 +23,7 @@
         <span class="section-number">1</span>
         <div>
           <h2 id="favoriteTitle">物質を選ぶ</h2>
-          <p class="active-card-line"><strong id="activeCardLabel">当日STD 1</strong></p>
+          <p class="active-card-line"><strong id="activeCardLabel">STD 1</strong></p>
         </div>
       </div>
       <div id="favoriteCommonChips" class="quick-chips quick-chips--grid" aria-label="通常よく使う物質"></div>
@@ -76,9 +76,9 @@
       <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
     </section>
 
-    <section class="card section-block custom-material-block no-print" aria-labelledby="customMaterialTitle">
+    <section class="card section-block custom-material-block utility-panel no-print" aria-labelledby="customMaterialTitle">
       <details>
-        <summary id="customMaterialTitle">一覧にない物質を使う</summary>
+        <summary id="customMaterialTitle">物質を追加</summary>
         <div class="custom-material-block__body">
           <div class="custom-material-form">
             <label>物質名<input id="customMaterialName" type="text" autocomplete="off" placeholder="例：シクロヘキサノン"></label>
@@ -90,9 +90,9 @@
       </details>
     </section>
 
-    <section class="card section-block copy-preview-block no-print">
+    <section class="card section-block copy-preview-block utility-panel no-print">
       <details>
-        <summary>コピー内容を確認</summary>
+        <summary>コピー確認</summary>
         <div class="copy-preview__body">
           <textarea id="copyTextOutput" rows="12" aria-label="コピー用テキスト" placeholder="「計算結果をコピー」または「コピー内容を更新」で作成されます。"></textarea>
         </div>
@@ -106,7 +106,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260827-ios-focus-fit-1';
+      const FALLBACK_VERSION = '20260827-design-refresh-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
