@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-version-loader-1';
+  const CACHE_VERSION = '20260827-regression-fix-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -84,7 +84,9 @@
     });
 
     els.copyResultBtn.addEventListener('click', async () => {
-      if (!els.copyTextOutput.value.trim()) els.copyTextOutput.value = buildCopyText();
+      // 常に現在の入力値から作り直す。過去に生成したコピー文を再利用しない。
+      els.copyTextOutput.value = buildCopyText();
+      persist();
       try {
         await navigator.clipboard.writeText(els.copyTextOutput.value);
         showStatus('計算結果をコピーしました。');
@@ -122,12 +124,32 @@
   async function loadMaster() {
     const res = await fetch(DATA_PATH, { cache: 'no-cache' });
     const masterRows = await res.json();
-    state.customMaterials = loadCustomMaterials();
+    const loadedCustomMaterials = loadCustomMaterials();
+    const normalizedMasterRows = Array.isArray(masterRows) ? masterRows : [];
+    const masterByName = new Map(normalizedMasterRows.map((item) => [
+      normalize(item.display_name || item.normalized_name || item.raw_label),
+      item
+    ]));
+    // 共有マスタに有効なSTDがある物質は、端末保存値で上書きしない。
+    // 共有マスタのSTDが未設定、または共有マスタに存在しない物質だけ端末値を使う。
+    state.customMaterials = loadedCustomMaterials.filter((item) => {
+      const key = normalize(item.display_name || item.normalized_name);
+      const master = masterByName.get(key);
+      if (!master) return true;
+      const rawStd = master.std_value;
+      const hasMasterStd = rawStd !== null
+        && rawStd !== undefined
+        && String(rawStd).trim() !== ''
+        && Number.isFinite(Number(rawStd));
+      return !hasMasterStd;
+    });
+    if (state.customMaterials.length !== loadedCustomMaterials.length) saveCustomMaterials();
+
     state.optionLookup = new Map();
     state.searchLookup = new Map();
     const sourceRows = [
       ...state.customMaterials.map((item, sourceIndex) => ({ item, isCustom: true, sourceIndex })),
-      ...(Array.isArray(masterRows) ? masterRows : []).map((item, sourceIndex) => ({ item, isCustom: false, sourceIndex }))
+      ...normalizedMasterRows.map((item, sourceIndex) => ({ item, isCustom: false, sourceIndex }))
     ];
     const usedNames = new Set();
     state.materials = sourceRows.map(({ item, isCustom, sourceIndex }) => {
@@ -458,8 +480,12 @@
   }
 
   function calculate(row, material) {
-    const std = parseNumber(resolvedStdText(row, material)); const stdArea = parseNumber(row.stdAreaInput); const sample = parseNumber(row.sampleAreaInput);
-    if (!std.valid || !stdArea.valid || !sample.valid) return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
+    const std = parseNumber(resolvedStdText(row, material));
+    const stdArea = parseNumber(row.stdAreaInput);
+    const sample = parseNumber(row.sampleAreaInput);
+    if (!std.valid || !stdArea.valid || !sample.valid) {
+      return { coefficientText: '', ppmText: '', errorText: '数値を入力してください。' };
+    }
     if (std.empty) {
       const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
       return {
@@ -470,9 +496,25 @@
           : 'STD値を取得できませんでした。STDを手入力するか、物質マスタとの紐づけを確認してください。'
       };
     }
-    if (stdArea.empty || stdArea.value === 0) return { coefficientText: '', ppmText: '', errorText: 'STDエリアを入力してください。' };
-    const c = std.value / stdArea.value; const ppm = sample.empty ? null : sample.value * c;
-    return { coefficientText: Number(c.toPrecision(10)).toString(), ppmText: ppm == null ? '' : Number(ppm.toFixed(2)).toString(), errorText: '' };
+    if (std.value <= 0) {
+      return { coefficientText: '', ppmText: '', errorText: 'STD値には0より大きい数値を入力してください。' };
+    }
+    if (stdArea.empty) {
+      return { coefficientText: '', ppmText: '', errorText: 'STDエリアを入力してください。' };
+    }
+    if (stdArea.value <= 0) {
+      return { coefficientText: '', ppmText: '', errorText: 'STDエリアには0より大きい数値を入力してください。' };
+    }
+    if (!sample.empty && sample.value < 0) {
+      return { coefficientText: '', ppmText: '', errorText: '検体エリアには0以上の数値を入力してください。' };
+    }
+    const c = std.value / stdArea.value;
+    const ppm = sample.empty ? null : sample.value * c;
+    return {
+      coefficientText: Number(c.toPrecision(10)).toString(),
+      ppmText: ppm == null ? '' : Number(ppm.toFixed(2)).toString(),
+      errorText: ''
+    };
   }
 
   function buildCopyText() {
@@ -502,9 +544,36 @@
   }
 
   function renderFavoriteChips() {
-    renderFavoriteGroup(els.favoriteCommonChips, findMaterialsByNames(MAIN_CHIP_NAMES), false);
-    renderFavoriteGroup(els.favoriteLiquidChips, findMaterialsByNames(LIQUID_STD_NAMES), true);
+    renderFavoriteGroup(
+      els.favoriteCommonChips,
+      findMaterialsFromFavoriteEntries(state.favorites.common, MAIN_CHIP_NAMES),
+      false
+    );
+    renderFavoriteGroup(
+      els.favoriteLiquidChips,
+      findMaterialsFromFavoriteEntries(state.favorites.liquid_standard, LIQUID_STD_NAMES),
+      true
+    );
     renderFavoriteGroup(els.favoriteOtherChips, findMaterialsByNames(OTHER_CHIP_NAMES), true);
+  }
+
+  function findMaterialsFromFavoriteEntries(entries, fallbackNames) {
+    if (!Array.isArray(entries) || !entries.length) return findMaterialsByNames(fallbackNames);
+    const seen = new Set();
+    return entries.map((entry) => {
+      const normalizedName = String(entry?.normalized_name || '');
+      const candidates = [
+        entry?.display_name,
+        normalizedName,
+        state.analyteDisplay?.[normalizedName],
+        ...(Array.isArray(state.analyteAliases?.[normalizedName]) ? state.analyteAliases[normalizedName] : [])
+      ].filter(Boolean);
+      return candidates.map((candidate) => resolveMaterial(candidate)).find(Boolean) || null;
+    }).filter((material) => {
+      if (!material || seen.has(material.key)) return false;
+      seen.add(material.key);
+      return true;
+    });
   }
 
   function findMaterialsByNames(names) {
