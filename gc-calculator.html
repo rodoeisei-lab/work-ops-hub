@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-daily-std-multisample-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-large-simple-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -16,16 +16,6 @@
         <span class="tool-kicker">GC分析ツール</span>
       </div>
       <h1>GC係数・ppm計算</h1>
-      <p class="page-header__lead">物質ごとに当日STDエリアを1回登録し、複数の検体エリアを同じ係数でまとめて計算します。</p>
-      <ol class="calc-steps" aria-label="計算の手順">
-        <li><strong>物質</strong><span>選択する</span></li>
-        <li><strong>当日STD</strong><span>1回登録</span></li>
-        <li><strong>検体</strong><span>複数入力</span></li>
-      </ol>
-      <div class="formula-strip">
-        <span>係数 = STD ÷ STDエリア</span>
-        <span>ppm = 検体エリア × 係数</span>
-      </div>
     </header>
 
     <section class="card section-block quick-select-block no-print" aria-labelledby="favoriteTitle">
@@ -33,11 +23,10 @@
         <span class="section-number">1</span>
         <div>
           <h2 id="favoriteTitle">物質を選ぶ</h2>
-          <p class="hint"><strong id="activeCardLabel">当日STD 1</strong> に反映します。1物質につき1つの当日STDを登録します。</p>
+          <p class="active-card-line"><strong id="activeCardLabel">当日STD 1</strong></p>
         </div>
       </div>
       <div id="favoriteCommonChips" class="quick-chips quick-chips--grid" aria-label="通常よく使う物質"></div>
-      <p class="scroll-hint" aria-hidden="true">← 横にスワイプして続きを表示 →</p>
       <details class="secondary-materials">
         <summary>液体STD・その他の物質</summary>
         <div class="secondary-materials__body">
@@ -58,8 +47,7 @@
         <div class="section-heading">
           <span class="section-number">2</span>
           <div>
-            <h2 id="rowsTitle">今日のSTD・検体を入力</h2>
-            <p class="hint">当日STDエリアは物質ごとに1回だけ入力。その下に検体を追加すると同じ係数でppmを計算します。</p>
+            <h2 id="rowsTitle">STD・検体</h2>
           </div>
         </div>
         <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ 物質追加</button>
@@ -71,8 +59,7 @@
       <div class="section-heading">
         <span class="section-number">3</span>
         <div>
-          <h2>結果を使う</h2>
-          <p class="hint">現在の入力値から、最新の結果を出力します。</p>
+          <h2>結果</h2>
         </div>
       </div>
       <div class="actions-grid">
@@ -93,7 +80,6 @@
       <details>
         <summary id="customMaterialTitle">一覧にない物質を使う</summary>
         <div class="custom-material-block__body">
-          <p class="hint">共有マスタは変更しません。必要な物質だけ、この端末の候補として保存できます。</p>
           <div class="custom-material-form">
             <label>物質名<input id="customMaterialName" type="text" autocomplete="off" placeholder="例：シクロヘキサノン"></label>
             <label>STD値<input id="customStdValue" type="text" inputmode="decimal" autocomplete="off" placeholder="例：25.0"></label>
@@ -113,17 +99,14 @@
       </details>
     </section>
 
-    <section class="card section-block caution-block">
-      <p><strong>確認：</strong>STD値とピーク同定に誤りがないことを確認して使用してください。</p>
-      <p class="hint no-print">計算機バージョン: <span id="gcCalculatorVersionLabel">確認中...</span></p>
-    </section>
+    <p class="version-line no-print">v <span id="gcCalculatorVersionLabel">確認中...</span></p>
   </main>
 
   <script src="assets/js/app.js"></script>
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260827-daily-std-multisample-1';
+      const FALLBACK_VERSION = '20260827-large-simple-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
