@@ -1,0 +1,30 @@
+name: GC calculator checks
+
+on:
+  pull_request:
+    paths:
+      - 'assets/js/gc-calculator.js'
+      - 'data/gc-std-master.json'
+      - 'data/gc-favorite-analytes.json'
+      - 'data/gc-analyte-aliases.json'
+      - 'scripts/test-gc-calculator.mjs'
+      - '.github/workflows/gc-calculator-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/js/gc-calculator.js'
+      - 'data/gc-std-master.json'
+      - 'data/gc-favorite-analytes.json'
+      - 'data/gc-analyte-aliases.json'
+      - 'scripts/test-gc-calculator.mjs'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check assets/js/gc-calculator.js
+      - run: node scripts/test-gc-calculator.mjs
