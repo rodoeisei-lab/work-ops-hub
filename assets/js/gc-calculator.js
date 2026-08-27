@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-coefficient-7dp-1';
+  const CACHE_VERSION = '20260827-manual-collapse-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -245,6 +245,7 @@
       status: '',
       confidence: '',
       note: '',
+      collapsed: false,
       samples: [createEmptySample()]
     };
   }
@@ -293,6 +294,20 @@
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
     const cardNumber = index + 1;
     const title = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質未選択');
+    const filledSampleCount = row.samples.filter((sample) => String(sample.areaInput || '').trim()).length;
+
+    if (row.collapsed) {
+      return `<article class="calc-row calc-row--collapsed${row.id === state.activeRowId ? ' is-active' : ''}" data-row-id="${escapeHtml(row.id)}" data-card-number="${cardNumber}">
+        <button type="button" class="collapsed-open-btn" aria-label="${escapeHtml(title)}を開く">
+          <strong class="collapsed-material">${escapeHtml(title)}</strong>
+          <span class="collapsed-coefficient">係数 ${escapeHtml(calc.coefficientText || '—')}</span>
+          <span class="collapsed-count">${filledSampleCount}件</span>
+          <span class="collapsed-open-label">開く</span>
+        </button>
+        <button type="button" class="remove-row-btn collapsed-remove-btn" aria-label="${escapeHtml(title)}を削除">×</button>
+      </article>`;
+    }
+
     const statusBadge = material?.status && !['confirmed', 'custom'].includes(material.status) ? `<span class="badge badge-review">${STATUS_LABEL[material.status] || '要確認'}</span>` : '';
     const customBadge = material?.isCustom ? '<span class="badge badge-custom">この端末の登録</span>' : '';
     const stdNeedsCheck = (!row.stdManual && material && material.stdValue == null) ? '<span class="badge badge-review">STD値を確認</span>' : '';
@@ -306,10 +321,13 @@
         <p>設定後に「STDを手入力する」でSTD値を入力します。</p>
       </div>
     </details>`;
+    const closeButton = String(row.materialInput || '').trim()
+      ? '<button type="button" class="collapse-row-btn no-print">閉じる</button>'
+      : '';
     return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}${row.id === state.activeRowId ? ' is-active' : ''}" data-row-id="${escapeHtml(row.id)}" data-card-number="${cardNumber}">
       <div class="card-topline">
         <span class="card-caption">当日STD ${cardNumber}</span>
-        <button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">×</button>
+        <div class="card-topline-actions">${closeButton}<button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">×</button></div>
       </div>
       <div class="row-head">
         <div>
@@ -374,6 +392,17 @@
 
   function bindRowEvents(root, rowId) {
     const row = state.rows.find((r) => r.id === rowId);
+
+    if (row.collapsed) {
+      root.querySelector('.collapsed-open-btn')?.addEventListener('click', () => {
+        row.collapsed = false;
+        setActiveRow(row.id);
+        renderRows();
+        persist();
+      });
+      root.querySelector('.remove-row-btn')?.addEventListener('click', () => removeRow(row));
+      return;
+    }
     const materialSelect = root.querySelector('.material-select');
     const unregisteredMaterialInput = root.querySelector('.unregistered-material-input');
     const unregisteredMaterialApply = root.querySelector('.unregistered-material-apply');
@@ -410,18 +439,13 @@
 
     bindSampleEvents(root, row);
 
-    root.querySelector('.remove-row-btn').addEventListener('click', () => {
-      if (rowHasContent(row)) {
-        const material = resolveMaterial(row.materialInput, row.materialKey);
-        const label = material?.displayName || String(row.materialInput || '').trim() || 'この物質';
-        if (!window.confirm(`「${label}」の当日STDと検体を削除しますか？入力内容も削除されます。`)) return;
-      }
-      state.rows = state.rows.filter((r) => r.id !== rowId);
-      normalizeCardsState();
+    root.querySelector('.collapse-row-btn')?.addEventListener('click', () => {
+      row.collapsed = true;
       renderRows();
-      renderFavoriteChips();
       persist();
     });
+
+    root.querySelector('.remove-row-btn').addEventListener('click', () => removeRow(row));
 
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
@@ -446,6 +470,19 @@
     if (stdField) stdField.appendChild(toggleBtn);
     stdInput.readOnly = !row.stdManual;
     toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
+  }
+
+  function removeRow(row) {
+    if (rowHasContent(row)) {
+      const material = resolveMaterial(row.materialInput, row.materialKey);
+      const label = material?.displayName || String(row.materialInput || '').trim() || 'この物質';
+      if (!window.confirm(`「${label}」の当日STDと検体を削除しますか？入力内容も削除されます。`)) return;
+    }
+    state.rows = state.rows.filter((item) => item.id !== row.id);
+    normalizeCardsState();
+    renderRows();
+    renderFavoriteChips();
+    persist();
   }
 
   function bindSampleEvents(root, row) {
