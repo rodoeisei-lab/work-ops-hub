@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-design-refresh-1';
+  const CACHE_VERSION = '20260827-material-sync-fix-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -659,7 +659,10 @@
       if (sample) updateSampleComputedView(sampleRoot, row, sample);
     });
     if (rerenderHead) {
-      root.querySelector('.row-title').textContent = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択');
+      const materialTitle = root.querySelector('.card-material-title');
+      if (materialTitle) {
+        materialTitle.textContent = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択');
+      }
     }
     root.classList.toggle('is-unregistered', isUnregistered);
     const unregisteredNote = root.querySelector('.unregistered-note');
