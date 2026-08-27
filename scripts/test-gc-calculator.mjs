@@ -4,6 +4,8 @@ const master = JSON.parse(fs.readFileSync('data/gc-std-master.json', 'utf8'));
 const favorites = JSON.parse(fs.readFileSync('data/gc-favorite-analytes.json', 'utf8'));
 const aliases = JSON.parse(fs.readFileSync('data/gc-analyte-aliases.json', 'utf8'));
 const calculator = fs.readFileSync('assets/js/gc-calculator.js', 'utf8');
+const calculatorHtml = fs.readFileSync('gc-calculator.html', 'utf8');
+const calculatorCss = fs.readFileSync('assets/css/gc-calculator.css', 'utf8');
 
 const normalize = (value) => String(value || '').trim().toLowerCase();
 const lookup = new Map();
@@ -53,4 +55,36 @@ for (const required of [
   }
 }
 
-console.log('GC calculator regression checks passed.');
+for (const required of [
+  'id="activeCardLabel"',
+  'class="primary action-primary"',
+  'class="card section-block copy-preview-block',
+  'gc-calculator.css?v=20260827-ui-refresh-1'
+]) {
+  if (!calculatorHtml.includes(required)) {
+    throw new Error(`GC calculator UI marker missing: ${required}`);
+  }
+}
+
+for (const required of [
+  '.calc-row.is-active',
+  'grid-template-areas:',
+  '.result-primary',
+  '.quick-chips--grid'
+]) {
+  if (!calculatorCss.includes(required)) {
+    throw new Error(`GC calculator CSS marker missing: ${required}`);
+  }
+}
+
+for (const required of [
+  'syncActiveRowState',
+  'setActiveRow',
+  "calc.coefficientText || '—'"
+]) {
+  if (!calculator.includes(required)) {
+    throw new Error(`GC calculator interaction marker missing: ${required}`);
+  }
+}
+
+console.log('GC calculator regression and UI checks passed.');
