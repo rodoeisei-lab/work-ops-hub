@@ -174,7 +174,7 @@ for (const forbiddenHtml of [
 
 for (const requiredCss of [
   '.page-header h1 { font-size:1.65rem;',
-  '.field select {\n  min-height:52px;',
+  '.field input,\n.field select {\n  min-height:52px;',
   '.sample-ppm-output { font-size:1.45rem;'
 ]) {
   if (!calculatorCss.includes(requiredCss)) {
