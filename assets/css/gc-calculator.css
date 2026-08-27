@@ -1256,3 +1256,33 @@
   .sample-ppm-output { font-size:.9rem; }
   .sample-delete-btn { width:24px; }
 }
+
+
+/* numbered samples: 検体名入力なし */
+.sample-row {
+  grid-template-columns:32px minmax(0,1fr) 68px 28px;
+  grid-template-areas:"index area ppm delete";
+}
+.sample-index {
+  font-size:.86rem;
+  font-weight:900;
+}
+.sample-row .sample-area-field { grid-area:area; }
+.sample-error {
+  grid-column:2 / 4;
+  grid-row:2;
+}
+
+@media (max-width:580px) {
+  .sample-row {
+    grid-template-columns:30px minmax(0,1fr) 64px 26px;
+    grid-template-areas:"index area ppm delete";
+  }
+}
+
+@media (max-width:360px) {
+  .sample-row {
+    grid-template-columns:28px minmax(0,1fr) 58px 24px;
+    grid-template-areas:"index area ppm delete";
+  }
+}

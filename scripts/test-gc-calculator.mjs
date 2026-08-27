@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-compact-grid-1'
+  'gc-calculator.css?v=20260827-numbered-samples-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -131,7 +131,6 @@ for (const required of [
   'sample-ppm-output',
   'すでに当日STD登録済みです',
   '当日STDエリア',
-  '検体名'
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -191,12 +190,36 @@ if (compactBlock.includes('overflow-x:auto')) {
   throw new Error('GC compact UI must not use horizontal chip scrolling');
 }
 
+const numberedSampleBlock = calculatorCss.split('/* numbered samples: 検体名入力なし */')[1] || '';
+for (const requiredCss of [
+  'grid-template-areas:"index area ppm delete";',
+  'grid-template-columns:32px minmax(0,1fr) 68px 28px;'
+]) {
+  if (!numberedSampleBlock.includes(requiredCss)) {
+    throw new Error('GC numbered samples CSS marker missing: ' + requiredCss);
+  }
+}
+for (const requiredJs of [
+  '<div class="sample-index">${index + 1}</div>',
+  'String(index + 1)',
+  'parts.push(`${index + 1}: エリア'
+]) {
+  if (!calculator.includes(requiredJs)) {
+    throw new Error('GC numbered samples JS marker missing: ' + requiredJs);
+  }
+}
+
+
 for (const forbidden of [
   "const selected = new Set(state.rows.map",
   "row.stdManual = true;\n    });\n    state.customMaterials",
   "root.addEventListener('pointerdown', () => setActiveRow(rowId)",
   'class="ppm-field result-field result-primary"',
-  'class="memo-input"'
+  'class="memo-input"',
+  'sample-label-input',
+  'sample-label-field',
+  '例：試料A',
+  'sample.label'
 ]) {
   if (calculator.includes(forbidden)) {
     throw new Error(`GC calculator unsafe legacy pattern remains: ${forbidden}`);
