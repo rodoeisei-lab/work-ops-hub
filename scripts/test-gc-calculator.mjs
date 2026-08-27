@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-large-simple-1'
+  'gc-calculator.css?v=20260827-compact-grid-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -141,12 +141,15 @@ for (const required of [
 for (const required of [
   'STD・検体',
   '当日STD 1',
-  '＋ 物質追加',
-  'GC係数・ppm計算'
+  '＋ 物質',
+  'GC計算'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC daily STD / multi-sample UI marker missing: ${required}`);
   }
+}
+if (!calculator.includes('＋ 検体')) {
+  throw new Error('GC compact sample-add label missing');
 }
 for (const required of [
   '.samples-block',
@@ -172,14 +175,20 @@ for (const forbiddenHtml of [
   }
 }
 
+const compactBlock = calculatorCss.split('/* 20260827 compact-grid: 横スクロール廃止・縦方向を圧縮 */')[1] || '';
 for (const requiredCss of [
-  '.page-header h1 { font-size:1.65rem;',
-  '.field input,\n.field select {\n  min-height:52px;',
-  '.sample-ppm-output { font-size:1.45rem;'
+  'grid-template-columns:repeat(4,minmax(0,1fr));',
+  'overflow:visible;',
+  'height:36px;',
+  'grid-template-areas:"index label area ppm delete";',
+  '.status-message:empty { display:none; }'
 ]) {
-  if (!calculatorCss.includes(requiredCss)) {
-    throw new Error(`GC large text marker missing: ${requiredCss}`);
+  if (!compactBlock.includes(requiredCss)) {
+    throw new Error(`GC compact UI marker missing: ${requiredCss}`);
   }
+}
+if (compactBlock.includes('overflow-x:auto')) {
+  throw new Error('GC compact UI must not use horizontal chip scrolling');
 }
 
 for (const forbidden of [

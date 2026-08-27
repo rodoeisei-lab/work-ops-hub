@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-large-simple-1';
+  const CACHE_VERSION = '20260827-compact-grid-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -57,7 +57,7 @@
     renderRows();
     renderFavoriteChips();
     renderCustomMaterialList();
-    showStatus('入力内容はこの端末に自動保存されます。');
+    showStatus('');
   }
 
   function bindGlobalEvents() {
@@ -310,7 +310,7 @@
     return `<article class="calc-row${isUnregistered ? ' is-unregistered' : ''}${row.id === state.activeRowId ? ' is-active' : ''}" data-row-id="${escapeHtml(row.id)}" data-card-number="${cardNumber}">
       <div class="card-topline">
         <span class="card-caption">当日STD ${cardNumber}</span>
-        <button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">削除</button>
+        <button type="button" class="remove-row-btn" aria-label="当日STD${cardNumber}を削除">×</button>
       </div>
       <div class="row-head">
         <div>
@@ -336,7 +336,7 @@
       <section class="samples-block" aria-label="${escapeHtml(title)}の検体">
         <div class="samples-heading">
           <div><strong>検体</strong></div>
-          <button type="button" class="plain add-sample-btn no-print">＋ 検体追加</button>
+          <button type="button" class="plain add-sample-btn no-print">＋ 検体</button>
         </div>
         <div class="samples-list">${renderSamples(row, material)}</div>
       </section>
@@ -358,7 +358,7 @@
         <span>ppm</span>
         <strong class="sample-ppm-output">${escapeHtml(calc.ppmText || '—')}</strong>
       </div>
-      <button type="button" class="sample-delete-btn no-print" aria-label="検体${index + 1}を削除">削除</button>
+      <button type="button" class="sample-delete-btn no-print" aria-label="検体${index + 1}を削除">×</button>
       <div class="sample-error">${escapeHtml(calc.sampleErrorText || '')}</div>
     </div>`;
   }
