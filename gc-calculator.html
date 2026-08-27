@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-ui-refresh-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260827-ui-polish-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -37,6 +37,7 @@
         </div>
       </div>
       <div id="favoriteCommonChips" class="quick-chips quick-chips--grid" aria-label="通常よく使う物質"></div>
+      <p class="scroll-hint" aria-hidden="true">← 横にスワイプして続きを表示 →</p>
       <details class="secondary-materials">
         <summary>液体STD・その他の物質</summary>
         <div class="secondary-materials__body">
@@ -122,7 +123,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260827-ui-refresh-1';
+      const FALLBACK_VERSION = '20260827-ui-polish-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
