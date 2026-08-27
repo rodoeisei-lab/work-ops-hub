@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-regression-fix-1';
+  const CACHE_VERSION = '20260827-ui-refresh-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -21,6 +21,7 @@
     downloadCsvBtn: document.getElementById('downloadCsvBtn'),
     copyTextOutput: document.getElementById('copyTextOutput'),
     statusMessage: document.getElementById('statusMessage'),
+    activeCardLabel: document.getElementById('activeCardLabel'),
     favoriteCommonChips: document.getElementById('favoriteCommonChips'),
     favoriteLiquidChips: document.getElementById('favoriteLiquidChips'),
     favoriteOtherChips: document.getElementById('favoriteOtherChips'),
@@ -59,11 +60,16 @@
 
   function bindGlobalEvents() {
     els.addRowBtn.addEventListener('click', () => {
-      state.rows.push(createEmptyRow());
+      const newRow = createEmptyRow();
+      state.rows.push(newRow);
+      state.activeRowId = newRow.id;
       normalizeCardsState();
       renderRows();
       renderFavoriteChips();
       persist();
+      requestAnimationFrame(() => {
+        els.rowsContainer.querySelector(`[data-row-id="${newRow.id}"] .material-select`)?.focus();
+      });
     });
 
     els.clearAllBtn.addEventListener('click', () => {
@@ -213,15 +219,16 @@
   }
 
   function renderRows() {
-    els.rowsContainer.innerHTML = state.rows.map((r) => renderRow(r)).join('');
+    els.rowsContainer.innerHTML = state.rows.map((r, index) => renderRow(r, index)).join('');
     state.rows.forEach((row) => {
       const root = els.rowsContainer.querySelector(`[data-row-id="${row.id}"]`);
       if (root) bindRowEvents(root, row.id);
     });
     syncFavoriteChipState();
+    syncActiveRowState();
   }
 
-  function renderRow(row) {
+  function renderRow(row, index) {
     const material = resolveMaterial(row.materialInput, row.materialKey);
     const stdText = resolvedStdText(row, material);
     const calc = calculate(row, material);
@@ -280,7 +287,8 @@
 
     const updateOnly = () => { updateRowComputedView(root, row); persist(); };
 
-    root.addEventListener('focusin', () => { state.activeRowId = rowId; });
+    root.addEventListener('focusin', () => setActiveRow(rowId));
+    root.addEventListener('pointerdown', () => setActiveRow(rowId), { passive: true });
     materialSelect.addEventListener('change', () => applyRegisteredMaterial(row, materialSelect.value, root));
     unregisteredMaterialApply.addEventListener('click', () => applyUnregisteredMaterial(row, unregisteredMaterialInput.value, root));
     unregisteredMaterialInput.addEventListener('keydown', (event) => {
@@ -329,8 +337,31 @@
     toggleBtn.classList.toggle('is-required', Boolean(String(row.materialInput || '').trim()) && !resolveMaterial(row.materialInput, row.materialKey));
   }
 
+  function setActiveRow(rowId) {
+    if (!state.rows.some((row) => row.id === rowId)) return;
+    state.activeRowId = rowId;
+    syncActiveRowState();
+  }
+
+  function syncActiveRowState() {
+    els.rowsContainer?.querySelectorAll('.calc-row').forEach((root) => {
+      root.classList.toggle('is-active', root.dataset.rowId === state.activeRowId);
+    });
+    if (!els.activeCardLabel) return;
+    const index = state.rows.findIndex((row) => row.id === state.activeRowId);
+    const row = index >= 0 ? state.rows[index] : state.rows[0];
+    if (!row) {
+      els.activeCardLabel.textContent = '計算カード1';
+      return;
+    }
+    const material = resolveMaterial(row.materialInput, row.materialKey);
+    els.activeCardLabel.textContent = material
+      ? `計算カード${index + 1}（${material.displayName}）`
+      : `計算カード${index + 1}`;
+  }
+
   function applyRegisteredMaterial(row, materialKey, root) {
-    state.activeRowId = row.id;
+    setActiveRow(row.id);
     const selected = findMaterialByKey(materialKey);
     if (!selected) {
       clearRowMaterialSelection(row, '');
@@ -357,7 +388,7 @@
       root.querySelector('.unregistered-material-input')?.focus();
       return;
     }
-    state.activeRowId = row.id;
+    setActiveRow(row.id);
     clearRowMaterialSelection(row, name);
     const materialSelect = root.querySelector('.material-select');
     if (materialSelect) materialSelect.value = '';
@@ -405,13 +436,12 @@
     if (!row.stdManual) row.stdInput = stdText;
     const calc = calculate(row, material);
     const isUnregistered = Boolean(String(row.materialInput || '').trim()) && !material;
-    root.querySelector('.coefficient-output').textContent = calc.coefficientText;
+    root.querySelector('.coefficient-output').textContent = calc.coefficientText || '—';
     root.querySelector('.ppm-output').textContent = calc.ppmText || '—';
     root.querySelector('.error-text').textContent = calc.errorText;
     if (rerenderHead) {
       root.querySelector('.row-title').textContent = material?.displayName || (isUnregistered ? `${row.materialInput}（未登録）` : '物質を選択');
-      root.querySelector('.card-caption').textContent = material ? `計算カード：${material.displayName}` : (isUnregistered ? '未登録物質の計算カード' : '計算カード（未選択）');
-      root.querySelector('.meta-note').textContent = material?.rawLabel ? `raw: ${material.rawLabel}` : 'raw: -';
+      root.querySelector('.meta-note').textContent = material?.rawLabel ? `raw: ${material.rawLabel}` : '';
     }
     root.classList.toggle('is-unregistered', isUnregistered);
     const unregisteredNote = root.querySelector('.unregistered-note');
@@ -434,6 +464,7 @@
     if (row.stdManual) badges.push('<span class="badge badge-manual">手入力</span>');
     root.querySelector('.badges').innerHTML = badges.join('');
     syncFavoriteChipState();
+    syncActiveRowState();
   }
 
   function resolveMaterial(input, materialKey = '') {
