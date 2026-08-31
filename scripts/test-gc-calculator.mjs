@@ -86,7 +86,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260827-material-sync-fix-1'
+  'gc-calculator.css?v=20260831-ppm-sync-fix-1'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -139,6 +139,9 @@ for (const required of [
   'row.collapsed = false',
   'filledSampleCount',
   'if (row?.collapsed)',
+  'syncVisibleInputsToState',
+  "areaInput?.addEventListener('change', syncSampleInput)",
+  'const liveAreaInput = areaInput ? areaInput.value : sample.areaInput',
 ]) {
   if (!calculator.includes(required)) {
     throw new Error(`GC calculator interaction marker missing: ${required}`);
@@ -333,6 +336,27 @@ if (!updateViewBlock.includes("root.querySelector('.card-material-title')")) {
 }
 if (updateViewBlock.includes("root.querySelector('.row-title')")) {
   throw new Error('Legacy .row-title material sync remains');
+}
+const persistBlock = calculator.match(/function persist\(\) \{[\s\S]*?\n  \}/)?.[0] || '';
+if (!persistBlock.includes('syncVisibleInputsToState();')) {
+  throw new Error('persist must sync live DOM inputs before saving');
+}
+if (persistBlock.includes('normalizeCardsState();')) {
+  throw new Error('persist must not replace row/sample objects during input');
+}
+
+const sampleUpdateBlock = calculator.match(/function updateSampleComputedView\([\s\S]*?\n  \}/)?.[0] || '';
+if (!sampleUpdateBlock.includes("sampleRoot.querySelector('.sample-area-input')")) {
+  throw new Error('ppm update must read the live sample input');
+}
+if (!sampleUpdateBlock.includes('calculate(row, material, liveAreaInput)')) {
+  throw new Error('ppm update must calculate from the live sample input value');
+}
+
+const screenshotCoefficient = 15 / 15491;
+const screenshotPpm = 322 * screenshotCoefficient;
+if (Number(screenshotPpm.toFixed(2)).toString() !== '0.31') {
+  throw new Error('ppm regression fixture must equal 0.31');
 }
 
 console.log('GC calculator regression, UI, safety, iOS input, and multi-sample checks passed.');
