@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260827-material-sync-fix-1';
+  const CACHE_VERSION = '20260831-ppm-sync-fix-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -92,6 +92,7 @@
     });
 
     els.copyResultBtn.addEventListener('click', async () => {
+      syncVisibleInputsToState();
       const validation = validateOutputRows();
       if (!validation.ok) {
         resetCopyButton();
@@ -117,6 +118,7 @@
     });
 
     els.downloadCsvBtn.addEventListener('click', () => {
+      syncVisibleInputsToState();
       const validation = validateOutputRows();
       if (!validation.ok) {
         showStatus(validation.message, true);
@@ -488,11 +490,13 @@
       const sample = row.samples.find((item) => item.id === sampleRoot.dataset.sampleId);
       if (!sample) return;
       const areaInput = sampleRoot.querySelector('.sample-area-input');
-      areaInput?.addEventListener('input', () => {
-        sample.areaInput = areaInput.value;
+      const syncSampleInput = () => {
+        sample.areaInput = areaInput?.value || '';
         updateSampleComputedView(sampleRoot, row, sample);
         persist();
-      });
+      };
+      areaInput?.addEventListener('input', syncSampleInput);
+      areaInput?.addEventListener('change', syncSampleInput);
       sampleRoot.querySelector('.sample-delete-btn')?.addEventListener('click', () => {
         if (row.samples.length === 1) {
           sample.areaInput = '';
@@ -688,8 +692,11 @@
   }
 
   function updateSampleComputedView(sampleRoot, row, sample) {
+    const areaInput = sampleRoot.querySelector('.sample-area-input');
+    const liveAreaInput = areaInput ? areaInput.value : sample.areaInput;
+    if (areaInput && sample.areaInput !== liveAreaInput) sample.areaInput = liveAreaInput;
     const material = resolveMaterial(row.materialInput, row.materialKey);
-    const calc = calculate(row, material, sample.areaInput);
+    const calc = calculate(row, material, liveAreaInput);
     sampleRoot.querySelector('.sample-ppm-output').textContent = calc.ppmText || '—';
     sampleRoot.querySelector('.sample-error').textContent = calc.sampleErrorText || '';
   }
@@ -1131,8 +1138,27 @@
       LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     } catch (_e) { state.rows = []; normalizeCardsState(); }
   }
+  function syncVisibleInputsToState() {
+    els.rowsContainer?.querySelectorAll('.calc-row[data-row-id]').forEach((root) => {
+      const row = state.rows.find((item) => item.id === root.dataset.rowId);
+      if (!row || row.collapsed) return;
+
+      const stdAreaInput = root.querySelector('.std-area-input');
+      if (stdAreaInput) row.stdAreaInput = stdAreaInput.value;
+
+      root.querySelectorAll('.sample-row').forEach((sampleRoot) => {
+        const sample = row.samples.find((item) => item.id === sampleRoot.dataset.sampleId);
+        const areaInput = sampleRoot.querySelector('.sample-area-input');
+        if (sample && areaInput) sample.areaInput = areaInput.value;
+      });
+    });
+  }
+
   function persist() {
-    normalizeCardsState();
+    // 保存のたびに normalizeCardsState() で row/sample を作り直すと、
+    // 既存DOMのイベントハンドラが古いオブジェクトを参照し続けるため、
+    // 画面値と計算stateが乖離する。正規化は復元・構造変更時だけ行う。
+    syncVisibleInputsToState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: state.rows, activeRowId: state.activeRowId, copyTextOutput: els.copyTextOutput.value }));
   }
   function showCopySuccess() {
