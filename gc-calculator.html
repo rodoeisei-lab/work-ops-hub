@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260902-initial-3-samples-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260902-easy-page-reset-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -66,11 +66,11 @@
         <button id="copyResultBtn" type="button" class="primary action-primary">計算結果をコピー</button>
         <button id="downloadCsvBtn" type="button" class="btn-ghost">CSV保存</button>
       </div>
+      <button id="clearAllBtn" type="button" class="page-reset-btn">↻ ページをリセット</button>
       <details class="more-actions">
         <summary>その他の操作</summary>
         <div class="more-actions__buttons">
           <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー内容を更新</button>
-          <button id="clearAllBtn" type="button" class="danger">入力をすべて消す</button>
         </div>
       </details>
       <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
@@ -106,7 +106,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260902-initial-3-samples-1';
+      const FALLBACK_VERSION = '20260902-easy-page-reset-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
