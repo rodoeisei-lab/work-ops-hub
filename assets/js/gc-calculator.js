@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260902-initial-3-samples-1';
+  const CACHE_VERSION = '20260902-easy-page-reset-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -75,14 +75,19 @@
     });
 
     els.clearAllBtn.addEventListener('click', () => {
-      if (!window.confirm('入力内容をすべて消します。よろしいですか？')) return;
-      state.rows = [createEmptyRow()];
-      normalizeCardsState();
+      if (!window.confirm('入力中のSTD・検体をすべて消して、初期状態に戻しますか？')) return;
+      const initialRow = createEmptyRow();
+      state.rows = [initialRow];
+      state.activeRowId = initialRow.id;
       localStorage.removeItem(STORAGE_KEY);
       els.copyTextOutput.value = '';
       renderRows();
       renderFavoriteChips();
-      showStatus('入力内容をクリアしました。');
+      persist();
+      showStatus('ページを初期状態に戻しました。');
+      requestAnimationFrame(() => {
+        els.rowsContainer?.querySelector('.material-select')?.focus({ preventScroll: true });
+      });
     });
 
     els.buildCopyTextBtn.addEventListener('click', () => {
