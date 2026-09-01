@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260901-row-state-fix-1';
+  const CACHE_VERSION = '20260902-initial-3-samples-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -233,6 +233,10 @@
     return { id: `s_${Math.random().toString(36).slice(2)}`, areaInput: '' };
   }
 
+  function createInitialSamples() {
+    return [createEmptySample(), createEmptySample(), createEmptySample()];
+  }
+
   function createEmptyRow() {
     return {
       id: `r_${Math.random().toString(36).slice(2)}`,
@@ -248,7 +252,7 @@
       confidence: '',
       note: '',
       collapsed: false,
-      samples: [createEmptySample()]
+      samples: createInitialSamples()
     };
   }
 
@@ -260,9 +264,18 @@
         areaInput: String(sample?.areaInput || '')
       }));
     } else {
-      row.samples = [createEmptySample()];
+      row.samples = createInitialSamples();
       if (legacyArea) row.samples[0].areaInput = legacyArea;
     }
+
+    // 完全に未入力の初期カードだけは、旧保存状態が検体1件でも検体3件まで補う。
+    // 入力済みカードや、ユーザーが意図的に検体を減らしたカードはそのまま維持する。
+    const isCompletelyEmpty = !String(row.materialInput || '').trim()
+      && !String(row.stdInput || '').trim()
+      && !String(row.stdAreaInput || '').trim()
+      && row.samples.every((sample) => !String(sample.areaInput || '').trim());
+    while (isCompletelyEmpty && row.samples.length < 3) row.samples.push(createEmptySample());
+
     delete row.sampleAreaInput;
     delete row.memo;
   }
