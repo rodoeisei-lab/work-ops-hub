@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260831-ppm-sync-fix-1';
+  const CACHE_VERSION = '20260901-row-state-fix-1';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -948,7 +948,18 @@
   }
   function applyFavoriteToActiveRow(displayName) {
     if (!displayName) return;
-    normalizeCardsState();
+
+    // DOMの入力イベントは、renderRows() 時点の row オブジェクトを参照している。
+    // ここで normalizeCardsState() を呼ぶと row が別オブジェクトに置き換わり、
+    // 物質選択後の入力イベントが古い row を更新してSTD表示を消す原因になる。
+    // 正規化が必要な場合は、必ず renderRows() とセットで行う。
+    if (!Array.isArray(state.rows) || !state.rows.length) {
+      const initialRow = createEmptyRow();
+      state.rows = [initialRow];
+      state.activeRowId = initialRow.id;
+      renderRows();
+    }
+
     let row = state.rows.find((r) => r.id === state.activeRowId) || state.rows[0];
     if (row?.collapsed) {
       row = createEmptyRow();
