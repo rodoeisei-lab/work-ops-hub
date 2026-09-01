@@ -1851,3 +1851,22 @@ body {
     grid-template-columns:25px minmax(0,1fr) 62px 24px;
   }
 }
+
+
+/* ページリセット：頻繁に使える位置に出すが、誤操作しにくい見た目にする */
+.page-reset-btn {
+  width:100%;
+  min-height:42px;
+  margin-top:7px;
+  border:1px solid #d9a9a9;
+  border-radius:9px;
+  background:#fffafa;
+  color:#9b3f3f;
+  font-weight:850;
+  box-shadow:none;
+}
+.page-reset-btn:hover,
+.page-reset-btn:focus-visible {
+  background:#fff2f2;
+  border-color:#c98787;
+}
