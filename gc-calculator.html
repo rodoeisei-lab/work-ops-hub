@@ -6,7 +6,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260902-easy-page-reset-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260904-nd-threshold-1">
+  <link rel="stylesheet" href="assets/css/gc-nd-threshold.css?v=20260904-nd-threshold-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -106,7 +107,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260902-easy-page-reset-1';
+      const FALLBACK_VERSION = '20260904-nd-threshold-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
@@ -181,5 +182,6 @@
       }
     })();
   </script>
+  <script src="assets/js/gc-nd-threshold.js?v=20260904-nd-threshold-1"></script>
 </body>
 </html>
