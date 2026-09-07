@@ -1,8 +1,9 @@
 const FACTOR_DIGITS = 7;
 const DEFAULT_OUTLIER_THRESHOLD = 0.15;
+let quickCalcGroups = [];
 
 function formatFactor(value) {
-  return Number(value).toFixed(FACTOR_DIGITS);
+  return Number.isFinite(Number(value)) ? Number(value).toFixed(FACTOR_DIGITS) : '-';
 }
 
 function formatArea(value) {
@@ -12,6 +13,18 @@ function formatArea(value) {
 
 function formatStd(value) {
   return Number.isFinite(Number(value)) ? `${Number(value)} ppm` : '-';
+}
+
+function formatPpm(value) {
+  if (!Number.isFinite(value)) return '—';
+  return Number(value.toFixed(2)).toString();
+}
+
+function parseArea(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return { empty: true, valid: true, value: null };
+  const value = Number(text.replace(/,/g, ''));
+  return { empty: false, valid: Number.isFinite(value), value };
 }
 
 function mean(values) {
@@ -62,6 +75,8 @@ function summarize(records, threshold) {
     const representative = mean(values);
     const stdPpm = Number(accepted.at(-1)?.std_ppm ?? rows.at(-1)?.std_ppm);
     return {
+      key: [rows[0].column_id, rows[0].temp_c, rows[0].analyte].join('|'),
+      column_id: rows[0].column_id,
       column_label: rows[0].column_label || rows[0].column_id.toUpperCase(),
       temp_c: rows[0].temp_c,
       analyte: rows[0].analyte,
@@ -75,6 +90,14 @@ function summarize(records, threshold) {
       max: values.length ? Math.max(...values) : null
     };
   });
+}
+
+function sortedSummaries(records, threshold) {
+  return summarize(records, threshold).sort((a, b) =>
+    a.column_label.localeCompare(b.column_label, 'ja') ||
+    a.temp_c - b.temp_c ||
+    a.analyte.localeCompare(b.analyte, 'ja')
+  );
 }
 
 function uniqueSorted(values, numeric = false) {
@@ -114,12 +137,70 @@ function filteredRecords(records) {
   });
 }
 
+function renderQuickCalculator(records, threshold) {
+  quickCalcGroups = sortedSummaries(records, threshold).filter((group) => Number.isFinite(group.representative));
+  const select = document.getElementById('calc-group');
+  const previous = select.value;
+
+  select.innerHTML = '<option value="">選択してください</option>' + quickCalcGroups.map((group) =>
+    `<option value="${group.key}">${group.column_label}・${group.temp_c}℃｜${group.analyte}</option>`
+  ).join('');
+
+  if (quickCalcGroups.some((group) => group.key === previous)) {
+    select.value = previous;
+  } else if (quickCalcGroups.length === 1) {
+    select.value = quickCalcGroups[0].key;
+  } else {
+    select.value = '';
+  }
+
+  updateQuickCalculation();
+}
+
+function updateQuickCalculation() {
+  const selectedKey = document.getElementById('calc-group').value;
+  const areaInput = document.getElementById('calc-sample-area');
+  const factorHost = document.getElementById('calc-factor');
+  const metaHost = document.getElementById('calc-factor-meta');
+  const ppmHost = document.getElementById('calc-ppm');
+  const messageHost = document.getElementById('calc-message');
+  const group = quickCalcGroups.find((item) => item.key === selectedKey);
+
+  if (!group) {
+    factorHost.textContent = '—';
+    metaHost.textContent = '';
+    ppmHost.textContent = '—';
+    messageHost.textContent = '物質・条件を選択してください。';
+    return;
+  }
+
+  factorHost.textContent = formatFactor(group.representative);
+  metaHost.textContent = `採用 ${group.accepted_count}/${group.total_count}件${group.outlier_count ? `・外れ値 ${group.outlier_count}件` : ''}`;
+
+  const area = parseArea(areaInput.value);
+  if (!area.valid) {
+    ppmHost.textContent = '—';
+    messageHost.textContent = '検体エリアは数値で入力してください。';
+    return;
+  }
+  if (area.empty) {
+    ppmHost.textContent = '—';
+    messageHost.textContent = '検体エリアを入力すると自動計算します。';
+    return;
+  }
+  if (area.value < 0) {
+    ppmHost.textContent = '—';
+    messageHost.textContent = '検体エリアには0以上の数値を入力してください。';
+    return;
+  }
+
+  const ppm = area.value * group.representative;
+  ppmHost.textContent = formatPpm(ppm);
+  messageHost.textContent = `${area.value.toLocaleString('ja-JP')} × ${formatFactor(group.representative)} = ${formatPpm(ppm)} ppm`;
+}
+
 function renderSummary(records, threshold) {
-  const groups = summarize(records, threshold).sort((a, b) =>
-    a.column_label.localeCompare(b.column_label, 'ja') ||
-    a.temp_c - b.temp_c ||
-    a.analyte.localeCompare(b.analyte, 'ja')
-  );
+  const groups = sortedSummaries(records, threshold);
 
   const tbody = document.getElementById('factor-summary-body');
   document.getElementById('summary-empty').hidden = groups.length !== 0;
@@ -174,6 +255,7 @@ function renderRecords(records, threshold) {
 
 function render(records, threshold) {
   const filtered = filteredRecords(records);
+  renderQuickCalculator(filtered, threshold);
   renderSummary(filtered, threshold);
   renderRecords(filtered, threshold);
 }
@@ -198,6 +280,9 @@ async function init() {
     document.getElementById('filter-analyte').value = '';
     render(records, threshold);
   });
+
+  document.getElementById('calc-group').addEventListener('change', updateQuickCalculation);
+  document.getElementById('calc-sample-area').addEventListener('input', updateQuickCalculation);
 }
 
 init().catch((error) => {
