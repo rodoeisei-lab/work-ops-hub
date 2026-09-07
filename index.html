@@ -158,6 +158,36 @@
       opacity: .96;
     }
 
+    .factor-quick-link {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 52px;
+      padding: 11px 15px;
+      border: 1px solid #9fb8df;
+      border-radius: 13px;
+      background: #fff;
+      color: #173b82;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 8px 19px rgba(20, 45, 91, 0.09);
+    }
+
+    .factor-quick-link span {
+      color: #5b7093;
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    .factor-quick-link:hover,
+    .factor-quick-link:focus-visible {
+      text-decoration: none;
+      background: #f4f8ff;
+      border-color: #7f9fd1;
+    }
+
     .flow {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -289,6 +319,7 @@
       .flow { grid-template-columns: 1fr; }
       .quick-links a { justify-content: flex-start; padding-inline: 12px; font-size: .94rem; }
       .calculator-quick-link { padding: 14px; }
+      .factor-quick-link { align-items: flex-start; flex-direction: column; gap: 2px; padding: 12px 14px; }
       .flow-step { padding: 11px 12px; }
       .menu-card { min-height: 0; padding: 13px; }
       .section-title { font-size: 1.1rem; }
@@ -308,6 +339,10 @@
         <small>いま計算する</small>
         <strong>GC係数・ppm計算</strong>
         <span>STDエリアと検体エリアから、係数・ppmをすぐ確認</span>
+      </a>
+      <a class="factor-quick-link" href="gc-factors.html">
+        <strong>GC係数ライブラリを見る</strong>
+        <span>係数・面積・平均・外れ値を確認</span>
       </a>
       <p class="sub">労働衛生・作業環境測定の実務ページを、現場の作業順に整理したホームです。GCの計算は下の直通ボタンからすぐ開けます。</p>
       <div class="hero-meta">
@@ -345,6 +380,7 @@
       <p class="section-note">GC条件の照合、標準液管理、濃度計算を行うページです。測定の再現性確認や記録前チェックに活用できます。</p>
       <div class="menu-grid">
         <a href="gc-calculator.html?gc-version=20260902-easy-page-reset-1" class="menu-card primary-link"><strong>GC係数・ppm計算</strong><small>STDエリアと検体エリアから、係数・ppmを計算</small></a>
+        <a href="gc-factors.html" class="menu-card primary-link"><strong>GC係数ライブラリ</strong><small>カラム・温度ごとの係数、面積、平均、外れ値を確認</small></a>
         <a href="gc-rt-library.html" class="menu-card"><strong>GC RTライブラリ</strong><small>条件ごとのRT一覧を確認</small></a>
         <a href="gc-std-master.html" class="menu-card"><strong>GC標準液マスタ</strong><small>STD値と要確認データを確認</small></a>
       </div>
