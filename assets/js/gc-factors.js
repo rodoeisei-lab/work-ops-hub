@@ -2,6 +2,15 @@ const FACTOR_DIGITS = 7;
 const DEFAULT_OUTLIER_THRESHOLD = 0.15;
 let quickCalcGroups = [];
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 function formatFactor(value) {
   return Number.isFinite(Number(value)) ? Number(value).toFixed(FACTOR_DIGITS) : '-';
 }
@@ -53,7 +62,6 @@ function classifyGroup(rows, threshold) {
     }
 
     if (!isOutlier) accepted.push(factor);
-
     return { ...record, isOutlier, deviationRatio, referenceMean };
   });
 }
@@ -140,21 +148,33 @@ function filteredRecords(records) {
 function renderQuickCalculator(records, threshold) {
   quickCalcGroups = sortedSummaries(records, threshold).filter((group) => Number.isFinite(group.representative));
   const select = document.getElementById('calc-group');
-  const previous = select.value;
 
   select.innerHTML = '<option value="">選択してください</option>' + quickCalcGroups.map((group) =>
-    `<option value="${group.key}">${group.column_label}・${group.temp_c}℃｜${group.analyte}</option>`
+    `<option value="${escapeHtml(group.key)}">${escapeHtml(group.analyte)}（${escapeHtml(group.column_label)}・${group.temp_c}℃）</option>`
   ).join('');
 
-  if (quickCalcGroups.some((group) => group.key === previous)) {
-    select.value = previous;
-  } else if (quickCalcGroups.length === 1) {
-    select.value = quickCalcGroups[0].key;
-  } else {
-    select.value = '';
-  }
-
+  select.value = '';
   updateQuickCalculation();
+}
+
+function clearQuickSample() {
+  const input = document.getElementById('calc-sample-area');
+  input.value = '';
+}
+
+function handleCalcGroupChange() {
+  clearQuickSample();
+  updateQuickCalculation();
+}
+
+function useGroupInCalculator(groupKey) {
+  const select = document.getElementById('calc-group');
+  if (!quickCalcGroups.some((group) => group.key === groupKey)) return;
+  select.value = groupKey;
+  clearQuickSample();
+  updateQuickCalculation();
+  document.querySelector('.factor-calc-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.setTimeout(() => document.getElementById('calc-sample-area')?.focus({ preventScroll: true }), 350);
 }
 
 function updateQuickCalculation() {
@@ -201,16 +221,16 @@ function updateQuickCalculation() {
 
 function renderSummary(records, threshold) {
   const groups = sortedSummaries(records, threshold);
-
   const tbody = document.getElementById('factor-summary-body');
+  const cards = document.getElementById('factor-summary-cards');
   document.getElementById('summary-empty').hidden = groups.length !== 0;
   document.getElementById('summary-count').textContent = `${groups.length}条件`;
 
   tbody.innerHTML = groups.map((group) => `
     <tr>
-      <td>${group.column_label}</td>
+      <td>${escapeHtml(group.column_label)}</td>
       <td>${group.temp_c}℃</td>
-      <td>${group.analyte}</td>
+      <td>${escapeHtml(group.analyte)}</td>
       <td>${formatStd(group.std_ppm)}</td>
       <td class="number"><strong>${formatFactor(group.representative)}</strong></td>
       <td class="number"><strong>${formatArea(group.representative_area)}</strong></td>
@@ -218,6 +238,34 @@ function renderSummary(records, threshold) {
       <td>${group.outlier_count ? `<span class="factor-badge outlier">${group.outlier_count}件</span>` : '0件'}</td>
       <td class="number">${group.min === null ? '-' : `${formatFactor(group.min)} ～ ${formatFactor(group.max)}`}</td>
     </tr>
+  `).join('');
+
+  cards.innerHTML = groups.map((group) => `
+    <article class="factor-mobile-card">
+      <div class="factor-mobile-card-head">
+        <div class="factor-mobile-card-title">
+          <strong>${escapeHtml(group.analyte)}</strong>
+          <span>${escapeHtml(group.column_label)}・${group.temp_c}℃</span>
+        </div>
+        ${group.outlier_count ? `<span class="factor-badge outlier">外れ値 ${group.outlier_count}</span>` : '<span class="factor-badge ok">採用</span>'}
+      </div>
+      <div class="factor-mobile-factor">
+        <div class="factor-mobile-metric">
+          <span>代表係数</span>
+          <strong>${formatFactor(group.representative)}</strong>
+        </div>
+        <div class="factor-mobile-metric">
+          <span>換算面積</span>
+          <strong>${formatArea(group.representative_area)}</strong>
+        </div>
+      </div>
+      <div class="factor-mobile-meta">
+        <span>STD ${formatStd(group.std_ppm)}</span>
+        <span>採用 ${group.accepted_count}/${group.total_count}件</span>
+        <span>範囲 ${group.min === null ? '-' : `${formatFactor(group.min)}～${formatFactor(group.max)}`}</span>
+      </div>
+      <button class="factor-use-btn" type="button" data-group-key="${escapeHtml(group.key)}">この係数で計算</button>
+    </article>
   `).join('');
 }
 
@@ -227,6 +275,7 @@ function renderRecords(records, threshold) {
     .sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.analyte.localeCompare(b.analyte, 'ja'));
 
   const tbody = document.getElementById('factor-record-body');
+  const cards = document.getElementById('factor-record-cards');
   document.getElementById('record-empty').hidden = rows.length !== 0;
 
   tbody.innerHTML = rows.map((record) => {
@@ -240,10 +289,10 @@ function renderRecords(records, threshold) {
 
     return `
       <tr class="${record.isOutlier ? 'outlier' : ''}">
-        <td>${record.date}</td>
-        <td>${record.column_label || record.column_id.toUpperCase()}</td>
+        <td>${escapeHtml(record.date)}</td>
+        <td>${escapeHtml(record.column_label || record.column_id.toUpperCase())}</td>
         <td>${record.temp_c}℃</td>
-        <td>${record.analyte}</td>
+        <td>${escapeHtml(record.analyte)}</td>
         <td>${formatStd(record.std_ppm)}</td>
         <td class="number">${formatFactor(record.factor)}</td>
         <td class="number">${formatArea(area)}</td>
@@ -251,11 +300,41 @@ function renderRecords(records, threshold) {
         <td>${deviation}</td>
       </tr>`;
   }).join('');
+
+  cards.innerHTML = rows.map((record) => {
+    const area = Number(record.std_ppm) / Number(record.factor);
+    const deviation = record.deviationRatio === null
+      ? '基準'
+      : `${record.deviationRatio >= 0 ? '+' : ''}${(record.deviationRatio * 100).toFixed(1)}%`;
+    return `
+      <article class="factor-mobile-card factor-mobile-history ${record.isOutlier ? 'outlier' : ''}">
+        <div class="factor-mobile-card-head">
+          <div class="factor-mobile-card-title">
+            <strong>${escapeHtml(record.analyte)}</strong>
+            <span>${escapeHtml(record.date)}・${escapeHtml(record.column_label || record.column_id.toUpperCase())}・${record.temp_c}℃</span>
+          </div>
+          <span class="factor-badge ${record.isOutlier ? 'outlier' : 'ok'}">${record.isOutlier ? '外れ値' : '採用'}</span>
+        </div>
+        <div class="factor-mobile-factor">
+          <div class="factor-mobile-metric">
+            <span>係数</span>
+            <strong>${formatFactor(record.factor)}</strong>
+          </div>
+          <div class="factor-mobile-metric">
+            <span>換算面積</span>
+            <strong>${formatArea(area)}</strong>
+          </div>
+        </div>
+        <div class="factor-mobile-meta">
+          <span>STD ${formatStd(record.std_ppm)}</span>
+          <span>平均との差 ${deviation}</span>
+        </div>
+      </article>`;
+  }).join('');
 }
 
-function render(records, threshold) {
+function renderFilteredData(records, threshold) {
   const filtered = filteredRecords(records);
-  renderQuickCalculator(filtered, threshold);
   renderSummary(filtered, threshold);
   renderRecords(filtered, threshold);
 }
@@ -268,21 +347,27 @@ async function init() {
   const records = data.records.filter((record) => record.machine_id === 'gc2014');
 
   renderFilters(records);
-  render(records, threshold);
+  renderQuickCalculator(records, threshold);
+  renderFilteredData(records, threshold);
 
   ['filter-column', 'filter-temp', 'filter-analyte'].forEach((id) => {
-    document.getElementById(id).addEventListener(id === 'filter-analyte' ? 'input' : 'change', () => render(records, threshold));
+    document.getElementById(id).addEventListener(id === 'filter-analyte' ? 'input' : 'change', () => renderFilteredData(records, threshold));
   });
 
   document.getElementById('filter-reset').addEventListener('click', () => {
     document.getElementById('filter-column').value = '';
     document.getElementById('filter-temp').value = '';
     document.getElementById('filter-analyte').value = '';
-    render(records, threshold);
+    renderFilteredData(records, threshold);
   });
 
-  document.getElementById('calc-group').addEventListener('change', updateQuickCalculation);
+  document.getElementById('calc-group').addEventListener('change', handleCalcGroupChange);
   document.getElementById('calc-sample-area').addEventListener('input', updateQuickCalculation);
+  document.getElementById('factor-summary-cards').addEventListener('click', (event) => {
+    const button = event.target.closest('.factor-use-btn');
+    if (!button) return;
+    useGroupInCalculator(button.dataset.groupKey || '');
+  });
 }
 
 init().catch((error) => {
