@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GC係数ライブラリ | 労働衛生・作業環境測定ハブ</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/gc-factors.css">
+</head>
+<body>
+  <main class="wrap factor-page">
+    <a class="factor-back" href="index.html">← ホームへ戻る</a>
+
+    <section class="factor-head">
+      <h1>GC係数ライブラリ</h1>
+      <p>カラム・温度・物質ごとの係数、STD濃度、面積をまとめて確認できます。</p>
+    </section>
+
+    <section class="factor-card">
+      <h2>代表係数の扱い</h2>
+      <p class="factor-note"><strong>同一カラム・同一温度・同一物質</strong>の再記録は、既存の採用平均から<strong>±15%以内</strong>なら平均へ採用します。±15%を超えた値は<strong>外れ値</strong>として履歴に残し、代表係数の平均からは除外します。</p>
+      <p class="factor-note">外れ値は削除せず、注入状態・プランジャーチップ・STD作製条件などを振り返るための記録として残します。±15%は暫定基準です。</p>
+    </section>
+
+    <section class="factor-card">
+      <h2>絞り込み</h2>
+      <div class="factor-filter">
+        <label>カラム
+          <select id="filter-column"><option value="">すべて</option></select>
+        </label>
+        <label>温度
+          <select id="filter-temp"><option value="">すべて</option></select>
+        </label>
+        <label>物質
+          <input id="filter-analyte" type="search" placeholder="例：トルエン">
+        </label>
+      </div>
+      <button id="filter-reset" class="factor-reset" type="button">絞り込み解除</button>
+    </section>
+
+    <p id="load-error" class="factor-note" role="alert"></p>
+
+    <section class="factor-card">
+      <h2>代表係数 <span id="summary-count" class="factor-count"></span></h2>
+      <p class="factor-note">代表係数は採用値の平均です。代表面積は「STD濃度 ÷ 代表係数」で計算します。</p>
+      <div class="factor-table-wrap">
+        <table class="factor-table">
+          <thead>
+            <tr>
+              <th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>代表係数</th><th>代表面積</th><th>採用/全記録</th><th>外れ値</th><th>採用範囲</th>
+            </tr>
+          </thead>
+          <tbody id="factor-summary-body"></tbody>
+        </table>
+      </div>
+      <p id="summary-empty" class="factor-empty" hidden>該当する係数はありません。</p>
+    </section>
+
+    <section class="factor-card">
+      <h2>実測記録</h2>
+      <div class="factor-table-wrap">
+        <table class="factor-table">
+          <thead>
+            <tr>
+              <th>日付</th><th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>係数</th><th>面積</th><th>判定</th><th>平均との差</th>
+            </tr>
+          </thead>
+          <tbody id="factor-record-body"></tbody>
+        </table>
+      </div>
+      <p id="record-empty" class="factor-empty" hidden>該当する記録はありません。</p>
+    </section>
+  </main>
+  <script src="assets/js/gc-factors.js" type="module"></script>
+</body>
+</html>
