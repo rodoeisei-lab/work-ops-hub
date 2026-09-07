@@ -26,9 +26,7 @@
     const number = Number(normalized);
     return Number.isFinite(number) ? number : null;
   };
-  const formatArea = (value) => Number(value).toLocaleString('ja-JP', {
-    maximumFractionDigits: 3
-  });
+  const formatArea = (value) => Math.round(Number(value)).toLocaleString('ja-JP');
   const formatLimit = (value) => Number(value).toString();
   const setText = (element, text) => {
     if (element && element.textContent !== text) element.textContent = text;
@@ -93,7 +91,7 @@
 
     const thresholdArea = ndLimit * stdArea / std;
     panel.classList.add('is-ready');
-    setText(areaOutput, `エリア ${formatArea(thresholdArea)} 未満 → ND`);
+    setText(areaOutput, `${formatArea(thresholdArea)} 未満 → ND`);
   }
 
   function init() {
