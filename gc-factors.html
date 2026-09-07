@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>GC係数ライブラリ | 労働衛生・作業環境測定ハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-factors.css">
+  <link rel="stylesheet" href="assets/css/gc-factors.css?v=20260907-mobile-2">
 </head>
 <body>
   <main class="wrap factor-page">
@@ -13,16 +13,12 @@
 
     <section class="factor-head">
       <h1>GC係数ライブラリ</h1>
-      <p>過去の代表係数を確認し、検体エリアから参考ppmをすぐ計算できます。</p>
     </section>
 
     <section class="factor-card factor-calc-card" aria-labelledby="quickCalcTitle">
       <div class="factor-section-head">
-        <div>
-          <span class="factor-kicker">すぐ計算</span>
-          <h2 id="quickCalcTitle">代表係数で検体を計算</h2>
-        </div>
-        <a class="factor-day-link" href="gc-calculator.html?gc-version=20260902-easy-page-reset-1">当日STDで計算 →</a>
+        <h2 id="quickCalcTitle">代表係数で計算</h2>
+        <a class="factor-day-link" href="gc-calculator.html?gc-version=20260902-easy-page-reset-1">当日STD →</a>
       </div>
 
       <div class="factor-calc-grid">
@@ -33,7 +29,7 @@
         </label>
 
         <div class="factor-calc-result factor-coefficient-box">
-          <span>使用する代表係数</span>
+          <span>代表係数</span>
           <strong id="calc-factor">—</strong>
           <small id="calc-factor-meta"></small>
         </div>
@@ -48,29 +44,30 @@
         </div>
       </div>
       <p id="calc-message" class="factor-calc-message" aria-live="polite">物質・条件を選択してください。</p>
-      <p class="factor-caution">過去の代表係数による参考計算です。正式な定量は当日のSTDから求めた係数を優先してください。</p>
     </section>
 
     <section class="factor-card factor-list-card" aria-labelledby="summaryTitle">
       <div class="factor-section-head factor-list-head">
-        <div>
-          <span class="factor-kicker">登録データ</span>
-          <h2 id="summaryTitle">代表値一覧 <span id="summary-count" class="factor-count"></span></h2>
-        </div>
+        <h2 id="summaryTitle">代表値一覧 <span id="summary-count" class="factor-count"></span></h2>
       </div>
 
-      <div class="factor-filter">
-        <label>カラム
-          <select id="filter-column"><option value="">すべて</option></select>
-        </label>
-        <label>温度
-          <select id="filter-temp"><option value="">すべて</option></select>
-        </label>
-        <label>物質
-          <input id="filter-analyte" type="search" placeholder="物質名で絞り込み">
-        </label>
-      </div>
-      <button id="filter-reset" class="factor-reset" type="button">絞り込みを解除</button>
+      <details class="factor-filter-details">
+        <summary>絞り込み</summary>
+        <div class="factor-filter-body">
+          <div class="factor-filter">
+            <label>カラム
+              <select id="filter-column"><option value="">すべて</option></select>
+            </label>
+            <label>温度
+              <select id="filter-temp"><option value="">すべて</option></select>
+            </label>
+            <label>物質
+              <input id="filter-analyte" type="search" placeholder="物質名">
+            </label>
+          </div>
+          <button id="filter-reset" class="factor-reset" type="button">解除</button>
+        </div>
+      </details>
 
       <p id="load-error" class="factor-note factor-error" role="alert"></p>
 
@@ -87,13 +84,12 @@
         </table>
       </div>
       <p id="summary-empty" class="factor-empty" hidden>該当する係数はありません。</p>
-      <p class="factor-note factor-list-note">代表係数は採用値の平均です。「換算面積」は STD濃度 ÷ 代表係数 で逆算した参考値です。</p>
     </section>
 
     <details class="factor-card factor-details">
       <summary>
-        <span>実測履歴を見る</span>
-        <small>日付・係数・外れ値判定</small>
+        <span>実測履歴</span>
+        <small>日付・係数・判定</small>
       </summary>
       <div class="factor-details-body">
         <div id="factor-record-cards" class="factor-mobile-list" aria-label="実測記録"></div>
@@ -110,18 +106,7 @@
         <p id="record-empty" class="factor-empty" hidden>該当する記録はありません。</p>
       </div>
     </details>
-
-    <details class="factor-card factor-details factor-rule-details">
-      <summary>
-        <span>代表係数・外れ値のルール</span>
-        <small>現在の暫定基準</small>
-      </summary>
-      <div class="factor-details-body">
-        <p class="factor-note"><strong>同一カラム・同一温度・同一物質</strong>の再記録は、既存の採用平均から<strong>±15%以内</strong>なら平均へ採用します。±15%を超えた値は外れ値として履歴に残し、代表係数の平均からは除外します。</p>
-        <p class="factor-note">外れ値は削除せず、注入状態・プランジャーチップ・STD作製条件などを振り返るための記録として残します。±15%は暫定基準です。</p>
-      </div>
-    </details>
   </main>
-  <script src="assets/js/gc-factors.js" type="module"></script>
+  <script src="assets/js/gc-factors.js?v=20260907-mobile-2" type="module"></script>
 </body>
 </html>
