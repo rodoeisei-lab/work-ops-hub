@@ -6,8 +6,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260904-nd-threshold-1">
-  <link rel="stylesheet" href="assets/css/gc-nd-threshold.css?v=20260904-nd-threshold-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260907-nd-area-label-1">
+  <link rel="stylesheet" href="assets/css/gc-nd-threshold.css?v=20260907-nd-area-label-1">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -107,7 +107,7 @@
   <script src="assets/js/gc-favorites.js" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260904-nd-threshold-1';
+      const FALLBACK_VERSION = '20260907-nd-area-label-1';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
@@ -168,7 +168,6 @@
           if (checks >= MAX_VERSION_CHECKS) window.clearInterval(timer);
         }, CHECK_INTERVAL_MS);
 
-        // iPhone Safariの戻る操作・タブ復帰でも最新版を確認する。
         window.addEventListener('pageshow', () => { checkForUpdate(); });
         document.addEventListener('visibilitychange', () => {
           if (!document.hidden) checkForUpdate();
@@ -182,6 +181,6 @@
       }
     })();
   </script>
-  <script src="assets/js/gc-nd-threshold.js?v=20260904-nd-threshold-1"></script>
+  <script src="assets/js/gc-nd-threshold.js?v=20260907-nd-area-label-1"></script>
 </body>
 </html>
