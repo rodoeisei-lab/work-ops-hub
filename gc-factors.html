@@ -38,6 +38,31 @@
       <button id="filter-reset" class="factor-reset" type="button">絞り込み解除</button>
     </section>
 
+    <section class="factor-card factor-calc-card" aria-labelledby="quickCalcTitle">
+      <h2 id="quickCalcTitle">代表係数で検体を計算</h2>
+      <p class="factor-note">物質・条件を選ぶと代表係数を自動で使います。検体エリアを入力すると <strong>ppm ＝ 検体エリア × 代表係数</strong> で計算します。</p>
+      <div class="factor-calc-grid">
+        <label class="factor-calc-field">物質・条件
+          <select id="calc-group">
+            <option value="">選択してください</option>
+          </select>
+        </label>
+        <div class="factor-calc-result">
+          <span>代表係数</span>
+          <strong id="calc-factor">—</strong>
+          <small id="calc-factor-meta"></small>
+        </div>
+        <label class="factor-calc-field">検体エリア
+          <input id="calc-sample-area" type="text" inputmode="decimal" placeholder="例：1250" autocomplete="off">
+        </label>
+        <div class="factor-calc-result factor-calc-ppm">
+          <span>計算結果</span>
+          <strong><span id="calc-ppm">—</span> <small>ppm</small></strong>
+        </div>
+      </div>
+      <p id="calc-message" class="factor-calc-message" aria-live="polite"></p>
+    </section>
+
     <p id="load-error" class="factor-note" role="alert"></p>
 
     <section class="factor-card">
