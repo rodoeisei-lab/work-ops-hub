@@ -1,6 +1,7 @@
 const FACTOR_DIGITS = 7;
 const DEFAULT_OUTLIER_THRESHOLD = 0.15;
 let quickCalcGroups = [];
+let stdMasterMap = new Map();
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -9,6 +10,35 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function normalizeStdKey(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function buildStdMasterMap(rows) {
+  stdMasterMap = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const stdValue = Number(row?.std_value);
+    if (!Number.isFinite(stdValue)) return;
+    const keys = [
+      row?.display_name,
+      row?.normalized_name,
+      row?.raw_label,
+      ...(Array.isArray(row?.aliases) ? row.aliases : [])
+    ];
+    keys.forEach((key) => {
+      const normalized = normalizeStdKey(key);
+      if (normalized) stdMasterMap.set(normalized, stdValue);
+    });
+  });
+}
+
+function applyMasterStd(records) {
+  return records.map((record) => {
+    const masterStd = stdMasterMap.get(normalizeStdKey(record.analyte));
+    return Number.isFinite(masterStd) ? { ...record, std_ppm: masterStd } : record;
+  });
 }
 
 function formatFactor(value) {
@@ -340,11 +370,22 @@ function renderFilteredData(records, threshold) {
 }
 
 async function init() {
-  const response = await fetch('./data/gc-factor-library.json');
-  if (!response.ok) throw new Error(`係数データを読み込めませんでした: ${response.status}`);
-  const data = await response.json();
+  const [factorResponse, masterResponse] = await Promise.all([
+    fetch('./data/gc-factor-library.json', { cache: 'no-cache' }),
+    fetch('./data/gc-std-master.json', { cache: 'no-cache' })
+  ]);
+
+  if (!factorResponse.ok) throw new Error(`係数データを読み込めませんでした: ${factorResponse.status}`);
+  if (!masterResponse.ok) throw new Error(`STDマスタを読み込めませんでした: ${masterResponse.status}`);
+
+  const [data, stdMaster] = await Promise.all([
+    factorResponse.json(),
+    masterResponse.json()
+  ]);
+
+  buildStdMasterMap(stdMaster);
   const threshold = Number(data.outlier_threshold_ratio) || DEFAULT_OUTLIER_THRESHOLD;
-  const records = data.records.filter((record) => record.machine_id === 'gc2014');
+  const records = applyMasterStd(data.records.filter((record) => record.machine_id === 'gc2014'));
 
   renderFilters(records);
   renderQuickCalculator(records, threshold);
