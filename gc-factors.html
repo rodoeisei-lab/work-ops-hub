@@ -13,17 +13,52 @@
 
     <section class="factor-head">
       <h1>GC係数ライブラリ</h1>
-      <p>カラム・温度・物質ごとの係数、STD濃度、面積をまとめて確認できます。</p>
+      <p>過去の代表係数を確認し、検体エリアから参考ppmをすぐ計算できます。</p>
     </section>
 
-    <section class="factor-card">
-      <h2>代表係数の扱い</h2>
-      <p class="factor-note"><strong>同一カラム・同一温度・同一物質</strong>の再記録は、既存の採用平均から<strong>±15%以内</strong>なら平均へ採用します。±15%を超えた値は<strong>外れ値</strong>として履歴に残し、代表係数の平均からは除外します。</p>
-      <p class="factor-note">外れ値は削除せず、注入状態・プランジャーチップ・STD作製条件などを振り返るための記録として残します。±15%は暫定基準です。</p>
+    <section class="factor-card factor-calc-card" aria-labelledby="quickCalcTitle">
+      <div class="factor-section-head">
+        <div>
+          <span class="factor-kicker">すぐ計算</span>
+          <h2 id="quickCalcTitle">代表係数で検体を計算</h2>
+        </div>
+        <a class="factor-day-link" href="gc-calculator.html?gc-version=20260902-easy-page-reset-1">当日STDで計算 →</a>
+      </div>
+
+      <div class="factor-calc-grid">
+        <label class="factor-calc-field factor-calc-material">物質・条件
+          <select id="calc-group">
+            <option value="">選択してください</option>
+          </select>
+        </label>
+
+        <div class="factor-calc-result factor-coefficient-box">
+          <span>使用する代表係数</span>
+          <strong id="calc-factor">—</strong>
+          <small id="calc-factor-meta"></small>
+        </div>
+
+        <label class="factor-calc-field factor-area-field">検体エリア
+          <input id="calc-sample-area" type="text" inputmode="decimal" placeholder="エリアを入力" autocomplete="off">
+        </label>
+
+        <div class="factor-calc-result factor-calc-ppm">
+          <span>参考ppm</span>
+          <strong><span id="calc-ppm">—</span> <small>ppm</small></strong>
+        </div>
+      </div>
+      <p id="calc-message" class="factor-calc-message" aria-live="polite">物質・条件を選択してください。</p>
+      <p class="factor-caution">過去の代表係数による参考計算です。正式な定量は当日のSTDから求めた係数を優先してください。</p>
     </section>
 
-    <section class="factor-card">
-      <h2>絞り込み</h2>
+    <section class="factor-card factor-list-card" aria-labelledby="summaryTitle">
+      <div class="factor-section-head factor-list-head">
+        <div>
+          <span class="factor-kicker">登録データ</span>
+          <h2 id="summaryTitle">代表値一覧 <span id="summary-count" class="factor-count"></span></h2>
+        </div>
+      </div>
+
       <div class="factor-filter">
         <label>カラム
           <select id="filter-column"><option value="">すべて</option></select>
@@ -32,69 +67,60 @@
           <select id="filter-temp"><option value="">すべて</option></select>
         </label>
         <label>物質
-          <input id="filter-analyte" type="search" placeholder="例：トルエン">
+          <input id="filter-analyte" type="search" placeholder="物質名で絞り込み">
         </label>
       </div>
-      <button id="filter-reset" class="factor-reset" type="button">絞り込み解除</button>
-    </section>
+      <button id="filter-reset" class="factor-reset" type="button">絞り込みを解除</button>
 
-    <section class="factor-card factor-calc-card" aria-labelledby="quickCalcTitle">
-      <h2 id="quickCalcTitle">代表係数で検体を計算</h2>
-      <p class="factor-note">物質・条件を選ぶと代表係数を自動で使います。検体エリアを入力すると <strong>ppm ＝ 検体エリア × 代表係数</strong> で計算します。</p>
-      <div class="factor-calc-grid">
-        <label class="factor-calc-field">物質・条件
-          <select id="calc-group">
-            <option value="">選択してください</option>
-          </select>
-        </label>
-        <div class="factor-calc-result">
-          <span>代表係数</span>
-          <strong id="calc-factor">—</strong>
-          <small id="calc-factor-meta"></small>
-        </div>
-        <label class="factor-calc-field">検体エリア
-          <input id="calc-sample-area" type="text" inputmode="decimal" placeholder="例：1250" autocomplete="off">
-        </label>
-        <div class="factor-calc-result factor-calc-ppm">
-          <span>計算結果</span>
-          <strong><span id="calc-ppm">—</span> <small>ppm</small></strong>
-        </div>
-      </div>
-      <p id="calc-message" class="factor-calc-message" aria-live="polite"></p>
-    </section>
+      <p id="load-error" class="factor-note factor-error" role="alert"></p>
 
-    <p id="load-error" class="factor-note" role="alert"></p>
+      <div id="factor-summary-cards" class="factor-mobile-list" aria-label="代表値一覧"></div>
 
-    <section class="factor-card">
-      <h2>代表係数 <span id="summary-count" class="factor-count"></span></h2>
-      <p class="factor-note">代表係数は採用値の平均です。代表面積は「STD濃度 ÷ 代表係数」で計算します。</p>
-      <div class="factor-table-wrap">
+      <div class="factor-table-wrap factor-desktop-table">
         <table class="factor-table">
           <thead>
             <tr>
-              <th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>代表係数</th><th>代表面積</th><th>採用/全記録</th><th>外れ値</th><th>採用範囲</th>
+              <th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>代表係数</th><th>換算面積</th><th>採用/全記録</th><th>外れ値</th><th>採用範囲</th>
             </tr>
           </thead>
           <tbody id="factor-summary-body"></tbody>
         </table>
       </div>
       <p id="summary-empty" class="factor-empty" hidden>該当する係数はありません。</p>
+      <p class="factor-note factor-list-note">代表係数は採用値の平均です。「換算面積」は STD濃度 ÷ 代表係数 で逆算した参考値です。</p>
     </section>
 
-    <section class="factor-card">
-      <h2>実測記録</h2>
-      <div class="factor-table-wrap">
-        <table class="factor-table">
-          <thead>
-            <tr>
-              <th>日付</th><th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>係数</th><th>面積</th><th>判定</th><th>平均との差</th>
-            </tr>
-          </thead>
-          <tbody id="factor-record-body"></tbody>
-        </table>
+    <details class="factor-card factor-details">
+      <summary>
+        <span>実測履歴を見る</span>
+        <small>日付・係数・外れ値判定</small>
+      </summary>
+      <div class="factor-details-body">
+        <div id="factor-record-cards" class="factor-mobile-list" aria-label="実測記録"></div>
+        <div class="factor-table-wrap factor-desktop-table">
+          <table class="factor-table">
+            <thead>
+              <tr>
+                <th>日付</th><th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>係数</th><th>換算面積</th><th>判定</th><th>平均との差</th>
+              </tr>
+            </thead>
+            <tbody id="factor-record-body"></tbody>
+          </table>
+        </div>
+        <p id="record-empty" class="factor-empty" hidden>該当する記録はありません。</p>
       </div>
-      <p id="record-empty" class="factor-empty" hidden>該当する記録はありません。</p>
-    </section>
+    </details>
+
+    <details class="factor-card factor-details factor-rule-details">
+      <summary>
+        <span>代表係数・外れ値のルール</span>
+        <small>現在の暫定基準</small>
+      </summary>
+      <div class="factor-details-body">
+        <p class="factor-note"><strong>同一カラム・同一温度・同一物質</strong>の再記録は、既存の採用平均から<strong>±15%以内</strong>なら平均へ採用します。±15%を超えた値は外れ値として履歴に残し、代表係数の平均からは除外します。</p>
+        <p class="factor-note">外れ値は削除せず、注入状態・プランジャーチップ・STD作製条件などを振り返るための記録として残します。±15%は暫定基準です。</p>
+      </div>
+    </details>
   </main>
   <script src="assets/js/gc-factors.js" type="module"></script>
 </body>
