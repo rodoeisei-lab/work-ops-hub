@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "description": "GC2014で使用する係数の実測記録。同一カラム・温度・物質は採用値の平均を代表係数とし、既存平均から±15%を超える値は外れ値として履歴に残して代表平均から除外する。",
+  "outlier_threshold_ratio": 0.15,
+  "records": [
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸エチル","std_ppm":1,"factor":0.0022595,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"トルエン","std_ppm":1,"factor":0.0007870,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"p-キシレン","std_ppm":1,"factor":0.0007379,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"o-キシレン","std_ppm":1,"factor":0.0009678,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"IPA","std_ppm":1,"factor":0.0027227,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"MIBK","std_ppm":1,"factor":0.0011541,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸ブチル","std_ppm":15,"factor":0.0016022,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"メタノール","std_ppm":5,"factor":0.0092120,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸イソブチル","std_ppm":1,"factor":0.0013881,"source":"実測記録"},
+    {"date":"2026-09-07","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"エチルベンゼン","std_ppm":1,"factor":0.0009141,"source":"実測記録"}
+  ]
+}
