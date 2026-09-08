@@ -6,6 +6,7 @@
   <title>GC係数ライブラリ | 労働衛生・作業環境測定ハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/gc-factors.css?v=20260907-mobile-2">
+  <link rel="stylesheet" href="assets/css/gc-factor-cascade.css?v=20260908-cascade-1">
 </head>
 <body>
   <main class="wrap factor-page">
@@ -22,11 +23,30 @@
       </div>
 
       <div class="factor-calc-grid">
-        <label class="factor-calc-field factor-calc-material">物質・条件
-          <select id="calc-group">
+        <div class="factor-cascade">
+          <div class="factor-cascade-row">
+            <label class="factor-calc-field">カラム
+              <select id="calc-column">
+                <option value="">選択</option>
+              </select>
+            </label>
+            <label class="factor-calc-field">温度
+              <select id="calc-temp" disabled>
+                <option value="">選択</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="factor-calc-field">物質
+            <select id="calc-analyte" disabled>
+              <option value="">選択してください</option>
+            </select>
+          </label>
+
+          <select id="calc-group" hidden aria-hidden="true" tabindex="-1">
             <option value="">選択してください</option>
           </select>
-        </label>
+        </div>
 
         <div class="factor-calc-result factor-coefficient-box">
           <span>代表係数</span>
@@ -43,7 +63,7 @@
           <strong><span id="calc-ppm">—</span> <small>ppm</small></strong>
         </div>
       </div>
-      <p id="calc-message" class="factor-calc-message" aria-live="polite">物質・条件を選択してください。</p>
+      <p id="calc-message" class="factor-calc-message" aria-live="polite">カラムを選択してください。</p>
     </section>
 
     <section class="factor-card factor-list-card" aria-labelledby="summaryTitle">
@@ -108,5 +128,6 @@
     </details>
   </main>
   <script src="assets/js/gc-factors.js?v=20260907-std-sync-1" type="module"></script>
+  <script src="assets/js/gc-factor-cascade.js?v=20260908-cascade-1" type="module"></script>
 </body>
 </html>
