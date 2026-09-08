@@ -1,5 +1,6 @@
 const FACTOR_DIGITS = 7;
 const DEFAULT_OUTLIER_THRESHOLD = 0.15;
+const MIN_RECORDS_FOR_OUTLIER_CHECK = 3;
 let quickCalcGroups = [];
 let stdMasterMap = new Map();
 
@@ -71,28 +72,48 @@ function mean(values) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2) return sorted[middle];
+  return (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
 function classifyGroup(rows, threshold) {
   const sorted = rows
     .map((row, index) => ({ ...row, _order: index }))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)) || a._order - b._order);
 
-  const accepted = [];
+  const provisional = sorted.length < MIN_RECORDS_FOR_OUTLIER_CHECK;
+  const medianCandidates = sorted
+    .filter((record) => record.outlier !== true)
+    .map((record) => Number(record.factor))
+    .filter(Number.isFinite);
+  const referenceMedian = median(medianCandidates);
+
   return sorted.map((record) => {
     const factor = Number(record.factor);
-    const referenceMean = mean(accepted);
-    const deviationRatio = referenceMean ? (factor - referenceMean) / referenceMean : null;
+    const deviationRatio = referenceMedian ? (factor - referenceMedian) / referenceMedian : null;
 
     let isOutlier = false;
-    if (record.outlier === true) {
-      isOutlier = true;
-    } else if (record.outlier === false || referenceMean === null) {
-      isOutlier = false;
-    } else {
-      isOutlier = Math.abs(deviationRatio) > threshold;
+    if (!provisional) {
+      if (record.outlier === true) {
+        isOutlier = true;
+      } else if (record.outlier === false) {
+        isOutlier = false;
+      } else {
+        isOutlier = Math.abs(deviationRatio ?? 0) > threshold;
+      }
     }
 
-    if (!isOutlier) accepted.push(factor);
-    return { ...record, isOutlier, deviationRatio, referenceMean };
+    return {
+      ...record,
+      isOutlier,
+      isProvisional: provisional,
+      deviationRatio,
+      referenceMedian
+    };
   });
 }
 
@@ -124,6 +145,8 @@ function summarize(records, threshold) {
       total_count: rows.length,
       accepted_count: accepted.length,
       outlier_count: rows.length - accepted.length,
+      provisional: rows.length < MIN_RECORDS_FOR_OUTLIER_CHECK,
+      reference_median: rows[0]?.referenceMedian ?? null,
       min: values.length ? Math.min(...values) : null,
       max: values.length ? Math.max(...values) : null
     };
@@ -225,7 +248,9 @@ function updateQuickCalculation() {
   }
 
   factorHost.textContent = formatFactor(group.representative);
-  metaHost.textContent = `採用 ${group.accepted_count}/${group.total_count}件${group.outlier_count ? `・外れ値 ${group.outlier_count}件` : ''}`;
+  metaHost.textContent = group.provisional
+    ? `暫定 ${group.total_count}件`
+    : `採用 ${group.accepted_count}/${group.total_count}件${group.outlier_count ? `・外れ値 ${group.outlier_count}件` : ''}`;
 
   const area = parseArea(areaInput.value);
   if (!area.valid) {
@@ -264,8 +289,8 @@ function renderSummary(records, threshold) {
       <td>${formatStd(group.std_ppm)}</td>
       <td class="number"><strong>${formatFactor(group.representative)}</strong></td>
       <td class="number"><strong>${formatArea(group.representative_area)}</strong></td>
-      <td>${group.accepted_count}/${group.total_count}</td>
-      <td>${group.outlier_count ? `<span class="factor-badge outlier">${group.outlier_count}件</span>` : '0件'}</td>
+      <td>${group.provisional ? `暫定 ${group.total_count}件` : `${group.accepted_count}/${group.total_count}`}</td>
+      <td>${group.provisional ? '—' : (group.outlier_count ? `<span class="factor-badge outlier">${group.outlier_count}件</span>` : '0件')}</td>
       <td class="number">${group.min === null ? '-' : `${formatFactor(group.min)} ～ ${formatFactor(group.max)}`}</td>
     </tr>
   `).join('');
@@ -277,7 +302,9 @@ function renderSummary(records, threshold) {
           <strong>${escapeHtml(group.analyte)}</strong>
           <span>${escapeHtml(group.column_label)}・${group.temp_c}℃</span>
         </div>
-        ${group.outlier_count ? `<span class="factor-badge outlier">外れ値 ${group.outlier_count}</span>` : '<span class="factor-badge ok">採用</span>'}
+        ${group.provisional
+          ? '<span class="factor-badge ok">暫定</span>'
+          : (group.outlier_count ? `<span class="factor-badge outlier">外れ値 ${group.outlier_count}</span>` : '<span class="factor-badge ok">採用</span>')}
       </div>
       <div class="factor-mobile-factor">
         <div class="factor-mobile-metric">
@@ -291,7 +318,7 @@ function renderSummary(records, threshold) {
       </div>
       <div class="factor-mobile-meta">
         <span>STD ${formatStd(group.std_ppm)}</span>
-        <span>採用 ${group.accepted_count}/${group.total_count}件</span>
+        <span>${group.provisional ? `暫定 ${group.total_count}件` : `採用 ${group.accepted_count}/${group.total_count}件`}</span>
         <span>範囲 ${group.min === null ? '-' : `${formatFactor(group.min)}～${formatFactor(group.max)}`}</span>
       </div>
       <button class="factor-use-btn" type="button" data-group-key="${escapeHtml(group.key)}">この係数で計算</button>
@@ -310,12 +337,16 @@ function renderRecords(records, threshold) {
 
   tbody.innerHTML = rows.map((record) => {
     const area = Number(record.std_ppm) / Number(record.factor);
-    const deviation = record.deviationRatio === null
-      ? '基準'
-      : `${record.deviationRatio >= 0 ? '+' : ''}${(record.deviationRatio * 100).toFixed(1)}%`;
-    const status = record.isOutlier
-      ? '<span class="factor-badge outlier">外れ値</span>'
-      : '<span class="factor-badge ok">採用</span>';
+    const deviation = record.isProvisional
+      ? '暫定'
+      : (record.deviationRatio === null
+        ? '基準'
+        : `${record.deviationRatio >= 0 ? '+' : ''}${(record.deviationRatio * 100).toFixed(1)}%`);
+    const status = record.isProvisional
+      ? '<span class="factor-badge ok">暫定</span>'
+      : (record.isOutlier
+        ? '<span class="factor-badge outlier">外れ値</span>'
+        : '<span class="factor-badge ok">採用</span>');
 
     return `
       <tr class="${record.isOutlier ? 'outlier' : ''}">
@@ -333,9 +364,13 @@ function renderRecords(records, threshold) {
 
   cards.innerHTML = rows.map((record) => {
     const area = Number(record.std_ppm) / Number(record.factor);
-    const deviation = record.deviationRatio === null
-      ? '基準'
-      : `${record.deviationRatio >= 0 ? '+' : ''}${(record.deviationRatio * 100).toFixed(1)}%`;
+    const deviation = record.isProvisional
+      ? '暫定'
+      : (record.deviationRatio === null
+        ? '基準'
+        : `${record.deviationRatio >= 0 ? '+' : ''}${(record.deviationRatio * 100).toFixed(1)}%`);
+    const badgeClass = record.isOutlier ? 'outlier' : 'ok';
+    const badgeText = record.isProvisional ? '暫定' : (record.isOutlier ? '外れ値' : '採用');
     return `
       <article class="factor-mobile-card factor-mobile-history ${record.isOutlier ? 'outlier' : ''}">
         <div class="factor-mobile-card-head">
@@ -343,7 +378,7 @@ function renderRecords(records, threshold) {
             <strong>${escapeHtml(record.analyte)}</strong>
             <span>${escapeHtml(record.date)}・${escapeHtml(record.column_label || record.column_id.toUpperCase())}・${record.temp_c}℃</span>
           </div>
-          <span class="factor-badge ${record.isOutlier ? 'outlier' : 'ok'}">${record.isOutlier ? '外れ値' : '採用'}</span>
+          <span class="factor-badge ${badgeClass}">${badgeText}</span>
         </div>
         <div class="factor-mobile-factor">
           <div class="factor-mobile-metric">
@@ -357,7 +392,7 @@ function renderRecords(records, threshold) {
         </div>
         <div class="factor-mobile-meta">
           <span>STD ${formatStd(record.std_ppm)}</span>
-          <span>平均との差 ${deviation}</span>
+          <span>基準との差 ${deviation}</span>
         </div>
       </article>`;
   }).join('');
