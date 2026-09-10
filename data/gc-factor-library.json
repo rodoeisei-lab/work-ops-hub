@@ -37,7 +37,6 @@
     {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸エチル","std_ppm":35.6,"factor":0.0031974,"source":"画像赤字記録（SET）"},
     {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"トルエン","std_ppm":15.5,"factor":0.0010204,"source":"画像赤字記録（T）"},
     {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸ブチル","std_ppm":15,"factor":0.0018367,"source":"画像赤字記録（SBT）"},
-    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"IPA","std_ppm":32.8,"factor":0.0083059,"source":"画像赤字記録"},
-    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸イソブチル","std_ppm":12.7,"factor":0.0015031,"source":"画像赤字記録（S.ISO）"}
+    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"IPA","std_ppm":32.8,"factor":0.0083059,"source":"画像赤字記録"}
   ]
 }
