@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "description": "GC2014で使用する係数の実測記録。同一カラム・温度・物質は1～2件の間は暫定扱い。3件以上になると全履歴の中央値を基準に±15%で毎回再判定し、外れ値を除いた採用値の平均を代表係数とする。過去の判定も新規データ追加時に自動で更新される。STD濃度はGC標準液マスタと対応させる。",
   "outlier_threshold_ratio": 0.15,
   "records": [
@@ -32,6 +32,12 @@
     {"date":"2026-09-09","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"MIBK","std_ppm":15.6,"factor":0.0011129,"source":"画像赤字記録"},
     {"date":"2026-09-09","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"エチルベンゼン","std_ppm":15.4,"factor":0.0011894,"source":"画像赤字記録（etB）"},
     {"date":"2026-09-09","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"p-キシレン","std_ppm":12,"factor":0.0009712,"source":"画像赤字記録（pm-キシレン表記）"},
-    {"date":"2026-09-09","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"o-キシレン","std_ppm":9.8,"factor":0.0007568,"source":"画像赤字記録"}
+    {"date":"2026-09-09","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"o-キシレン","std_ppm":9.8,"factor":0.0007568,"source":"画像赤字記録"},
+
+    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸エチル","std_ppm":35.6,"factor":0.0031974,"source":"画像赤字記録（SET）"},
+    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"トルエン","std_ppm":15.5,"factor":0.0010204,"source":"画像赤字記録（T）"},
+    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸ブチル","std_ppm":15,"factor":0.0018367,"source":"画像赤字記録（SBT）"},
+    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"IPA","std_ppm":32.8,"factor":0.0083059,"source":"画像赤字記録"},
+    {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸イソブチル","std_ppm":12.7,"factor":0.0015031,"source":"画像赤字記録（S.ISO）"}
   ]
 }
