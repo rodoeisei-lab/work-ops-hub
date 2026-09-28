@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "description": "GC2014で使用する係数の実測記録。同一カラム・温度・物質は1～2件の間は暫定扱い。3件以上になると全履歴の中央値を基準に±15%で毎回再判定し、外れ値を除いた採用値の平均を代表係数とする。過去の判定も新規データ追加時に自動で更新される。STD濃度はGC標準液マスタと対応させる。",
   "outlier_threshold_ratio": 0.15,
   "records": [
@@ -40,6 +40,7 @@
     {"date":"2026-09-10","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"IPA","std_ppm":32.8,"factor":0.0083059,"source":"画像赤字記録"},
 
     {"date":"2026-09-21","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":70,"analyte":"n-ヘキサン","std_ppm":52.9,"factor":0.0007902,"source":"ユーザー入力（面積 66949）"},
-    {"date":"2026-09-21","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":70,"analyte":"ジクロロメタン","std_ppm":412.1,"factor":0.0034196,"source":"ユーザー入力（DCLM、面積 120512）"}
+    {"date":"2026-09-21","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":70,"analyte":"ジクロロメタン","std_ppm":412.1,"factor":0.0034196,"source":"ユーザー入力（DCLM、面積 120512）"},
+    {"date":"2026-09-28","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":120,"analyte":"ブチルセロソルブ","std_ppm":22.9,"factor":0.0002602,"source":"ユーザー入力（ブチセロ、面積 88011）"}
   ]
 }
