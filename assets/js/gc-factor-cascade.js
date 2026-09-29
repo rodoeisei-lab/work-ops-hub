@@ -8,6 +8,16 @@
   if (!hidden || !column || !temp || !analyte) return;
 
   let internalDispatch = false;
+  let masterAnalytes = [];
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
 
   function parseKey(key) {
     const parts = String(key || '').split('|');
@@ -26,12 +36,12 @@
 
   function setOptions(select, items, placeholder, formatter = (value) => value) {
     select.innerHTML = `<option value="">${placeholder}</option>` + items
-      .map((value) => `<option value="${value}">${formatter(value)}</option>`)
+      .map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(formatter(value))}</option>`)
       .join('');
   }
 
   function unique(values) {
-    return [...new Set(values)];
+    return [...new Set(values.filter(Boolean))];
   }
 
   function clearHiddenSelection() {
@@ -65,13 +75,29 @@
   function rebuildAnalytes() {
     const selectedColumn = column.value;
     const selectedTemp = temp.value;
-    const rows = groups()
+    const allGroups = groups();
+    const availableRows = allGroups
       .filter((group) => group.column === selectedColumn && group.temp === selectedTemp)
       .sort((a, b) => a.analyte.localeCompare(b.analyte, 'ja'));
 
-    analyte.innerHTML = '<option value="">選択してください</option>' + rows
-      .map((group) => `<option value="${group.key}">${group.analyte}</option>`)
+    const availableMap = new Map(availableRows.map((group) => [group.analyte, group]));
+    const fallbackAnalytes = allGroups
+      .filter((group) => group.column === selectedColumn)
+      .map((group) => group.analyte);
+    const allAnalytes = unique([...masterAnalytes, ...fallbackAnalytes, ...availableRows.map((group) => group.analyte)])
+      .sort((a, b) => a.localeCompare(b, 'ja'));
+    const unavailableAnalytes = allAnalytes.filter((name) => !availableMap.has(name));
+
+    const availableOptions = availableRows
+      .map((group) => `<option value="${escapeHtml(group.key)}">${escapeHtml(group.analyte)}</option>`)
       .join('');
+    const unavailableOptions = unavailableAnalytes
+      .map((name) => `<option disabled>${escapeHtml(name)}（${escapeHtml(selectedTemp)}℃係数未登録）</option>`)
+      .join('');
+
+    analyte.innerHTML = '<option value="">選択してください</option>'
+      + (availableOptions ? `<optgroup label="この条件で使用可">${availableOptions}</optgroup>` : '')
+      + (unavailableOptions ? `<optgroup label="係数未登録">${unavailableOptions}</optgroup>` : '');
     analyte.disabled = !(selectedColumn && selectedTemp);
   }
 
@@ -95,7 +121,7 @@
   temp.addEventListener('change', () => {
     rebuildAnalytes();
     clearHiddenSelection();
-    if (message) message.textContent = temp.value ? '物質を選択してください。' : '温度を選択してください。';
+    if (message) message.textContent = temp.value ? '物質を選択してください。係数未登録の物質も一覧で確認できます。' : '温度を選択してください。';
   });
 
   analyte.addEventListener('change', () => {
@@ -119,6 +145,18 @@
     if (hidden.value) syncFromHidden();
   });
   observer.observe(hidden, { childList: true });
+
+  fetch('./data/gc-std-master.json', { cache: 'no-cache' })
+    .then((response) => response.ok ? response.json() : [])
+    .then((rows) => {
+      masterAnalytes = unique((Array.isArray(rows) ? rows : [])
+        .map((row) => row?.display_name || row?.normalized_name)
+        .filter(Boolean));
+      if (column.value && temp.value) rebuildAnalytes();
+    })
+    .catch(() => {
+      masterAnalytes = [];
+    });
 
   rebuildColumns();
 })();
