@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "description": "GC2014で使用する係数の実測記録。同一カラム・温度・物質は1～2件の間は暫定扱い。3件以上になると全履歴の中央値を基準に±15%で毎回再判定し、外れ値を除いた採用値の平均を代表係数とする。過去の判定も新規データ追加時に自動で更新される。STD濃度はGC標準液マスタと対応させる。",
   "outlier_threshold_ratio": 0.15,
   "records": [
@@ -52,6 +52,16 @@
     {"date":"2026-09-25","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":120,"analyte":"酢酸ブチル","std_ppm":15,"factor":0.0017289,"source":"ユーザー入力（面積 8676）"},
     {"date":"2026-09-25","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":120,"analyte":"エチルベンゼン","std_ppm":15.4,"factor":0.0013143,"source":"ユーザー入力（面積 11717）"},
 
-    {"date":"2026-09-28","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":120,"analyte":"ブチルセロソルブ","std_ppm":22.9,"factor":0.0002602,"source":"ユーザー入力（ブチセロ、面積 88011）"}
+    {"date":"2026-09-28","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":120,"analyte":"ブチルセロソルブ","std_ppm":22.9,"factor":0.0002602,"source":"ユーザー入力（ブチセロ、面積 88011）"},
+
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"n-ヘキサン","std_ppm":52.9,"factor":0.0009586,"source":"ユーザー入力（面積 55182）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"ジクロロメタン","std_ppm":412.1,"factor":0.0043436,"source":"ユーザー入力（DCLM、面積 94875）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"メタノール","std_ppm":101.7,"factor":0.0131412,"source":"ユーザー入力（面積 7739）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸ブチル","std_ppm":15,"factor":0.0012253,"source":"ユーザー入力（面積 12242）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"エチルベンゼン","std_ppm":15.4,"factor":0.0009920,"source":"ユーザー入力（面積 15524）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"酢酸エチル","std_ppm":35.6,"factor":0.0023273,"source":"ユーザー入力（面積 15297）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"トルエン","std_ppm":15.5,"factor":0.0008185,"source":"ユーザー入力（面積 18937）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"p-キシレン","std_ppm":12,"factor":0.0008477,"source":"ユーザー入力（面積 14156）"},
+    {"date":"2026-09-29","machine_id":"gc2014","column_id":"cbp","column_label":"CBP","temp_c":90,"analyte":"o-キシレン","std_ppm":9.8,"factor":0.0009506,"source":"ユーザー入力（面積 10309）"}
   ]
 }
