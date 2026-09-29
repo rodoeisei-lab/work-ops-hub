@@ -8,7 +8,6 @@
   if (!hidden || !column || !temp || !analyte) return;
 
   let internalDispatch = false;
-  let masterAnalytes = [];
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -80,13 +79,12 @@
       .filter((group) => group.column === selectedColumn && group.temp === selectedTemp)
       .sort((a, b) => a.analyte.localeCompare(b.analyte, 'ja'));
 
-    const availableMap = new Map(availableRows.map((group) => [group.analyte, group]));
-    const fallbackAnalytes = allGroups
+    const availableNames = new Set(availableRows.map((group) => group.analyte));
+    const allAnalytesForColumn = unique(allGroups
       .filter((group) => group.column === selectedColumn)
-      .map((group) => group.analyte);
-    const allAnalytes = unique([...masterAnalytes, ...fallbackAnalytes, ...availableRows.map((group) => group.analyte)])
+      .map((group) => group.analyte))
       .sort((a, b) => a.localeCompare(b, 'ja'));
-    const unavailableAnalytes = allAnalytes.filter((name) => !availableMap.has(name));
+    const unavailableAnalytes = allAnalytesForColumn.filter((name) => !availableNames.has(name));
 
     const availableOptions = availableRows
       .map((group) => `<option value="${escapeHtml(group.key)}">${escapeHtml(group.analyte)}</option>`)
@@ -97,7 +95,7 @@
 
     analyte.innerHTML = '<option value="">選択してください</option>'
       + (availableOptions ? `<optgroup label="この条件で使用可">${availableOptions}</optgroup>` : '')
-      + (unavailableOptions ? `<optgroup label="係数未登録">${unavailableOptions}</optgroup>` : '');
+      + (unavailableOptions ? `<optgroup label="他温度では登録あり">${unavailableOptions}</optgroup>` : '');
     analyte.disabled = !(selectedColumn && selectedTemp);
   }
 
@@ -121,7 +119,7 @@
   temp.addEventListener('change', () => {
     rebuildAnalytes();
     clearHiddenSelection();
-    if (message) message.textContent = temp.value ? '物質を選択してください。係数未登録の物質も一覧で確認できます。' : '温度を選択してください。';
+    if (message) message.textContent = temp.value ? '物質を選択してください。他温度だけに係数がある物質も一覧で確認できます。' : '温度を選択してください。';
   });
 
   analyte.addEventListener('change', () => {
@@ -145,18 +143,6 @@
     if (hidden.value) syncFromHidden();
   });
   observer.observe(hidden, { childList: true });
-
-  fetch('./data/gc-std-master.json', { cache: 'no-cache' })
-    .then((response) => response.ok ? response.json() : [])
-    .then((rows) => {
-      masterAnalytes = unique((Array.isArray(rows) ? rows : [])
-        .map((row) => row?.display_name || row?.normalized_name)
-        .filter(Boolean));
-      if (column.value && temp.value) rebuildAnalytes();
-    })
-    .catch(() => {
-      masterAnalytes = [];
-    });
 
   rebuildColumns();
 })();
