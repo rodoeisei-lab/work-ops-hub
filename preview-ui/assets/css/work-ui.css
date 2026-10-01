@@ -89,8 +89,10 @@ td,th { font-size:.875rem; line-height:1.5; }
 .gc-finder-page .hint,.day-plan-page .hint,.day-plan-page .summary-box,.day-plan-page .detail-card { font-size:.875rem; }
 .gc-finder-page .rt-graph { background:#fff; }
 .gc-calculator-page button { min-height:44px; height:auto; font-size:.875rem; }
+.gc-calculator-page .page-header { display:block; }
+.gc-calculator-page .actions-block .section-heading { display:flex; margin-bottom:10px; }
 .gc-calculator-page .quick-chips--grid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:7px; }
-.gc-calculator-page .quick-chip { min-height:44px; height:auto; font-size:.875rem; padding:8px 5px; border-radius:7px; }
+.gc-calculator-page .quick-chips .quick-chip { min-height:44px; height:auto; font-size:.875rem; padding:8px 5px; border-radius:7px; }
 .gc-calculator-page input,.gc-calculator-page select { min-height:44px !important; height:auto !important; }
 .gc-calculator-page .field-heading,.gc-calculator-page .result-label { font-size:.8125rem; color:#435873; }
 .gc-calculator-page .sample-row { grid-template-columns:24px minmax(0,1fr) 90px 44px; gap:6px; padding:6px; }
