@@ -25,7 +25,12 @@
   let rows = [];
   let favoriteMeta = { common: new Set(), liquid_standard: new Set(), all: new Set() };
 
-  init();
+  init().catch(() => {
+    window.WorkOpsUi?.error('RTデータを読み込めませんでした。ページを開き直してください。');
+    els.summaryText.textContent = 'データ読み込みに失敗しました。';
+    els.mobileCardList.innerHTML = '<p class="empty-cell">データ読み込みに失敗しました。</p>';
+    els.tableBody.innerHTML = '<tr><td colspan="7">データ読み込みに失敗しました。</td></tr>';
+  });
 
   async function init() {
     const [machines, columns, tempPrograms, rtLibrary, analyteDisplay, favorites, analyteAliases] = await Promise.all([
@@ -62,6 +67,7 @@
     });
 
     render();
+    window.WorkOpsUi?.ready();
   }
 
   function render() {
@@ -107,7 +113,7 @@
         <p>機械: ${escapeHtml(r.machine)}</p>
         <p>カラム: ${escapeHtml(r.column)}</p>
         <p>温度条件: ${escapeHtml(r.temp)}</p>
-        <p>RT: ${fmt(r.rt)} min</p>
+        <p class="mobile-result">RT: ${fmt(r.rt)} min</p>
         <p>信頼度: ${r.confidence === 'high' ? '高' : r.confidence === 'low' ? '低' : '中'}</p>
         <p>備考: ${escapeHtml(r.note || '-')}</p>
       </article>

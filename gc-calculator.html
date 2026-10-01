@@ -6,8 +6,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>GC濃度計算 | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20260907-nd-area-label-1">
-  <link rel="stylesheet" href="assets/css/gc-nd-threshold.css?v=20260907-nd-area-label-1">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20261002-4">
+  <link rel="stylesheet" href="assets/css/gc-nd-threshold.css?v=20261002-4">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-4">
 </head>
 <body>
   <main class="wrap gc-calculator-page">
@@ -16,14 +17,15 @@
         <a href="index.html" class="back-home-link no-print">← ホームへ戻る</a>
         <span class="tool-kicker">GC分析ツール</span>
       </div>
-      <h1>GC計算</h1>
+      <h1>GC係数・ppm計算</h1>
+      <p class="operation-hint">物質を選択 → 当日STD・検体のエリアを入力。係数とppmは自動計算されます。</p>
     </header>
 
     <section class="card section-block quick-select-block no-print" aria-labelledby="favoriteTitle">
       <div class="section-heading">
         <span class="section-number">1</span>
         <div>
-          <h2 id="favoriteTitle">物質を選ぶ</h2>
+          <h2 id="favoriteTitle">1. 物質を選ぶ</h2>
           <p class="active-card-line"><strong id="activeCardLabel">STD 1</strong></p>
         </div>
       </div>
@@ -48,7 +50,7 @@
         <div class="section-heading">
           <span class="section-number">2</span>
           <div>
-            <h2 id="rowsTitle">STD・検体</h2>
+            <h2 id="rowsTitle">2. STD・検体を入力</h2>
           </div>
         </div>
         <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ 物質</button>
@@ -60,17 +62,17 @@
       <div class="section-heading">
         <span class="section-number">3</span>
         <div>
-          <h2>結果</h2>
+          <h2>3. 結果を出力</h2>
         </div>
       </div>
       <div class="actions-grid">
         <button id="copyResultBtn" type="button" class="primary action-primary">計算結果をコピー</button>
         <button id="downloadCsvBtn" type="button" class="btn-ghost">CSV保存</button>
       </div>
-      <button id="clearAllBtn" type="button" class="page-reset-btn">↻ ページをリセット</button>
       <details class="more-actions">
         <summary>その他の操作</summary>
         <div class="more-actions__buttons">
+          <button id="clearAllBtn" type="button" class="page-reset-btn">ページをリセット</button>
           <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー内容を更新</button>
         </div>
       </details>
@@ -83,7 +85,7 @@
         <div class="custom-material-block__body">
           <div class="custom-material-form">
             <label>物質名<input id="customMaterialName" type="text" autocomplete="off" placeholder="例：シクロヘキサノン"></label>
-            <label>STD値<input id="customStdValue" type="text" inputmode="decimal" autocomplete="off" placeholder="例：25.0"></label>
+            <label>STD値（ppm）<input id="customStdValue" type="text" inputmode="decimal" autocomplete="off" placeholder="例：25.0"></label>
             <button id="addCustomMaterialBtn" type="button" class="plain">この端末に追加</button>
           </div>
           <div id="customMaterialList" class="custom-material-list" aria-live="polite"></div>
@@ -103,11 +105,11 @@
     <p class="version-line no-print">v <span id="gcCalculatorVersionLabel">確認中...</span></p>
   </main>
 
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/gc-favorites.js" defer></script>
+  <script src="assets/js/app.js?v=20261002-4"></script>
+  <script src="assets/js/gc-favorites.js?v=20261002-4" defer></script>
   <script>
     (() => {
-      const FALLBACK_VERSION = '20260907-nd-area-label-1';
+      const FALLBACK_VERSION = '20261002-4';
       const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
       const CHECK_INTERVAL_MS = 30000;
       const MAX_VERSION_CHECKS = 20;
@@ -181,6 +183,6 @@
       }
     })();
   </script>
-  <script src="assets/js/gc-nd-threshold.js?v=20260907-nd-area-label-1"></script>
+  <script src="assets/js/gc-nd-threshold.js?v=20261002-4"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20260902-easy-page-reset-1';
+  const CACHE_VERSION = '20261002-4';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -45,7 +45,10 @@
 
   let copyFeedbackTimer = null;
 
-  init();
+  init().catch(() => {
+    window.WorkOpsUi?.error('計算データを読み込めませんでした。通信状態を確認してページを開き直してください。');
+    els.rowsContainer.innerHTML = '<p class="error-text" role="alert">計算データを読み込めませんでした。</p>';
+  });
 
   async function init() {
     document.documentElement.dataset.gcCalculatorVersion = CACHE_VERSION;
@@ -58,6 +61,7 @@
     renderFavoriteChips();
     renderCustomMaterialList();
     showStatus('');
+    window.WorkOpsUi?.ready();
   }
 
   function bindGlobalEvents() {
@@ -131,16 +135,8 @@
         return;
       }
       const csv = buildCsv();
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `gc-calculation-${todayIso()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showStatus('CSVを保存しました。');
+      showStatus('CSVの保存を開始しました。');
+      window.WorkOpsUi.downloadCsv(csv, `gc-calculation-${todayIso()}.csv`, els.statusMessage);
     });
 
     els.copyTextOutput.addEventListener('input', persist);
@@ -358,10 +354,10 @@
           <label><span class="field-heading">物質</span><select class="material-select" aria-label="物質">${buildMaterialSelectOptions(material?.key || '')}</select></label>
         </div>
         <div class="field std-field">
-          <label><span class="field-heading">STD</span><input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label>
+          <label><span class="field-heading">STD（ppm）</span><input type="text" class="std-input ${row.stdManual ? '' : 'std-auto'}" inputmode="decimal" value="${escapeHtml(stdText)}" readonly></label>
         </div>
         <div class="field std-area-field">
-          <label><span class="field-heading">STDエリア</span><input type="text" class="std-area-input input-main" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}" placeholder="例：125000"></label>
+          <label><span class="field-heading">STDエリア（面積）</span><input type="text" class="std-area-input input-main" inputmode="decimal" value="${escapeHtml(row.stdAreaInput)}" placeholder="例：125000"></label>
         </div>
         <div class="field coefficient-field result-field">
           <div class="result-label"><span>係数</span></div>
@@ -370,12 +366,12 @@
       </div>
       <section class="samples-block" aria-label="${escapeHtml(title)}の検体">
         <div class="samples-heading">
-          <div class="samples-title"><strong>検体</strong><span>エリア → ppm</span></div>
+          <div class="samples-title"><strong>検体</strong><span>検体エリア（面積） → 結果（ppm）</span></div>
           <button type="button" class="plain add-sample-btn no-print">＋ 検体</button>
         </div>
         <div class="samples-list">${renderSamples(row, material)}</div>
       </section>
-      ${unregisteredEntry}${unregisteredNote}<div class="error-text">${escapeHtml(calc.errorText)}</div>
+      ${unregisteredEntry}${unregisteredNote}<div class="error-text" role="status">${escapeHtml(calc.errorText)}</div>
     </article>`;
   }
 
@@ -387,7 +383,7 @@
     const calc = calculate(row, material, sample.areaInput);
     return `<div class="sample-row" data-sample-id="${escapeHtml(sample.id)}">
       <div class="sample-index">${index + 1}</div>
-      <label class="sample-area-field"><span>検体エリア</span><input type="text" class="sample-area-input input-main" inputmode="decimal" value="${escapeHtml(sample.areaInput)}" placeholder="エリア"></label>
+      <label class="sample-area-field"><span>検体エリア</span><input type="text" class="sample-area-input input-main" aria-label="検体${index + 1}のエリア（面積）" inputmode="decimal" value="${escapeHtml(sample.areaInput)}" placeholder="エリア"></label>
       <div class="sample-ppm-field">
         <span>ppm</span>
         <strong class="sample-ppm-output">${escapeHtml(calc.ppmText || '—')}</strong>
@@ -687,6 +683,7 @@
       }
     }
     root.classList.toggle('is-unregistered', isUnregistered);
+    root.querySelector('.samples-block')?.setAttribute('aria-label', `${material?.displayName || row.materialInput || '物質未選択'}の検体`);
     const unregisteredNote = root.querySelector('.unregistered-note');
     if (unregisteredNote) unregisteredNote.hidden = !isUnregistered;
     const stdInput = root.querySelector('.std-input');

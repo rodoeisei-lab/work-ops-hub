@@ -425,6 +425,7 @@ async function init() {
   renderFilters(records);
   renderQuickCalculator(records, threshold);
   renderFilteredData(records, threshold);
+  window.WorkOpsUi?.ready();
 
   ['filter-column', 'filter-temp', 'filter-analyte'].forEach((id) => {
     document.getElementById(id).addEventListener(id === 'filter-analyte' ? 'input' : 'change', () => renderFilteredData(records, threshold));
@@ -448,4 +449,5 @@ async function init() {
 
 init().catch((error) => {
   document.getElementById('load-error').textContent = error.message;
+  window.WorkOpsUi?.error('係数データを読み込めませんでした。ページを開き直してください。');
 });

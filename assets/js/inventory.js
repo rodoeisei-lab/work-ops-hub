@@ -2,6 +2,7 @@
   const state = window.InventoryStorage.loadState();
   let defs = null;
   let reorderRules = {};
+  let filterOpenState = null;
   const filterState = {
     keyword: '',
     alertOnly: false,
@@ -28,8 +29,9 @@
   const SOLVENT_KEYWORDS = ['アルコール', 'アセトン', 'トルエン', 'ホルム', 'ベンゼン', 'キシレン', '酢酸', 'ケトン', 'ブタノール'];
   const REAGENT_KEYWORDS = ['標準液', '試薬', '硝酸', '塩酸', '苛性'];
 
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const id = (text) => text.replace(/[^\w\u3040-\u30ff\u3400-\u9fff]+/g, '_');
-  const setStatus = (message) => { document.getElementById('status').textContent = message; };
+  const setStatus = (message) => { document.getElementById('status').textContent = message; document.getElementById('inventorySaveStatus').textContent = message; };
   const hasKeyword = (name, keywords) => keywords.some((keyword) => name.includes(keyword));
 
   function iconType(name, section) {
@@ -71,7 +73,10 @@
   }
 
   function save() {
-    window.InventoryStorage.saveState(state);
+    try { window.InventoryStorage.saveState(state); } catch (_) {
+      setStatus('端末への保存に失敗しました。コピーまたはCSVで記録してください。');
+      window.WorkOpsUi?.error('端末への保存に失敗しました。コピーまたはCSVで記録してください。'); return;
+    }
     setStatus('この端末に保存しました。');
   }
 
@@ -94,20 +99,20 @@
     const special = !hasThreshold && point ? `<div class="special-note">${point.label || '発注メモ'}（通常の自動警告対象外）</div>` : '';
 
     return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}" data-filter-item="1" data-filter-alert="${warnClass ? '1' : '0'}" data-filter-filled="${hasValue ? '1' : '0'}" data-filter-text="${name.toLowerCase()}">
-      <div class="name">${itemName(name, section)}${ruleLabel}${warn}${special}${note}</div>
-      <input class="qty" id="${id(key)}" type="number" min="0" step="1" inputmode="numeric" value="${value ?? ''}" placeholder="0">
+      <div class="name">${itemName(name, section)}${ruleLabel}${warn}${special}${note}${point?.unit === '本' && hasValue ? '<div class="rule-note">保存済み数量も本数として確認してください。</div>' : ''}</div>
+      <div class="qty-control"><input class="qty" id="${id(key)}" aria-label="${name}の在庫（${point?.unit || '箱'}）" type="number" min="0" step="1" inputmode="numeric" value="${value ?? ''}" placeholder="—"><span>${point?.unit || '箱'}</span></div>
     </div>`;
   }
 
   function memoField(section, group, name) {
     const key = `${section}__${group}__${name}`;
-    return `<div data-filter-item="1" data-filter-alert="0" data-filter-filled="${(state[key] || '').trim() ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${state[key] ?? ''}</textarea></div>`;
+    return `<div data-filter-item="1" data-filter-alert="0" data-filter-filled="${(state[key] || '').trim() ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${escapeHtml(state[key])}</textarea></div>`;
   }
 
   function checkRow(section, group, name) {
     const key = `${section}__${group}__${name}__order`;
     const checked = state[key] ? 'checked' : '';
-    return `<div class="check-row" data-filter-item="1" data-filter-alert="${state[key] ? '1' : '0'}" data-filter-filled="${state[key] ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><div class="name">${itemName(name, section)}</div><label class="order-flag"><input id="${id(key)}" type="checkbox" ${checked}>注文</label></div>`;
+    return `<div class="check-row" data-filter-item="1" data-filter-alert="${state[key] ? '1' : '0'}" data-filter-filled="${state[key] ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><div class="name">${itemName(name, section)}</div><label class="order-flag"><input id="${id(key)}" aria-label="${name}を注文" type="checkbox" ${checked}>注文</label></div>`;
   }
 
   function expiredMemoBody() {
@@ -115,8 +120,8 @@
     return `<div class="expired-box">
       <p class="expired-help">${memo.description} 在庫入力は箱数ですが、ここは本数で記録します。</p>
       <div class="expired-form">
-        <input id="expiredType" type="text" placeholder="種類">
-        <input id="expiredCount" type="number" min="1" step="1" inputmode="numeric" placeholder="本数">
+        <label>種類<input id="expiredType" type="text" placeholder="例：トルエン"></label>
+        <label>本数<input id="expiredCount" type="number" min="1" step="1" inputmode="numeric" placeholder="例：2"></label>
         <button type="button" class="plain tiny" id="addExpired">追加</button>
       </div>
       <div class="expired-list" id="expiredList"></div>
@@ -151,7 +156,7 @@
   function bindAccordion() {
     document.querySelectorAll('details.group').forEach((detail) => {
       detail.addEventListener('toggle', () => {
-        if (!detail.open) return;
+        if (!detail.open || filterOpenState) return;
         const section = detail.dataset.section;
         document.querySelectorAll(`details.group[data-section="${section}"]`).forEach((other) => {
           if (other !== detail) other.open = false;
@@ -168,18 +173,20 @@
       return;
     }
     list.innerHTML = state.expiredEntries.map((entry, idx) => `
-      <div class="expired-item">
-        <div class="name">${entry.type}</div>
+      <div class="expired-item" data-filter-item="1" data-filter-text="${escapeHtml(entry.type.toLowerCase())}" data-filter-alert="1" data-filter-filled="1">
+        <div class="name">${escapeHtml(entry.type)}</div>
         <div class="expired-count">${entry.count}本</div>
-        <button type="button" class="danger tiny" data-remove-expired="${idx}">削除</button>
+        <button type="button" class="danger tiny" aria-label="${escapeHtml(entry.type)}の期限切れメモを削除" data-remove-expired="${idx}">削除</button>
       </div>
     `).join('');
 
     list.querySelectorAll('[data-remove-expired]').forEach((button) => {
       button.addEventListener('click', () => {
+        if (!window.confirm('この期限切れメモを削除しますか？')) return;
         state.expiredEntries.splice(Number(button.dataset.removeExpired), 1);
         save();
         renderExpiredList();
+        applyFilters();
       });
     });
   }
@@ -197,6 +204,10 @@
   }
 
   function applyFilters() {
+    const filtering = Boolean(filterState.keyword || filterState.alertOnly || filterState.filledOnly);
+    if (filtering && !filterOpenState) {
+      filterOpenState = new Map(Array.from(document.querySelectorAll('details.group'), group => [group, group.open]));
+    }
     document.querySelectorAll('.section').forEach((sectionEl) => {
       sectionEl.querySelectorAll('details.group').forEach((groupEl) => {
         let visibleCount = 0;
@@ -212,9 +223,15 @@
           itemEl.classList.toggle('filtered-out', !show);
           if (show) visibleCount += 1;
         });
-        groupEl.classList.toggle('filtered-out-group', filterItems.length > 0 && visibleCount === 0);
+        const hidden = filtering && visibleCount === 0;
+        groupEl.classList.toggle('filtered-out-group', hidden);
+        if (filtering && !hidden) groupEl.open = true;
+        if (!filtering && filterOpenState) groupEl.open = filterOpenState.get(groupEl) || false;
       });
     });
+    if (!filtering) filterOpenState = null;
+    const active = document.querySelector('.section.active');
+    document.getElementById('filterEmpty').hidden = !active || Array.from(active.querySelectorAll('details.group')).some(group => !group.classList.contains('filtered-out-group'));
   }
 
   function syncFilterFilledState() {
@@ -247,6 +264,8 @@
         (group.items || []).forEach((name) => {
           const key = `${section}__${group.title}__${name}`;
           document.getElementById(id(key)).addEventListener('input', (event) => {
+            if (!event.target.checkValidity()) { event.target.setAttribute('aria-invalid', 'true'); setStatus('要確認：在庫数は0以上の整数で入力してください。未保存です。'); return; }
+            event.target.removeAttribute('aria-invalid');
             state[key] = event.target.value;
             save();
             refreshWarnings();
@@ -277,15 +296,16 @@
 
     document.getElementById('checkDate').addEventListener('input', (event) => {
       state.checkDate = event.target.value;
+      document.getElementById('checkDateLabel').textContent = state.checkDate || '未入力';
       save();
     });
 
     document.querySelectorAll('.tab').forEach((button) => {
       button.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((tab) => { tab.classList.remove('active'); tab.setAttribute('aria-pressed', 'false'); });
         document.querySelectorAll('.section').forEach((sec) => sec.classList.remove('active'));
-        button.classList.add('active');
-        document.getElementById(button.dataset.tab).classList.add('active');
+        button.classList.add('active'); button.setAttribute('aria-pressed', 'true');
+        document.getElementById(button.dataset.tab).classList.add('active'); applyFilters();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     });
@@ -312,8 +332,8 @@
         const countEl = document.getElementById('expiredCount');
         const type = (typeEl.value || '').trim();
         const count = Number(countEl.value || '');
-        if (!type || !count || count < 1) {
-          setStatus('期限切れメモは種類と本数を入力してください。');
+        if (!type || !Number.isInteger(count) || count < 1) {
+          setStatus('要確認：種類と、1以上の整数の本数を入力してください。');
           return;
         }
         state.expiredEntries.push({ type, count });
@@ -332,6 +352,7 @@
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     document.getElementById('checkDate').value = state.checkDate || today;
     if (!state.checkDate) state.checkDate = today;
+    document.getElementById('checkDateLabel').textContent = state.checkDate;
   }
 
   function summaryText() {
@@ -347,7 +368,7 @@
           const value = state[key];
           if (value !== undefined && value !== '') {
             if (!added) { lines.push(`■ ${group.title}`); added = true; }
-            lines.push(`${name}: ${value}箱`);
+            lines.push(`${name}: ${value}${reorderRules[name]?.unit || '箱'}`);
           }
         });
         if (group.expiredMemo && state.expiredEntries.length) {
@@ -386,7 +407,7 @@
         (group.items || []).forEach((name) => {
           const key = `${section}__${group.title}__${name}`;
           const value = state[key];
-          if (value !== undefined && value !== '') rows.push([state.checkDate || '', sectionLabel[section], group.title, name, `${value}箱`]);
+          if (value !== undefined && value !== '') rows.push([state.checkDate || '', sectionLabel[section], group.title, name, `${value}${reorderRules[name]?.unit || '箱'}`]);
         });
         if (group.expiredMemo) {
           state.expiredEntries.forEach((entry) => rows.push([state.checkDate || '', '期限切れ検知管', group.title, entry.type, `${entry.count}本`]));
@@ -406,19 +427,27 @@
     return rows.map((row) => row.map(quote).join(',')).join('\r\n');
   }
 
+  function validateStockInputs() {
+    const invalid = Array.from(document.querySelectorAll('.qty')).find(input => !input.checkValidity());
+    if (!invalid) return true;
+    document.querySelector(`[data-tab="${invalid.closest('.section').id}"]`).click();
+    document.querySelector('[data-reset-filters]').click();
+    invalid.closest('details.group').open = true;
+    invalid.focus();
+    setStatus('要確認：在庫数は0以上の整数で入力してください。出力を中止しました。');
+    return false;
+  }
+
   function downloadCsv() {
-    const blob = new Blob([csvText()], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `inventory-memo-${state.checkDate || 'data'}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setStatus('CSVを保存しました。');
+    if (!validateStockInputs()) return;
+    setStatus('CSVの保存を開始しました。');
+    window.WorkOpsUi.downloadCsv(csvText(), `inventory-memo-${state.checkDate || 'data'}.csv`, document.getElementById('inventorySaveStatus'));
   }
 
   function copySummary() {
+    if (!validateStockInputs()) return;
     const area = document.getElementById('summary');
+    area.value = summaryText();
     if (!area.value.trim()) {
       setStatus('先にコピー用テキスト作成を押してください。');
       return;
@@ -448,13 +477,16 @@
     refreshWarnings();
     syncFilterFilledState();
     applyFilters();
+    window.WorkOpsUi?.ready();
+    setStatus(Object.keys(state).some(key => !['expiredEntries', 'checkDate'].includes(key) && state[key] !== '' && state[key] !== false) || state.expiredEntries.length ? 'この端末に保存した入力を復元しました。' : '未入力・入力するとこの端末に自動保存されます。');
 
     document.getElementById('buildSummary').addEventListener('click', () => {
+      if (!validateStockInputs()) return;
       document.getElementById('summary').value = summaryText();
       document.getElementById('resultCard').classList.remove('hidden');
       document.getElementById('copySummary').disabled = false;
       setStatus('コピー用テキストを作成しました。');
-      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      window.WorkOpsUi?.result('#resultCard');
     });
     document.getElementById('downloadCsv').addEventListener('click', downloadCsv);
     document.getElementById('copySummary').addEventListener('click', copySummary);
@@ -462,6 +494,7 @@
   }
 
   init().catch(() => {
+    window.WorkOpsUi?.error('在庫データを読み込めませんでした。ページを開き直してください。');
     setStatus('初期データの読み込みに失敗しました。ファイル配置を確認してください。');
   });
 })();

@@ -1,10 +1,13 @@
 import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
 
 const master = JSON.parse(fs.readFileSync('data/gc-std-master.json', 'utf8'));
 const favorites = JSON.parse(fs.readFileSync('data/gc-favorite-analytes.json', 'utf8'));
 const aliases = JSON.parse(fs.readFileSync('data/gc-analyte-aliases.json', 'utf8'));
 const calculator = fs.readFileSync('assets/js/gc-calculator.js', 'utf8');
 const calculatorHtml = fs.readFileSync('gc-calculator.html', 'utf8');
+const version = JSON.parse(fs.readFileSync('data/gc-calculator-version.json', 'utf8')).version;
 const calculatorCss = fs.readFileSync('assets/css/gc-calculator.css', 'utf8');
 
 const normalize = (value) => String(value || '').trim().toLowerCase();
@@ -86,7 +89,7 @@ for (const required of [
   'id="activeCardLabel"',
   'class="primary action-primary"',
   'class="card section-block copy-preview-block',
-  'gc-calculator.css?v=20260831-ppm-sync-fix-1'
+  `gc-calculator.css?v=${version}`
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC calculator UI marker missing: ${required}`);
@@ -152,7 +155,7 @@ for (const required of [
   'STD・検体',
   'STD 1',
   '＋ 物質',
-  'GC計算'
+  'GC係数・ppm計算'
 ]) {
   if (!calculatorHtml.includes(required)) {
     throw new Error(`GC daily STD / multi-sample UI marker missing: ${required}`);
@@ -190,8 +193,8 @@ for (const required of [
 for (const required of [
   'card-material-title',
   'samples-title',
-  '<span>エリア → ppm</span>',
-  '<span class="field-heading">STDエリア</span>'
+  '<span>検体エリア（面積） → 結果（ppm）</span>',
+  '<span class="field-heading">STDエリア（面積）</span>'
 ]) {
   if (!calculator.includes(required)) {
     throw new Error('GC design refresh JS marker missing: ' + required);
@@ -352,6 +355,19 @@ if (!sampleUpdateBlock.includes("sampleRoot.querySelector('.sample-area-input')"
 if (!sampleUpdateBlock.includes('calculate(row, material, liveAreaInput)')) {
   throw new Error('ppm update must calculate from the live sample input value');
 }
+
+// Run the actual production calculation function, without the page or storage.
+const mathSource = calculator.slice(calculator.indexOf('  const parseNumber ='), calculator.indexOf('  function validateOutputRows()'));
+const { calculate } = vm.runInNewContext(mathSource + '\n({ calculate })');
+const fixtureRow = { materialInput:'酢酸ブチル', stdManual:false, stdAreaInput:'15491' };
+const fixtureMaterial = { stdValue:15 };
+assert.equal(calculate(fixtureRow, fixtureMaterial, '322').ppmText, '0.31');
+assert.equal(calculate(fixtureRow, fixtureMaterial, '15491').ppmText, '15');
+assert.equal(calculate(fixtureRow, fixtureMaterial, '0').ppmText, '0');
+assert.equal(calculate(fixtureRow, fixtureMaterial, '').ppmText, '');
+assert.ok(calculate({...fixtureRow, stdAreaInput:'0'}, fixtureMaterial, '322').errorText);
+assert.ok(calculate(fixtureRow, fixtureMaterial, '-1').sampleErrorText);
+assert.equal(calculate({...fixtureRow, stdManual:true, stdInput:'25.5', stdAreaInput:'100,000'}, fixtureMaterial, '50,000').ppmText, '12.75');
 
 const screenshotCoefficient = 15 / 15491;
 const screenshotPpm = 322 * screenshotCoefficient;

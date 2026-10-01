@@ -10,6 +10,11 @@ on:
       - 'data/gc-favorite-analytes.json'
       - 'data/gc-analyte-aliases.json'
       - 'scripts/test-gc-calculator.mjs'
+      - 'assets/js/gc-day-plan.js'
+      - 'scripts/test-gc-day-plan.mjs'
+      - 'assets/js/inventory.js'
+      - 'scripts/test-inventory.mjs'
+      - 'data/gc-method-rules.json'
       - '.github/workflows/gc-calculator-check.yml'
   push:
     branches: [main]
@@ -21,6 +26,11 @@ on:
       - 'data/gc-favorite-analytes.json'
       - 'data/gc-analyte-aliases.json'
       - 'scripts/test-gc-calculator.mjs'
+      - 'assets/js/gc-day-plan.js'
+      - 'scripts/test-gc-day-plan.mjs'
+      - 'assets/js/inventory.js'
+      - 'scripts/test-inventory.mjs'
+      - 'data/gc-method-rules.json'
 
 jobs:
   check:
@@ -32,3 +42,6 @@ jobs:
           node-version: '22'
       - run: node --check assets/js/gc-calculator.js
       - run: node scripts/test-gc-calculator.mjs
+      - run: node scripts/test-gc-day-plan.mjs
+      - run: node scripts/test-inventory.mjs
+      - run: for file in assets/js/*.js; do node --check "$file"; done

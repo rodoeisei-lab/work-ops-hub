@@ -7,19 +7,20 @@
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/gc-factors.css?v=20260907-mobile-2">
   <link rel="stylesheet" href="assets/css/gc-factor-cascade.css?v=20260908-cascade-1">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-4">
 </head>
 <body>
   <main class="wrap factor-page">
     <a class="factor-back" href="index.html">← ホームへ戻る</a>
 
     <section class="factor-head">
-      <h1>GC係数ライブラリ</h1>
+      <h1>GC係数ライブラリ</h1><p class="operation-hint">カラム → 温度 → 物質の順に選び、検体エリアを入力します。</p>
     </section>
 
     <section class="factor-card factor-calc-card" aria-labelledby="quickCalcTitle">
       <div class="factor-section-head">
         <h2 id="quickCalcTitle">代表係数で計算</h2>
-        <a class="factor-day-link" href="gc-calculator.html?gc-version=20260902-easy-page-reset-1">当日STD →</a>
+        <a class="factor-day-link" href="gc-calculator.html?gc-version=20260902-easy-page-reset-1">当日STDで計算</a>
       </div>
 
       <div class="factor-calc-grid">
@@ -65,6 +66,7 @@
           <strong><span id="calc-ppm">—</span> <small>ppm</small></strong>
         </div>
       </div>
+      <p class="data-note">参考値：過去の実測から算出した係数です。当日の定量は当日STDで確認してください。</p>
       <p id="calc-message" class="factor-calc-message" aria-live="polite">カラムを選択してください。</p>
     </section>
 
@@ -99,7 +101,7 @@
         <table class="factor-table">
           <thead>
             <tr>
-              <th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>代表係数</th><th>換算面積</th><th>採用/全記録</th><th>外れ値</th><th>採用範囲</th>
+              <th scope="col">カラム</th><th scope="col">温度</th><th scope="col">物質</th><th scope="col">STD（ppm）</th><th scope="col">代表係数</th><th scope="col">換算面積</th><th scope="col">採用/全記録</th><th scope="col">外れ値</th><th scope="col">採用範囲</th>
             </tr>
           </thead>
           <tbody id="factor-summary-body"></tbody>
@@ -119,7 +121,7 @@
           <table class="factor-table">
             <thead>
               <tr>
-                <th>日付</th><th>カラム</th><th>温度</th><th>物質</th><th>STD濃度</th><th>係数</th><th>換算面積</th><th>判定</th><th>基準との差</th>
+                <th scope="col">日付</th><th scope="col">カラム</th><th scope="col">温度</th><th scope="col">物質</th><th scope="col">STD（ppm）</th><th scope="col">係数</th><th scope="col">換算面積</th><th scope="col">判定</th><th scope="col">基準との差</th>
               </tr>
             </thead>
             <tbody id="factor-record-body"></tbody>
@@ -129,6 +131,7 @@
       </div>
     </details>
   </main>
+  <script src="assets/js/app.js?v=20261002-4"></script>
   <script src="assets/js/gc-factors.js?v=20260908-recheck-1" type="module"></script>
   <script src="assets/js/gc-factor-cascade.js?v=20260929-cascade-2" type="module"></script>
   <script src="assets/js/gc-factor-area-history.js?v=20260908-area-nd-2"></script>

@@ -30,6 +30,7 @@
       .url { border-color:#000; }
     }
   </style>
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-4">
 </head>
 <body>
   <main class="wrap">
@@ -42,13 +43,13 @@
           <p class="url" id="targetUrl"></p>
         </div>
         <div class="qr-canvas-wrap" aria-label="QRコード">
-          <canvas id="qrCanvas" width="230" height="230"></canvas>
+          <img id="qrCanvas" src="assets/images/inventory-qr.svg" width="230" height="230" alt="在庫メモを開くQRコード">
         </div>
       </div>
       <button type="button" class="primary print-btn no-print" id="printBtn">印刷する</button>
     </section>
   </main>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/qr-print.js"></script>
+  <script src="assets/js/app.js?v=20261002-4"></script>
+  <script src="assets/js/qr-print.js?v=20261002-4"></script>
 </body>
 </html>

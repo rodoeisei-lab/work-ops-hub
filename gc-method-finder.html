@@ -6,6 +6,7 @@
   <title>GC条件提案（単体） | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/gc-finder.css">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-4">
 </head>
 <body>
   <main class="wrap gc-finder-page">
@@ -17,6 +18,7 @@
 
     <section class="card section-block" aria-labelledby="filterSectionTitle">
       <h2 id="filterSectionTitle">1. 条件入力</h2>
+      <details class="optional-preset"><summary>登録済み作業場の条件を使う（任意）</summary>
       <div class="workplace-box" aria-label="単位作業場所コード設定">
         <label>
           単位作業場所コード
@@ -30,6 +32,8 @@
           <button id="applyWorkplaceAllBtn" type="button" class="plain">条件＋溶剤を反映</button>
         </div>
       </div>
+      </details>
+      <details class="condition-filters"><summary id="filterSelectionSummary">機械・カラム・温度・時間を絞る（任意）</summary>
       <div class="filter-grid">
         <label>
           機械（任意）
@@ -44,18 +48,19 @@
           <select id="tempFilter"><option value="">すべて</option></select>
         </label>
         <label>
-          分析時間上限（min）
+          分析時間上限（min・任意）
           <input id="analysisTimeLimitInput" type="number" inputmode="decimal" min="0" step="0.001" placeholder="例: 6">
         </label>
       </div>
       <p id="analysisTimeFilterStatus" class="hint">分析時間上限: 未指定（全候補を対象）</p>
+      </details>
 
       <div class="analyte-box">
         <p class="hint">分析対象の溶剤を追加してください。</p>
         <p class="hint">よく使う物質</p>
         <div id="quickAnalytes" class="quick-chips" aria-label="よく使う物質候補"></div>
-        <p class="hint">液体STD</p>
-        <div id="quickLiquidAnalytes" class="quick-chips" aria-label="液体STD候補"></div>
+        <details class="secondary-materials"><summary>液体STDを選ぶ（任意）</summary><div id="quickLiquidAnalytes" class="quick-chips" aria-label="液体STD候補"></div></details>
+        <label for="analyteInput" class="input-label">その他の物質（任意）</label>
         <div class="input-row">
           <input id="analyteInput" type="text" list="analyteList" placeholder="全物質から選択">
           <datalist id="analyteList"></datalist>
@@ -68,7 +73,7 @@
       </div>
 
       <div class="action-row">
-        <button id="clearAnalytesBtn" type="button" class="plain">入力を消す</button>
+        <button id="clearAnalytesBtn" type="button" class="danger">選択した溶剤を解除</button>
         <button id="suggestBtn" type="button" class="primary">候補を表示</button>
       </div>
     </section>
@@ -77,14 +82,14 @@
       <h2 id="resultSectionTitle">2. 候補一覧</h2>
       <p class="hint">候補順位 / 一致件数 / RT範囲 / 分析時間 / 最小RT差 / 信頼度</p>
       <div id="dataWarning" class="data-warning" hidden></div>
-      <div id="recommendations" class="recommend-list">
+      <div id="recommendations" class="recommend-list" aria-live="polite">
         <p class="empty-text">溶剤を追加して「候補を表示」を押してください。</p>
       </div>
     </section>
 
     <section class="card section-block" aria-labelledby="memoSectionTitle">
       <h2 id="memoSectionTitle">3. 当日メモ（仮）</h2>
-      <p class="hint">「この条件を使う」を押すと当日メモに追加されます。次回ログ機能の下準備です。</p>
+      <p class="hint">「この条件を使う」を押すと当日メモに追加されます。このブラウザに保存されます。</p>
       <div id="selectedMethodMemo" class="selected-method-memo">まだ選択されていません。</div>
     </section>
 
@@ -97,7 +102,7 @@
       <div id="unknownAnalytesPanel" class="unknown-panel" hidden></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>溶剤</th><th>RT(min)</th><th>信頼度</th><th>備考</th></tr></thead>
+          <thead><tr><th scope="col">溶剤</th><th scope="col">RT(min)</th><th scope="col">信頼度</th><th scope="col">備考</th></tr></thead>
           <tbody id="rtTableBody"><tr><td colspan="4" class="empty-cell">表示するデータがありません。</td></tr></tbody>
         </table>
       </div>
@@ -107,8 +112,8 @@
     </section>
   </main>
 
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/gc-favorites.js" defer></script>
-  <script src="assets/js/gc-finder.js" defer></script>
+  <script src="assets/js/app.js?v=20261002-4"></script>
+  <script src="assets/js/gc-favorites.js?v=20261002-4" defer></script>
+  <script src="assets/js/gc-finder.js?v=20261002-4" defer></script>
 </body>
 </html>

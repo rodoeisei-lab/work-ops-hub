@@ -76,8 +76,8 @@
         <article class="mobile-data-card">
           <p><strong>${escapeHtml(row.display_name || row.normalized_name || '')}</strong>${favoriteBadge(row)}</p>
           <p>元表記: ${escapeHtml(row.raw_label || '-')}</p>
-          <p>STD: ${escapeHtml(stdValue)}</p>
-          <p>状態: ${escapeHtml(statusLabel)}</p>
+          <p class="mobile-result">STD: ${escapeHtml(stdValue)} ppm</p>
+          <p>状態: ${badge(`badge-status-${row.status}`, statusLabel)}</p>
           <p>信頼度: ${escapeHtml(confidenceLabel)}</p>
           <p>備考: ${escapeHtml(row.note || '-')}</p>
         </article>
@@ -135,8 +135,11 @@
       const [favorites, aliases] = await Promise.all([fetchJsonSafe(FAVORITES_PATH, { common: [], liquid_standard: [] }), fetchJsonSafe(ANALYTE_ALIASES_PATH, {})]);
       favoriteMeta = buildFavoriteMeta(favorites, aliases);
       render();
+      window.WorkOpsUi?.ready();
     } catch (error) {
       els.summaryText.textContent = 'データ読み込みに失敗しました。';
+      window.WorkOpsUi?.error('標準液データを読み込めませんでした。ページを開き直してください。');
+      els.stdCardList.innerHTML = '<p class="empty-cell">データ読み込みに失敗しました。</p>';
       els.stdTableBody.innerHTML = `<tr><td colspan="6" class="empty-cell">${escapeHtml(error.message)}</td></tr>`;
     }
   }

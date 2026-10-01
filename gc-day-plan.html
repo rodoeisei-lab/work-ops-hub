@@ -6,6 +6,7 @@
   <title>GC当日プラン | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/gc-day-plan.css">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-4">
 </head>
 <body>
   <main class="wrap day-plan-page">
@@ -18,13 +19,13 @@
     <section class="card section-block">
       <h2>1. 基本設定</h2>
       <div class="top-grid">
-        <label>GC開始時刻<input id="gcStartTime" type="time" value="13:00"></label>
-        <label>段取り余裕時間（1単位あたり min）<input id="setupBufferInput" type="number" min="0" step="0.1" value="1.0"></label>
+        <label>GC開始時刻<input id="gcStartTime" type="time" required value="13:00"></label>
+        <label>段取り余裕時間（1単位あたり min）<input id="setupBufferInput" type="number" inputmode="decimal" required min="0" step="0.1" value="1.0"></label>
       </div>
     </section>
 
     <section class="card section-block">
-      <h2>2. 単位作業場所</h2>
+      <h2>2. 単位作業場所</h2><p class="operation-hint">対象物質を選択し、必要な作業場だけ追加してください。</p>
       <div id="workplaceCards" class="workplace-list"></div>
       <div class="action-row">
         <button id="addWorkplaceBtn" type="button" class="plain">作業場を追加</button>
@@ -34,7 +35,7 @@
 
     <section class="card section-block">
       <h2>3. 全体プラン</h2>
-      <div id="planSummary" class="summary-box">作業場入力後に「まとめて候補提案」を押してください。</div>
+      <div id="planSummary" class="summary-box" role="status" aria-live="polite">作業場入力後に「まとめて候補提案」を押してください。</div>
     </section>
 
     <section class="card section-block">
@@ -43,7 +44,7 @@
     </section>
   </main>
 
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/gc-day-plan.js" defer></script>
+  <script src="assets/js/app.js?v=20261002-4"></script>
+  <script src="assets/js/gc-day-plan.js?v=20261002-4" defer></script>
 </body>
 </html>

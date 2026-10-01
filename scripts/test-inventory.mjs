@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+const source = fs.readFileSync('assets/js/inventory.js','utf8');
+const defs = JSON.parse(fs.readFileSync('data/inventory-items.json','utf8'));
+const reorderRules = JSON.parse(fs.readFileSync('data/reorder-rules.json','utf8'));
+const batteryGroup = defs.supplies.find(group=>group.items?.includes('アルカリ乾電池 単1'));
+const acetoneGroup = defs.tube.find(group=>group.items?.includes('アセトン'));
+const state = {checkDate:'2026-10-02',expiredEntries:[{type:'確認用"メモ',count:2}]};
+state[`supplies__${batteryGroup.title}__アルカリ乾電池 単1`] = '5';
+state[`tube__${acetoneGroup.title}__アセトン`] = '0';
+const grouping = source.slice(source.indexOf('  function sectionGroups('),source.indexOf('  function render(section)'));
+const exporting = source.slice(source.indexOf('  function summaryText()'),source.indexOf('  function validateStockInputs()'));
+const {summaryText,csvText} = vm.runInNewContext(grouping + exporting + '\n({summaryText,csvText})',{defs,reorderRules,state});
+assert.ok(summaryText().includes('アルカリ乾電池 単1: 5本'));
+assert.ok(summaryText().includes('アセトン: 0箱'));
+assert.ok(!summaryText().includes('アルカリ乾電池 単1: 5箱'));
+assert.ok(csvText().includes('"アルカリ乾電池 単1","5本"'));
+assert.ok(csvText().includes('"アセトン","0箱"'));
+assert.ok(csvText().includes('"確認用""メモ","2本"'));
+console.log('Inventory production text/CSV unit, zero-stock, and quoting checks passed.');
