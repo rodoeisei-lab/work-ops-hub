@@ -123,6 +123,9 @@ td,th { font-size:.875rem; line-height:1.5; }
 .condition-filters > summary { margin:4px 0 10px; color:#264b77; font-weight:700; }
 .csv-fallback-link { display:inline-flex; align-items:center; min-height:44px; text-decoration:underline; }
 .save-status { margin:8px 2px; font-size:.875rem; color:#38536b; }
+.save-status:empty { display:none; }
+.memo-actions { display:flex; justify-content:flex-end; margin-top:8px; }
+.gc-finder-page .memo-card { font-size:.875rem; }
 .reset-panel { margin:12px 0; padding:0 12px 12px; border:1px solid #d5deea; border-radius:8px; background:#fff; }
 .reset-panel p { margin:0 0 8px; font-size:.875rem; }
 .tabs { background:#f6f8fb; backdrop-filter:none; }

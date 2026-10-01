@@ -1146,7 +1146,7 @@
         '</div>'
       ].join('');
 
-      card.querySelector('.rec-select-btn').addEventListener('click', () => showMethodDetails(item));
+      card.querySelector('.rec-select-btn').addEventListener('click', () => { showMethodDetails(item); window.WorkOpsUi?.result(el.rtSummary); });
       card.querySelector('.rec-use-btn').addEventListener('click', () => saveChosenMethod(item));
       el.recommendations.appendChild(card);
     });
@@ -1576,10 +1576,27 @@
       analysisTime: Number(item.analysisTime) || null,
       confidence: item.confidenceLabel
     };
-    state.chosenMethodMemos.unshift(memo);
-    state.chosenMethodMemos = state.chosenMethodMemos.slice(0, 6);
-    localStorage.setItem('gc_selected_method_memos', JSON.stringify(state.chosenMethodMemos));
+    const next = [memo, ...state.chosenMethodMemos].slice(0, 6);
+    if (persistChosenMethodMemos(next, 'この端末に当日メモを保存しました。')) {
+      window.WorkOpsUi?.result(el.selectedMethodMemo);
+    }
+  }
+
+  function persistChosenMethodMemos(next, message) {
+    const status = document.getElementById('methodMemoStatus');
+    try {
+      localStorage.setItem('gc_selected_method_memos', JSON.stringify(next));
+    } catch (_) {
+      status.textContent = '要確認：端末への保存に失敗しました。メモは変更されていません。';
+      status.classList.add('error-text');
+      window.WorkOpsUi?.result(status);
+      return false;
+    }
+    state.chosenMethodMemos = next;
     renderChosenMethodMemos();
+    status.classList.remove('error-text');
+    status.textContent = message;
+    return true;
   }
 
   function loadChosenMethodMemos() {
@@ -1603,7 +1620,7 @@
       el.selectedMethodMemo.textContent = 'まだ選択されていません。';
       return;
     }
-    el.selectedMethodMemo.innerHTML = state.chosenMethodMemos.map((memo) => {
+    el.selectedMethodMemo.innerHTML = state.chosenMethodMemos.map((memo, index) => {
       const date = new Date(memo.savedAt || Date.now());
       const dateLabel = Number.isNaN(date.getTime()) ? '-' :
         date.getFullYear() + '/' + String(date.getMonth() + 1).padStart(2, '0') + '/' + String(date.getDate()).padStart(2, '0') +
@@ -1614,10 +1631,21 @@
         '対象物質: ', escapeHtml((memo.analytes || []).join('、') || '-'), '<br>',
         '機械: ', escapeHtml(memo.machine || '-'), ' / カラム: ', escapeHtml(memo.column || '-'), '<br>',
         '温度条件: ', escapeHtml(memo.temp || '-'), ' / 分析時間: ', Number.isFinite(memo.analysisTime) ? formatCompactNumber(memo.analysisTime, 2, 3) + ' min' : '-', '<br>',
-        '信頼度: ', escapeHtml(memo.confidence || '-') ,
+        '信頼度: ', escapeHtml(memo.confidence || '-'),
+        '<div class="memo-actions"><button type="button" class="danger" data-remove-memo="', index, '" aria-label="', escapeHtml(dateLabel + '・' + (memo.analytes || []).join('、') + 'のメモを削除'), '">このメモを削除</button></div>',
         '</div>'
       ].join('');
     }).join('');
+    el.selectedMethodMemo.querySelectorAll('[data-remove-memo]').forEach(button => {
+      button.addEventListener('click', () => {
+        if (!window.confirm('この当日メモを削除しますか？')) return;
+        const index = Number(button.dataset.removeMemo);
+        const next = state.chosenMethodMemos.filter((_, memoIndex) => memoIndex !== index);
+        if (persistChosenMethodMemos(next, 'この当日メモを削除しました。')) {
+          window.WorkOpsUi?.result(el.selectedMethodMemo);
+        }
+      });
+    });
   }
 
   function escapeHtml(text) {
