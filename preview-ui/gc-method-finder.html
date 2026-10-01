@@ -6,7 +6,7 @@
   <title>GC条件提案（単体） | 作業用ミニハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/gc-finder.css">
-  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-1">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-2">
 </head>
 <body>
   <main class="wrap gc-finder-page">
@@ -33,6 +33,7 @@
         </div>
       </div>
       </details>
+      <details class="condition-filters"><summary id="filterSelectionSummary">機械・カラム・温度・時間を絞る（任意）</summary>
       <div class="filter-grid">
         <label>
           機械（任意）
@@ -52,6 +53,7 @@
         </label>
       </div>
       <p id="analysisTimeFilterStatus" class="hint">分析時間上限: 未指定（全候補を対象）</p>
+      </details>
 
       <div class="analyte-box">
         <p class="hint">分析対象の溶剤を追加してください。</p>
@@ -110,8 +112,8 @@
     </section>
   </main>
 
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/gc-favorites.js" defer></script>
-  <script src="assets/js/gc-finder.js" defer></script>
+  <script src="assets/js/app.js?v=20261002-2"></script>
+  <script src="assets/js/gc-favorites.js?v=20261002-2" defer></script>
+  <script src="assets/js/gc-finder.js?v=20261002-2" defer></script>
 </body>
 </html>

@@ -230,14 +230,14 @@
     const totalAnalysis = results.reduce((s, r) => s + (r.top?.analysisTime || 0), 0);
     const totalBuffer = setupBuffer * results.length;
     const total = totalAnalysis + totalBuffer;
-    const judgement = buildJudgement(results.length, total, results.filter((r) => !r.top).length);
+    const judgement = buildJudgement(results, total);
     const end = calcEnd(els.gcStartTime.value, total);
 
     els.planSummary.className = 'summary-box' + (judgement.warn ? ' warn' : '');
     els.planSummary.innerHTML = `
       使用候補機械: <strong>${escapeHtml(judgement.machineSummary)}</strong><br>
-      合計分析時間: <strong>${fmt(totalAnalysis)} min</strong>（段取り余裕 ${fmt(totalBuffer)} min 含むと ${fmt(total)} min）<br>
-      開始時刻: <strong>${escapeHtml(els.gcStartTime.value || '未入力')}</strong> / 終了目安: <strong>${escapeHtml(end)}</strong>
+      合計分析時間の目安${judgement.incomplete ? "（参考・データ不足）" : ""}: <strong>${fmt(totalAnalysis)} min</strong>（段取り余裕 ${fmt(totalBuffer)} min 含むと ${fmt(total)} min）<br>
+      開始時刻: <strong>${escapeHtml(els.gcStartTime.value || '未入力')}</strong> / 終了目安${judgement.incomplete ? "（参考）" : ""}: <strong>${escapeHtml(end)}</strong>
       <ul>${judgement.comments.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
     `;
 
@@ -247,38 +247,50 @@
   function renderDetail(row) {
     if (!row.top) return `<article class="detail-card"><h3>${escapeHtml(row.code)}</h3><p>対象物質: ${escapeHtml(row.analytes.map((a) => a.label).join('、'))}</p><p>推奨候補: 要確認</p><p>一部データ不足あり</p></article>`;
     const t = row.top;
+    const missing = missingAnalytes(row);
     return `<article class="detail-card"><h3>${escapeHtml(row.code)}</h3>
       <p>対象物質: ${escapeHtml(row.analytes.map((a) => a.label).join('、'))}</p>
+      ${missing.length ? `<p class="data-note">要確認：この条件にRTデータがない物質：${escapeHtml(missing.map(a => a.label).join('、'))}。分析時間は参考値です。</p>` : ''}
       <p>推奨候補: 第1候補</p>
       <p>機械: <strong>${escapeHtml(t.method.machine?.name || '-')}</strong></p>
       <p>カラム: <strong>${escapeHtml(t.method.column?.name || '-')}</strong></p>
       <p>温度条件: <strong>${escapeHtml(t.method.tempProgram?.display_name || '-')}</strong></p>
-      <p>分析時間: <strong>${fmt(t.analysisTime)} min</strong></p>
-      <p>最小RT差: <strong>${fmt(t.minGap)} min</strong></p>
+      <p>分析時間の目安（最終RT＋0.4 min）: <strong>${fmt(t.analysisTime)} min</strong></p>
+      <p>最小RT差: <strong>${new Set(t.method.records.filter(record => row.analytes.some(a => a.id === record.analyte_normalized)).map(record => record.analyte_normalized)).size < 2 ? '—（比較対象なし）' : fmt(t.minGap) + ' min'}</strong></p>
       <p>信頼度: <strong class="${t.confidence === '低' ? 'conf-low' : ''}">${escapeHtml(t.confidence)}</strong></p>
-      <p>注意点: ${escapeHtml(t.memo)}</p>
+      <p>注意点: ${escapeHtml(missing.length ? "全物質を確認できていません" : t.memo)}</p>
     </article>`;
   }
 
-  function buildJudgement(unitCount, total, missing) {
+  function missingAnalytes(row) {
+    const covered = new Set((row.top?.method.records || []).map(record => record.analyte_normalized));
+    return row.analytes.filter(analyte => analyte.unknown || !covered.has(analyte.id));
+  }
+
+  function buildJudgement(results, total) {
     const r = state.data.rules?.multi_workplace_plan || {};
-    const gcName = state.data.machines.find((m) => m.id === 'gc2014')?.name || 'GC2014';
+    const machines = new Map();
+    results.forEach(row => { const machine = row.top?.method.machine; if (machine) machines.set(machine.id, machine.name); });
+    const incomplete = results.some(row => !row.top || missingAnalytes(row).length > 0);
     const comments = [];
-    let machineSummary = `${gcName} 1台運用候補`;
+    let machineSummary = '要相談';
     let warn = false;
-    if (unitCount <= Number(r.single_machine_priority_units_max ?? 2)) {
-      comments.push(`${unitCount}単位のため、${gcName} 1台で処理候補`);
-      comments.push('GC2014 1台運用候補');
+    if (machines.size === 1 && !incomplete && results.length <= Number(r.single_machine_priority_units_max ?? 2)) {
+      const name = Array.from(machines.values())[0];
+      machineSummary = `${name} 1台運用候補`;
+      comments.push(`${results.length}単位の第1候補機械が${name}で一致しています`);
     } else {
-      comments.push('3単位以上のため要相談');
       warn = true;
-      machineSummary = '要相談';
-      if (total <= Number(r.short_total_min ?? 20)) comments.push('合計時間が短いため、1台運用も候補');
+      if (machines.size > 1) comments.push('作業場ごとの第1候補機械が異なります。1台運用できるか条件を確認してください');
+      if (incomplete) comments.push('一部物質のRTデータ不足あり。合計時間と終了目安は参考値です');
+      if (results.length > Number(r.single_machine_priority_units_max ?? 2)) {
+        comments.push('3単位以上のため要相談');
+        if (total <= Number(r.short_total_min ?? 20)) comments.push('合計時間が短いため、1台運用も候補');
+      }
     }
     if (parseTime(els.gcStartTime.value) >= parseTime(String(r.late_start_time || '16:00'))) comments.push('開始時刻が遅い場合は複数台も検討');
     if (total > Number(r.long_total_min ?? 30)) comments.push('合計時間が長めのため複数台運用を検討');
-    if (missing > 0) comments.push('一部データ不足あり');
-    return { machineSummary, comments, warn };
+    return { machineSummary, comments, warn, incomplete };
   }
 
   function rank(selectedAnalytes) {

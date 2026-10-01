@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20261002-1';
+  const CACHE_VERSION = '20261002-2';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';

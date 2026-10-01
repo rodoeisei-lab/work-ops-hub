@@ -98,8 +98,8 @@
     const special = !hasThreshold && point ? `<div class="special-note">${point.label || '発注メモ'}（通常の自動警告対象外）</div>` : '';
 
     return `<div class="${warnClass ? 'row alert' : 'row'}" data-row-key="${key}" data-filter-item="1" data-filter-alert="${warnClass ? '1' : '0'}" data-filter-filled="${hasValue ? '1' : '0'}" data-filter-text="${name.toLowerCase()}">
-      <div class="name">${itemName(name, section)}${ruleLabel}${warn}${special}${note}</div>
-      <input class="qty" id="${id(key)}" aria-label="${name}の在庫（箱）" type="number" min="0" step="1" inputmode="numeric" value="${value ?? ''}" placeholder="0">
+      <div class="name">${itemName(name, section)}${ruleLabel}${warn}${special}${note}${point?.unit === '本' && hasValue ? '<div class="rule-note">保存済み数量も本数として確認してください。</div>' : ''}</div>
+      <div class="qty-control"><input class="qty" id="${id(key)}" aria-label="${name}の在庫（${point?.unit || '箱'}）" type="number" min="0" step="1" inputmode="numeric" value="${value ?? ''}" placeholder="—"><span>${point?.unit || '箱'}</span></div>
     </div>`;
   }
 
@@ -358,7 +358,7 @@
           const value = state[key];
           if (value !== undefined && value !== '') {
             if (!added) { lines.push(`■ ${group.title}`); added = true; }
-            lines.push(`${name}: ${value}箱`);
+            lines.push(`${name}: ${value}${reorderRules[name]?.unit || '箱'}`);
           }
         });
         if (group.expiredMemo && state.expiredEntries.length) {
@@ -397,7 +397,7 @@
         (group.items || []).forEach((name) => {
           const key = `${section}__${group.title}__${name}`;
           const value = state[key];
-          if (value !== undefined && value !== '') rows.push([state.checkDate || '', sectionLabel[section], group.title, name, `${value}箱`]);
+          if (value !== undefined && value !== '') rows.push([state.checkDate || '', sectionLabel[section], group.title, name, `${value}${reorderRules[name]?.unit || '箱'}`]);
         });
         if (group.expiredMemo) {
           state.expiredEntries.forEach((entry) => rows.push([state.checkDate || '', '期限切れ検知管', group.title, entry.type, `${entry.count}本`]));

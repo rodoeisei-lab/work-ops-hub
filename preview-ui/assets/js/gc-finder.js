@@ -69,6 +69,7 @@
       initMultiPlanSection();
       loadChosenMethodMemos();
       showInitialWarnings();
+      updateConditionSummary();
       window.WorkOpsUi?.ready();
     } catch (error) {
       console.error(error);
@@ -395,6 +396,7 @@
       node.addEventListener('change', () => {
         fillAnalyteOptions();
         syncQuickChipState();
+        updateConditionSummary();
         if (state.ranked.length) {
           state.ranked = rankMethods(Array.from(state.selectedAnalytes.values()));
           renderRecommendations();
@@ -406,6 +408,7 @@
     if (el.analysisTimeLimitInput) {
       el.analysisTimeLimitInput.addEventListener('input', () => {
         updateAnalysisTimeFilterStatus();
+        updateConditionSummary();
         if (state.ranked.length) {
           state.ranked = rankMethods(Array.from(state.selectedAnalytes.values()));
           renderRecommendations();
@@ -591,6 +594,7 @@
     el.machineFilter.value = workplace.machine_id || '';
     el.columnFilter.value = workplace.column_id || '';
     el.tempFilter.value = workplace.temp_program_id || '';
+    updateConditionSummary();
     fillAnalyteOptions();
     syncQuickChipState();
 
@@ -853,7 +857,7 @@
         '<p>カラム: <strong>', escapeHtml(best.method.column?.name || '-'), '</strong></p>',
         '<p>温度条件: <strong>', escapeHtml(getTempProgramDisplay(best.method.tempProgram)), '</strong></p>',
         '<p>分析時間: <strong>', formatAnalysisTime(best.analysisTime), '</strong></p>',
-        '<p>最小RT差: <strong>', formatCompactNumber(best.minGap, 2, 3), ' min</strong></p>',
+        '<p>最小RT差: <strong>', formatMinGap(best), '</strong></p>',
         '<p>信頼度: <strong>', escapeHtml(best.confidenceLabel), '</strong></p>',
         '<p>注意点: ', escapeHtml(buildJudgementMemo(best)), '</p>',
         best.provisional ? '<p class="provisional-badge">暫定候補（要確認）</p>' : '',
@@ -1127,13 +1131,13 @@
         '温度条件: ', escapeHtml(tempLabel), '<br>',
         '一致件数: ', item.matchCount, '/', item.selectedCount, '<br>',
         'RT範囲: ', item.rtRange || '-', '<br>',
-        '分析時間: ', formatAnalysisTime(item.analysisTime), '<br>',
-        '最小RT差: ', item.minGap.toFixed(2), ' min<br>',
+        '分析時間の目安: ', formatAnalysisTime(item.analysisTime), '<br>',
+        '最小RT差: ', formatMinGap(item), '<br>',
         '信頼度: ', escapeHtml(item.confidenceLabel), '<br>',
         '判定メモ: ', escapeHtml(memo),
         item.lowCertaintyMatchCount > 0 ? '<br><span class="provisional-badge">注意: 信頼度「低」のデータを含む</span>' : '',
         item.hasUndeterminedInMethod ? '<br><span class="provisional-badge">名称未確定データ含む</span>' : '',
-        item.dataShortage ? '<br><span class="provisional-badge">データ不足</span>' : '',
+        item.dataShortage ? '<br><span class="provisional-badge">' + (item.matches.length < 2 ? '分離比較用データなし' : 'データ件数が少ない') + '</span>' : '',
         item.provisional ? '<br><span class="provisional-badge">暫定候補</span>' : '',
         '</p>',
         '<div class="rec-action-row">',
@@ -1156,7 +1160,8 @@
       '<strong>', escapeHtml(tempLabel), '</strong>',
       '<br>対象溶剤カバー: ', (item.coverageRate * 100).toFixed(0), '% / 一致: ', item.matchCount, '/', item.selectedCount,
       '<br>RT範囲: ', item.rtRange || '-',
-      '<br>分析時間: ', formatAnalysisTime(item.analysisTime),
+      '<br>分析時間の目安: ', formatAnalysisTime(item.analysisTime),
+      '<br><span class="hint">対象物質の最終RT＋0.4 min。図の破線は登録プログラム時間です。</span>',
       item.missing.length ? '<br>未登録・不足: ' + escapeHtml(item.missing.join(', ')) : '',
       item.hasUndeterminedInMethod ? '<br>注意: RT一覧に「名称未確定」データを含みます。' : ''
     ].join('');
@@ -1239,14 +1244,14 @@
     const axis = document.createElement('div');
     axis.className = 'axis-label';
     axis.innerHTML = 'RT(min): <strong>0 〜 ' + formatAxisValue(axisMax) + '</strong>' +
-      (runtimeValue > 0 ? '<span class="runtime-axis-note">分析時間: ' + formatCompactNumber(runtimeValue, 2, 3) + ' min</span>' : '');
+      (runtimeValue > 0 ? '<span class="runtime-axis-note">登録プログラム時間: ' + formatCompactNumber(runtimeValue, 2, 3) + ' min</span>' : '');
     el.rtGraph.appendChild(axis);
 
     const minGap = getMinimumRtGap(rtValues);
     const selectedCount = sortedRows.filter((row) => selectedIds.includes(row.analyte_normalized)).length;
     const compactFlag = axisMax <= 4 ? '<span class="meta-chip">短時間レンジ最適化</span>' : '';
     el.graphMeta.innerHTML = [
-      '<span class="meta-chip strong">分析時間: ', runtimeValue > 0 ? formatCompactNumber(runtimeValue, 2, 3) : '-', ' min</span>',
+      '<span class="meta-chip strong">登録プログラム時間: ', runtimeValue > 0 ? formatCompactNumber(runtimeValue, 2, 3) : '-', ' min</span>',
       minGap !== null ? '<span class="meta-chip">最小RT差: ' + formatCompactNumber(minGap, 2, 3) + ' min</span>' : '',
       selectedCount > 0 ? '<span class="meta-chip">対象溶剤のみ強調: ' + selectedCount + '件</span>' : '',
       compactFlag
@@ -1460,11 +1465,23 @@
     return formatCompactNumber(analysisTime, 2, 3) + ' min';
   }
 
+  function updateConditionSummary() {
+    const labels = [el.machineFilter, el.columnFilter, el.tempFilter].filter(input => input.value).map(input => input.selectedOptions[0]?.textContent);
+    if (el.analysisTimeLimitInput.value) labels.push('上限 ' + el.analysisTimeLimitInput.value + ' min');
+    document.getElementById('filterSelectionSummary').textContent = labels.length ? '絞り込み中：' + labels.join(' / ') : '機械・カラム・温度・時間を絞る（任意）';
+  }
+
+  function formatMinGap(item) {
+    return item.matches.length < 2 ? '—（比較対象なし）' : formatCompactNumber(item.minGap, 2, 3) + ' min';
+  }
+
   function buildJudgementMemo(item) {
     const parts = [];
     const coverage = Math.round(item.coverageRate * 100);
     parts.push('一致率' + coverage + '%');
-    if (item.minGap >= 0.3) {
+    if (item.matches.length < 2) {
+      parts.push('分離判定の比較対象なし');
+    } else if (item.minGap >= 0.3) {
       parts.push('分離良好');
     } else if (item.minGap >= 0.15) {
       parts.push('分離やや接近');
