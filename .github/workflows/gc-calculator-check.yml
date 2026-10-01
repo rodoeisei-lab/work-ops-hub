@@ -14,6 +14,8 @@ on:
       - 'scripts/test-gc-day-plan.mjs'
       - 'assets/js/inventory.js'
       - 'scripts/test-inventory.mjs'
+      - 'assets/js/gc-finder.js'
+      - 'scripts/test-gc-finder.mjs'
       - 'data/gc-method-rules.json'
       - '.github/workflows/gc-calculator-check.yml'
   push:
@@ -30,6 +32,8 @@ on:
       - 'scripts/test-gc-day-plan.mjs'
       - 'assets/js/inventory.js'
       - 'scripts/test-inventory.mjs'
+      - 'assets/js/gc-finder.js'
+      - 'scripts/test-gc-finder.mjs'
       - 'data/gc-method-rules.json'
 
 jobs:
@@ -44,4 +48,5 @@ jobs:
       - run: node scripts/test-gc-calculator.mjs
       - run: node scripts/test-gc-day-plan.mjs
       - run: node scripts/test-inventory.mjs
+      - run: node scripts/test-gc-finder.mjs
       - run: for file in assets/js/*.js; do node --check "$file"; done

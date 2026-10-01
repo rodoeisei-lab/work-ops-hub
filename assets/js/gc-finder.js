@@ -380,6 +380,7 @@
     });
 
     el.suggestBtn.addEventListener('click', () => {
+      if (!validateAnalysisTimeLimit()) { el.analysisTimeLimitInput.focus(); return; }
       const selected = Array.from(state.selectedAnalytes.values());
       if (!selected.length) {
       el.recommendations.innerHTML = '<p class="empty-text" role="alert">先に溶剤を1つ以上追加してください。</p>';
@@ -409,6 +410,7 @@
       el.analysisTimeLimitInput.addEventListener('input', () => {
         updateAnalysisTimeFilterStatus();
         updateConditionSummary();
+        if (!validateAnalysisTimeLimit()) return;
         if (state.ranked.length) {
           state.ranked = rankMethods(Array.from(state.selectedAnalytes.values()));
           renderRecommendations();
@@ -1076,12 +1078,12 @@
       const hasKnown = selected.some((item) => item.known);
       const reasonSet = [];
       if (selected.filter((item) => !item.known).length >= Math.ceil(selected.length / 2)) {
-        reasonSet.push('未登録溶剤が多い');
+        reasonSet.push('未登録の溶剤を含む');
       }
       if (el.machineFilter.value || el.columnFilter.value || el.tempFilter.value) {
-        reasonSet.push('条件フィルタが厳しすぎる');
+        reasonSet.push('現在の機械・カラム・温度に一致する候補なし');
       }
-      if (hasKnown) reasonSet.push('データ件数不足');
+      if (hasKnown && !reasonSet.length && !state.lastFilterReport?.excludedByAnalysisTime) reasonSet.push('対象溶剤に一致するRTデータなし');
       if (state.lastFilterReport?.excludedByAnalysisTime > 0) {
         reasonSet.push('分析時間上限で除外');
       }
@@ -1092,7 +1094,7 @@
         : '';
       el.recommendations.innerHTML = '<p class="empty-text">条件に合う候補がありません。<br>' + escapeHtml(emptyReason) + strictTimeMessage + '</p>';
       clearDetails();
-      showWarning('候補提案できません。フィルタ緩和・alias追記・RTデータ追加を確認してください。');
+      showWarning('候補を表示できません。選択した溶剤と絞り込み条件を確認してください。');
       return;
     }
 
@@ -1396,6 +1398,17 @@
     el.dataWarning.textContent = text;
   }
 
+  function validateAnalysisTimeLimit() {
+    const field = el.analysisTimeLimitInput;
+    if (!field || field.checkValidity()) { field?.removeAttribute('aria-invalid'); return true; }
+    field.setAttribute('aria-invalid', 'true');
+    state.ranked = [];
+    clearDetails();
+    updateAnalysisTimeFilterStatus();
+    el.recommendations.innerHTML = '<p class="error-text" role="alert">要確認：分析時間上限は0以上の数値で入力してください。</p>';
+    return false;
+  }
+
   function getAnalysisTimeLimit() {
     if (!el.analysisTimeLimitInput) return null;
     const raw = String(el.analysisTimeLimitInput.value || '').trim();
@@ -1407,6 +1420,10 @@
 
   function updateAnalysisTimeFilterStatus(report) {
     if (!el.analysisTimeFilterStatus) return;
+    if (el.analysisTimeLimitInput && !el.analysisTimeLimitInput.checkValidity()) {
+      el.analysisTimeFilterStatus.textContent = '要確認：分析時間上限は0以上の数値で入力してください。';
+      return;
+    }
     const limit = Number.isFinite(report?.analysisTimeLimit) ? report.analysisTimeLimit : getAnalysisTimeLimit();
     if (!Number.isFinite(limit)) {
       el.analysisTimeFilterStatus.textContent = '分析時間上限: 未指定（全候補を対象）';
@@ -1468,7 +1485,8 @@
   function updateConditionSummary() {
     const labels = [el.machineFilter, el.columnFilter, el.tempFilter].filter(input => input.value).map(input => input.selectedOptions[0]?.textContent);
     if (el.analysisTimeLimitInput.value) labels.push('上限 ' + el.analysisTimeLimitInput.value + ' min');
-    document.getElementById('filterSelectionSummary').textContent = labels.length ? '絞り込み中：' + labels.join(' / ') : '機械・カラム・温度・時間を絞る（任意）';
+    const prefix = el.analysisTimeLimitInput.checkValidity() ? '絞り込み中：' : '要確認：';
+    document.getElementById('filterSelectionSummary').textContent = labels.length ? prefix + labels.join(' / ') : '機械・カラム・温度・時間を絞る（任意）';
   }
 
   function formatMinGap(item) {
