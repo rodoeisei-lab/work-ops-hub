@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>在庫メモ</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/inventory.css">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-1">
+</head>
+<body>
+  <main class="wrap">
+    <section class="card top">
+      <div class="top-head">
+        <h1>在庫メモ</h1>
+        <span class="chip">端末に自動保存</span>
+      </div>
+      <p class="sub">在庫入力は箱数、期限切れメモは本数です。発注点・注意メモは品目名の下に表示されます。</p>
+      <details class="top-panel" open>
+        <summary>点検情報</summary>
+        <div class="field panel-inner">
+          <label for="checkDate">点検日</label>
+          <input id="checkDate" type="date">
+        </div>
+      </details>
+    </section>
+
+    <div class="tabs" role="group" aria-label="入力区分">
+      <button class="tab active" aria-pressed="true" data-tab="tube" type="button">検知管</button>
+      <button class="tab" aria-pressed="false" data-tab="supplies" type="button">備品</button>
+      <button class="tab" aria-pressed="false" data-tab="visual" type="button">目視確認</button>
+    </div>
+
+    <section class="card filter-panel" aria-label="表示フィルター">
+      <div class="field">
+        <label for="itemFilter">品目検索</label>
+        <input id="itemFilter" type="search" placeholder="品目名・メモ名で絞り込み">
+      </div>
+      <button class="btn-ghost filter-reset-btn" type="button" data-reset-filters>検索条件を解除</button>
+      <div class="filter-switches">
+        <label class="toggle">
+          <input id="alertOnly" type="checkbox">
+          <span>注意表示のみ</span>
+        </label>
+        <label class="toggle">
+          <input id="filledOnly" type="checkbox">
+          <span>入力済みのみ</span>
+        </label>
+      </div>
+    </section>
+
+    <p id="filterEmpty" class="filter-empty" role="status" hidden>該当する品目がありません。検索条件を解除するか、入力区分を切り替えてください。</p>
+    <p id="inventorySaveStatus" class="save-status" role="status" aria-live="polite">未入力・この端末に自動保存</p>
+    <section class="section active" id="tube"></section>
+    <section class="section" id="supplies"></section>
+    <section class="section" id="visual"></section>
+
+    <div class="actions" aria-label="操作ボタン">
+      <button type="button" class="primary" id="buildSummary">テキスト作成</button>
+      <button type="button" class="btn-ghost" id="downloadCsv">CSV保存</button>
+      <button type="button" class="plain" id="copySummary" disabled>コピー</button>
+
+    </div>
+
+    <details class="reset-panel"><summary>入力のリセット</summary><p>この端末に保存した在庫入力・点検日・期限切れメモを消去します。</p><button type="button" class="danger" id="resetForm">この端末の入力を消す</button></details>
+    <section class="card result hidden" id="resultCard">
+      <label for="summary">コピー用テキスト</label>
+      <textarea id="summary" placeholder="テキスト作成を押すと表示されます"></textarea>
+      <div class="status" id="status"></div>
+    </section>
+  </main>
+
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/inventory.js"></script>
+</body>
+</html>

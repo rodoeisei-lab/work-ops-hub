@@ -1,0 +1,20 @@
+[
+  {
+    "id": "A01",
+    "display_label": "A01",
+    "machine_id": "gc2014",
+    "column_id": "cbp",
+    "temp_program_id": "80c",
+    "default_analytes": ["acetone", "toluene", "ethyl_acetate"],
+    "note": ""
+  },
+  {
+    "id": "B02",
+    "display_label": "B02",
+    "machine_id": "gc2014",
+    "column_id": "cbp",
+    "temp_program_id": "60c",
+    "default_analytes": ["MEK", "methanol"],
+    "note": ""
+  }
+]

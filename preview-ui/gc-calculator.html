@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>GC濃度計算 | 作業用ミニハブ</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/gc-calculator.css?v=20261002-1">
+  <link rel="stylesheet" href="assets/css/gc-nd-threshold.css?v=20261002-1">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-1">
+</head>
+<body>
+  <main class="wrap gc-calculator-page">
+    <header class="card section-block page-header">
+      <div class="page-header__top">
+        <a href="index.html" class="back-home-link no-print">← ホームへ戻る</a>
+        <span class="tool-kicker">GC分析ツール</span>
+      </div>
+      <h1>GC係数・ppm計算</h1>
+      <p class="operation-hint">物質を選択 → 当日STD・検体のエリアを入力。係数とppmは自動計算されます。</p>
+    </header>
+
+    <section class="card section-block quick-select-block no-print" aria-labelledby="favoriteTitle">
+      <div class="section-heading">
+        <span class="section-number">1</span>
+        <div>
+          <h2 id="favoriteTitle">1. 物質を選ぶ</h2>
+          <p class="active-card-line"><strong id="activeCardLabel">STD 1</strong></p>
+        </div>
+      </div>
+      <div id="favoriteCommonChips" class="quick-chips quick-chips--grid" aria-label="通常よく使う物質"></div>
+      <details class="secondary-materials">
+        <summary>液体STD・その他の物質</summary>
+        <div class="secondary-materials__body">
+          <div>
+            <h3>液体STD</h3>
+            <div id="favoriteLiquidChips" class="quick-chips" aria-label="液体STD"></div>
+          </div>
+          <div>
+            <h3>その他</h3>
+            <div id="favoriteOtherChips" class="quick-chips" aria-label="その他のよく使う物質"></div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card section-block calculator-section" aria-labelledby="rowsTitle">
+      <div class="rows-heading">
+        <div class="section-heading">
+          <span class="section-number">2</span>
+          <div>
+            <h2 id="rowsTitle">2. STD・検体を入力</h2>
+          </div>
+        </div>
+        <button id="addRowBtn" type="button" class="plain add-card-btn no-print">＋ 物質</button>
+      </div>
+      <div id="rowsContainer" class="rows-container"></div>
+    </section>
+
+    <section class="card section-block actions-block no-print" aria-label="結果を保存・出力">
+      <div class="section-heading">
+        <span class="section-number">3</span>
+        <div>
+          <h2>3. 結果を出力</h2>
+        </div>
+      </div>
+      <div class="actions-grid">
+        <button id="copyResultBtn" type="button" class="primary action-primary">計算結果をコピー</button>
+        <button id="downloadCsvBtn" type="button" class="btn-ghost">CSV保存</button>
+      </div>
+      <details class="more-actions">
+        <summary>その他の操作</summary>
+        <div class="more-actions__buttons">
+          <button id="clearAllBtn" type="button" class="page-reset-btn">ページをリセット</button>
+          <button id="buildCopyTextBtn" type="button" class="btn-ghost">コピー内容を更新</button>
+        </div>
+      </details>
+      <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card section-block custom-material-block utility-panel no-print" aria-labelledby="customMaterialTitle">
+      <details>
+        <summary id="customMaterialTitle">物質を追加</summary>
+        <div class="custom-material-block__body">
+          <div class="custom-material-form">
+            <label>物質名<input id="customMaterialName" type="text" autocomplete="off" placeholder="例：シクロヘキサノン"></label>
+            <label>STD値（ppm）<input id="customStdValue" type="text" inputmode="decimal" autocomplete="off" placeholder="例：25.0"></label>
+            <button id="addCustomMaterialBtn" type="button" class="plain">この端末に追加</button>
+          </div>
+          <div id="customMaterialList" class="custom-material-list" aria-live="polite"></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card section-block copy-preview-block utility-panel no-print">
+      <details>
+        <summary>コピー確認</summary>
+        <div class="copy-preview__body">
+          <textarea id="copyTextOutput" rows="12" aria-label="コピー用テキスト" placeholder="「計算結果をコピー」または「コピー内容を更新」で作成されます。"></textarea>
+        </div>
+      </details>
+    </section>
+
+    <p class="version-line no-print">v <span id="gcCalculatorVersionLabel">確認中...</span></p>
+  </main>
+
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/gc-favorites.js" defer></script>
+  <script>
+    (() => {
+      const FALLBACK_VERSION = '20261002-1';
+      const VERSION_MANIFEST_PATH = 'data/gc-calculator-version.json';
+      const CHECK_INTERVAL_MS = 30000;
+      const MAX_VERSION_CHECKS = 20;
+
+      async function fetchPublishedVersion() {
+        try {
+          const response = await fetch(`${VERSION_MANIFEST_PATH}?t=${Date.now()}`, { cache: 'no-store' });
+          if (!response.ok) return '';
+          const manifest = await response.json();
+          return String(manifest?.version || '').trim();
+        } catch (_error) {
+          return '';
+        }
+      }
+
+      function loadCalculator(version) {
+        const script = document.createElement('script');
+        script.src = `assets/js/gc-calculator.js?v=${encodeURIComponent(version)}`;
+        script.dataset.gcCalculatorVersion = version;
+        script.async = false;
+        const versionLabel = document.getElementById('gcCalculatorVersionLabel');
+        if (versionLabel) versionLabel.textContent = version;
+        script.addEventListener('error', () => {
+          const status = document.getElementById('statusMessage');
+          if (status) status.textContent = '計算機の読み込みに失敗しました。通信状態を確認して、ページを開き直してください。';
+        });
+        document.body.appendChild(script);
+      }
+
+      function reloadForVersion(version) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('gc-version', version);
+        url.searchParams.set('refresh', Date.now().toString(36));
+        window.location.replace(url.toString());
+      }
+
+      async function startCalculator() {
+        const publishedVersion = await fetchPublishedVersion();
+        const loadedVersion = publishedVersion || FALLBACK_VERSION;
+        loadCalculator(loadedVersion);
+
+        const checkForUpdate = async () => {
+          const latestVersion = await fetchPublishedVersion();
+          if (latestVersion && latestVersion !== loadedVersion) {
+            reloadForVersion(latestVersion);
+            return true;
+          }
+          return false;
+        };
+
+        let checks = 0;
+        const timer = window.setInterval(async () => {
+          checks += 1;
+          if (await checkForUpdate()) {
+            window.clearInterval(timer);
+            return;
+          }
+          if (checks >= MAX_VERSION_CHECKS) window.clearInterval(timer);
+        }, CHECK_INTERVAL_MS);
+
+        window.addEventListener('pageshow', () => { checkForUpdate(); });
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) checkForUpdate();
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startCalculator, { once: true });
+      } else {
+        startCalculator();
+      }
+    })();
+  </script>
+  <script src="assets/js/gc-nd-threshold.js?v=20261002-1"></script>
+</body>
+</html>
