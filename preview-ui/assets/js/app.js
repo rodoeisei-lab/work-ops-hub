@@ -33,7 +33,18 @@
   if (links.slice(0,7).some(([href]) => href === page)) status.textContent = 'データを読み込み中…';
   const header = main.querySelector('header, .factor-head, .top'); (header || main).appendChild(status);
   document.querySelectorAll(".table-wrap, .factor-table-wrap").forEach(wrap => { wrap.tabIndex = 0; wrap.setAttribute("role", "region"); wrap.setAttribute("aria-label", "データ一覧（横にスクロールできます）"); });
+  let downloadUrl = null;
+  window.addEventListener("pagehide", () => { if (downloadUrl) URL.revokeObjectURL(downloadUrl); });
   window.WorkOpsUi = {
+    downloadCsv(content, filename, target) {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      downloadUrl = URL.createObjectURL(new Blob([content], {type:'text/csv;charset=utf-8;'}));
+      const link = document.createElement('a');
+      link.href = downloadUrl; link.download = filename; link.className = 'csv-fallback-link';
+      link.textContent = '保存されない場合はCSVをダウンロード';
+      target.appendChild(document.createElement('br')); target.appendChild(link);
+      link.click();
+    },
     ready() { status.textContent = ''; status.classList.remove('is-error'); },
     error(message) { status.textContent = 'エラー：' + message; status.classList.add('is-error'); status.setAttribute('role', 'alert'); },
     result(target) {

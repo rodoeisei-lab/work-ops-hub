@@ -115,6 +115,7 @@ td,th { font-size:.875rem; line-height:1.5; }
 .inventory-page .section.active { padding-bottom:72px; }
 .inventory-page input,.inventory-page textarea { scroll-margin-block:80px; }
 .condition-filters > summary { margin:4px 0 10px; color:#264b77; font-weight:700; }
+.csv-fallback-link { display:inline-flex; align-items:center; min-height:44px; text-decoration:underline; }
 .save-status { margin:8px 2px; font-size:.875rem; color:#38536b; }
 .reset-panel { margin:12px 0; padding:0 12px 12px; border:1px solid #d5deea; border-radius:8px; background:#fff; }
 .reset-panel p { margin:0 0 8px; font-size:.875rem; }

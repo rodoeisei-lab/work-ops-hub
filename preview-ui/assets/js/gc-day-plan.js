@@ -257,7 +257,7 @@
       <p>温度条件: <strong>${escapeHtml(t.method.tempProgram?.display_name || '-')}</strong></p>
       <p>分析時間の目安（最終RT＋0.4 min）: <strong>${fmt(t.analysisTime)} min</strong></p>
       <p>最小RT差: <strong>${new Set(t.method.records.filter(record => row.analytes.some(a => a.id === record.analyte_normalized)).map(record => record.analyte_normalized)).size < 2 ? '—（比較対象なし）' : fmt(t.minGap) + ' min'}</strong></p>
-      <p>信頼度: <strong class="${t.confidence === '低' ? 'conf-low' : ''}">${escapeHtml(t.confidence)}</strong></p>
+      <p>一致したRTデータの信頼度: <strong class="${t.confidence === '低' ? 'conf-low' : ''}">${escapeHtml(t.confidence)}</strong></p>
       <p>注意点: ${escapeHtml(missing.length ? "全物質を確認できていません" : t.memo)}</p>
     </article>`;
   }

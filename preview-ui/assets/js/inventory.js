@@ -430,14 +430,8 @@
 
   function downloadCsv() {
     if (!validateStockInputs()) return;
-    const blob = new Blob([csvText()], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `inventory-memo-${state.checkDate || 'data'}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setStatus('CSVを保存しました。');
+    setStatus('CSVの保存を開始しました。');
+    window.WorkOpsUi.downloadCsv(csvText(), `inventory-memo-${state.checkDate || 'data'}.csv`, document.getElementById('inventorySaveStatus'));
   }
 
   function copySummary() {

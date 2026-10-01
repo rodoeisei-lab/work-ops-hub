@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_VERSION = '20261002-2';
+  const CACHE_VERSION = '20261002-3';
   const DATA_PATH = `data/gc-std-master.json?v=${CACHE_VERSION}`;
   const ANALYTE_ALIASES_PATH = 'data/gc-analyte-aliases.json';
   const ANALYTE_DISPLAY_PATH = 'data/gc-analyte-display.json';
@@ -135,16 +135,8 @@
         return;
       }
       const csv = buildCsv();
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `gc-calculation-${todayIso()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showStatus('CSVを保存しました。');
+      showStatus('CSVの保存を開始しました。');
+      window.WorkOpsUi.downloadCsv(csv, `gc-calculation-${todayIso()}.csv`, els.statusMessage);
     });
 
     els.copyTextOutput.addEventListener('input', persist);
@@ -691,6 +683,7 @@
       }
     }
     root.classList.toggle('is-unregistered', isUnregistered);
+    root.querySelector('.samples-block')?.setAttribute('aria-label', `${material?.displayName || row.materialInput || '物質未選択'}の検体`);
     const unregisteredNote = root.querySelector('.unregistered-note');
     if (unregisteredNote) unregisteredNote.hidden = !isUnregistered;
     const stdInput = root.querySelector('.std-input');
