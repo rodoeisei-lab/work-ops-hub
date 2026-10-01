@@ -113,6 +113,8 @@ td,th { font-size:.875rem; line-height:1.5; }
 .tab { border-radius:7px; }
 .actions { grid-template-columns:1.4fr 1fr 1fr; background:#f6f8fb; backdrop-filter:none; bottom:max(8px,env(safe-area-inset-bottom)); border-radius:8px; }
 .filter-reset-btn { margin-top:8px; }
+.filter-input-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+[aria-invalid="true"] { border:2px solid #b43b32 !important; }
 .field label,.result label { font-size:.875rem; }
 .order-flag { min-height:44px; border-radius:7px; }
 .row:not(.alert) .warn-note { display:none; }

@@ -28,6 +28,7 @@
   const SOLVENT_KEYWORDS = ['アルコール', 'アセトン', 'トルエン', 'ホルム', 'ベンゼン', 'キシレン', '酢酸', 'ケトン', 'ブタノール'];
   const REAGENT_KEYWORDS = ['標準液', '試薬', '硝酸', '塩酸', '苛性'];
 
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const id = (text) => text.replace(/[^\w\u3040-\u30ff\u3400-\u9fff]+/g, '_');
   const setStatus = (message) => { document.getElementById('status').textContent = message; document.getElementById('inventorySaveStatus').textContent = message; };
   const hasKeyword = (name, keywords) => keywords.some((keyword) => name.includes(keyword));
@@ -104,7 +105,7 @@
 
   function memoField(section, group, name) {
     const key = `${section}__${group}__${name}`;
-    return `<div data-filter-item="1" data-filter-alert="0" data-filter-filled="${(state[key] || '').trim() ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${state[key] ?? ''}</textarea></div>`;
+    return `<div data-filter-item="1" data-filter-alert="0" data-filter-filled="${(state[key] || '').trim() ? '1' : '0'}" data-filter-text="${name.toLowerCase()}"><label for="${id(key)}" class="sub">${name}</label><textarea id="${id(key)}">${escapeHtml(state[key])}</textarea></div>`;
   }
 
   function checkRow(section, group, name) {
@@ -172,9 +173,9 @@
     }
     list.innerHTML = state.expiredEntries.map((entry, idx) => `
       <div class="expired-item">
-        <div class="name">${entry.type}</div>
+        <div class="name">${escapeHtml(entry.type)}</div>
         <div class="expired-count">${entry.count}本</div>
-        <button type="button" class="danger tiny" aria-label="${entry.type}の期限切れメモを削除" data-remove-expired="${idx}">削除</button>
+        <button type="button" class="danger tiny" aria-label="${escapeHtml(entry.type)}の期限切れメモを削除" data-remove-expired="${idx}">削除</button>
       </div>
     `).join('');
 
@@ -253,6 +254,8 @@
         (group.items || []).forEach((name) => {
           const key = `${section}__${group.title}__${name}`;
           document.getElementById(id(key)).addEventListener('input', (event) => {
+            if (!event.target.checkValidity()) { event.target.setAttribute('aria-invalid', 'true'); setStatus('要確認：在庫数は0以上の整数で入力してください。未保存です。'); return; }
+            event.target.removeAttribute('aria-invalid');
             state[key] = event.target.value;
             save();
             refreshWarnings();
@@ -283,6 +286,7 @@
 
     document.getElementById('checkDate').addEventListener('input', (event) => {
       state.checkDate = event.target.value;
+      document.getElementById('checkDateLabel').textContent = state.checkDate || '未入力';
       save();
     });
 
@@ -318,8 +322,8 @@
         const countEl = document.getElementById('expiredCount');
         const type = (typeEl.value || '').trim();
         const count = Number(countEl.value || '');
-        if (!type || !count || count < 1) {
-          setStatus('期限切れメモは種類と本数を入力してください。');
+        if (!type || !Number.isInteger(count) || count < 1) {
+          setStatus('要確認：種類と、1以上の整数の本数を入力してください。');
           return;
         }
         state.expiredEntries.push({ type, count });
@@ -338,6 +342,7 @@
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     document.getElementById('checkDate').value = state.checkDate || today;
     if (!state.checkDate) state.checkDate = today;
+    document.getElementById('checkDateLabel').textContent = state.checkDate;
   }
 
   function summaryText() {
@@ -412,7 +417,19 @@
     return rows.map((row) => row.map(quote).join(',')).join('\r\n');
   }
 
+  function validateStockInputs() {
+    const invalid = Array.from(document.querySelectorAll('.qty')).find(input => !input.checkValidity());
+    if (!invalid) return true;
+    document.querySelector(`[data-tab="${invalid.closest('.section').id}"]`).click();
+    document.querySelector('[data-reset-filters]').click();
+    invalid.closest('details.group').open = true;
+    invalid.focus();
+    setStatus('要確認：在庫数は0以上の整数で入力してください。出力を中止しました。');
+    return false;
+  }
+
   function downloadCsv() {
+    if (!validateStockInputs()) return;
     const blob = new Blob([csvText()], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -424,6 +441,7 @@
   }
 
   function copySummary() {
+    if (!validateStockInputs()) return;
     const area = document.getElementById('summary');
     area.value = summaryText();
     if (!area.value.trim()) {
@@ -459,6 +477,7 @@
     setStatus(Object.keys(state).some(key => !['expiredEntries', 'checkDate'].includes(key) && state[key] !== '' && state[key] !== false) || state.expiredEntries.length ? 'この端末に保存した入力を復元しました。' : '未入力・入力するとこの端末に自動保存されます。');
 
     document.getElementById('buildSummary').addEventListener('click', () => {
+      if (!validateStockInputs()) return;
       document.getElementById('summary').value = summaryText();
       document.getElementById('resultCard').classList.remove('hidden');
       document.getElementById('copySummary').disabled = false;
