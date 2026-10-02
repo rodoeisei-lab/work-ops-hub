@@ -76,7 +76,9 @@
     "dcm",
     "DCM",
     "ジクロロメタン",
-    "dichloromethane"
+    "dichloromethane",
+    "DCLM",
+    "dclm"
   ],
   "styrene": [
     "styrene",
@@ -129,5 +131,8 @@
   "セロアセ": [
     "セロアセ",
     "セロアセ(液)"
+  ],
+  "SBT": [
+    "SBT"
   ]
 }

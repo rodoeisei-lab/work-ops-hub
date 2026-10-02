@@ -1,27 +1,93 @@
-.rt-page { max-width: 1180px; display:grid; gap:12px; }
+.rt-page { max-width:1060px; display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+.rt-header h1 { margin-bottom:2px; }
+.rt-header p { margin:0; font-size:.875rem; color:var(--muted); }
 .section-block { padding:14px; }
-.section-block h1,.section-block h2 { margin:0 0 8px; }
-.section-block p,.hint { margin:0; color:var(--muted); font-size:.86rem; }
-.filter-grid { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; }
-.filter-grid label { display:grid; gap:6px; font-size:.82rem; font-weight:700; color:#415473; }
-.toggle { display:inline-flex; gap:8px; align-items:center; margin-top:8px; font-size:.84rem; }
-.table-wrap { width:100%; overflow:hidden; margin-top:10px; }
-table { width:100%; border-collapse: collapse; min-width: 0; }
-th,td { border-bottom:1px solid var(--line); padding:9px 8px; font-size:.85rem; text-align:left; vertical-align:top; }
-th { background:#f8fbff; white-space:normal; }
-.rt { text-align:right; font-variant-numeric: tabular-nums; }
-.badge { display:inline-flex; align-items:center; border-radius:999px; padding:2px 8px; font-size:.74rem; font-weight:700; }
-.badge-high { background:#dcfce7; color:#166534; }
-.badge-medium { background:#fef3c7; color:#92400e; }
-.badge-low { background:#fee2e2; color:#b91c1c; }
-.empty-cell { color:var(--muted); }
-.mobile-card-list { display:none; margin-top:10px; gap:8px; }
-.mobile-data-card { border:1px solid #dce5f3; border-radius:10px; padding:10px; background:#fff; display:grid; gap:4px; font-size:.84rem; }
-.mobile-data-card p { margin:0; }
-@media (max-width:700px){
-  .filter-grid{grid-template-columns:1fr;}
-  .table-wrap{display:none;}
-  .mobile-card-list{display:grid;}
+.section-block h2 { margin:0 0 10px; }
+.rt-condition-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.rt-condition-grid label,.filter-grid label { display:grid; gap:4px; font-size:.875rem; font-weight:700; min-width:0; }
+.rt-condition-grid select { padding:9px 6px; }
+.rt-presets { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.rt-page .rt-presets button { font-size:.8125rem; padding:7px 10px; }
+.rt-presets button[aria-pressed="true"] { background:#eaf1fa; border-color:#184a9c; color:#163f72; }
+.rt-page .hint { margin:6px 0 0; font-size:.8125rem; color:var(--muted); }
+.rt-page .toggle { display:flex; align-items:center; gap:8px; margin:0; min-height:44px; font-size:.875rem; }
+.rt-page input[type="checkbox"] { width:18px; height:18px; }
+.rt-extra-filters { border-top:1px solid var(--line); }
+.rt-extra-filters > summary { font-weight:400; color:#344963; }
+.filter-grid { display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin:8px 0; }
+.rt-chart-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:6px; }
+.rt-chart-heading h2 { margin:0; }
+.rt-chart-heading p { font-size:.875rem; margin:0; color:var(--muted); }
+.rt-selected-condition { margin:5px 0 8px; font-weight:700; font-size:.9375rem; color:#183e6b; }
+.rt-legend { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; font-size:.8125rem; color:var(--muted); margin-bottom:14px; }
+.legend-measured,.legend-estimated { display:inline-flex; align-items:center; gap:6px; }
+.legend-measured::before,.legend-estimated::before { content:''; width:22px; height:10px; background:#245a96; border:1px solid #245a96; }
+.legend-estimated::before { background:repeating-linear-gradient(135deg,#e2ecf7 0 3px,#fff 3px 6px); border:1px dashed #5780ad; }
+.legend-near { display:inline-flex; align-items:center; gap:6px; }
+.legend-near::before { content:''; width:22px; border-top:2px solid #aa711c; }
+.rt-chart { container-type:inline-size; container-name:rt-chart; }
+.rt-axis,.rt-bar-row { display:grid; grid-template-columns:10rem minmax(0,1fr); gap:12px; }
+.rt-axis { margin:0 0 8px; font-size:.8125rem; color:var(--muted); }
+.rt-axis-plot { padding-right:64px; }
+.rt-axis-ticks { display:flex; justify-content:space-between; border-bottom:1px solid #a6b8ce; padding-bottom:4px; }
+.rt-axis-ticks span { white-space:nowrap; overflow-wrap:normal; }
+.rt-bars { list-style:none; margin:0; padding:0; }
+.rt-bar-row { align-items:center; min-height:38px; border-bottom:1px solid #edf1f6; }
+.rt-bar-label { font-size:.875rem; line-height:1.4; padding:6px 0; color:#233c58; }
+.rt-bar-label .badge { display:inline-flex; font-size:.75rem; padding:0 4px; margin:2px 0 0; }
+.rt-plot-cell { padding-right:64px; min-width:0; }
+.rt-track { position:relative; height:30px; border-left:1px solid #a6b8ce; background:repeating-linear-gradient(to right,transparent 0 calc(25% - 1px),#e7edf4 calc(25% - 1px) 25%); }
+.rt-bar { position:absolute; top:7px; height:16px; width:var(--bar-width); background:#245a96; border-radius:0 2px 2px 0; }
+.rt-bar-row.is-estimated .rt-bar { border:1px dashed #5780ad; background:repeating-linear-gradient(135deg,#e2ecf7 0 3px,#fff 3px 6px); }
+.rt-bar-row.is-near .rt-bar { border-top:2px solid #aa711c; }
+.rt-value { position:absolute; left:calc(var(--bar-width) + 6px); top:3px; font-size:.875rem; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow-wrap:normal; word-break:normal; }
+.badge { display:inline-flex; align-items:center; border-radius:4px; padding:1px 6px; font-size:.8125rem; }
+.badge-measured { background:#eaf1fa; color:#214e80; }
+.badge-estimated { background:#edf2f7; color:#47637f; border:1px dashed #5780ad; }
+.badge-low { background:#fff3dc; color:#82530d; }
+.badge-medium { background:#f4f2e7; color:#665719; }
+.badge-high { background:#eaf1fa; color:#214e80; }
+.rt-empty { padding:16px 0; font-size:.9375rem; color:var(--muted); }
+.rt-empty p { margin:0 0 8px; }
+.rt-empty button { border:1px solid #aebccc; color:#173e73; background:#eaf1fa; }
+.near-pairs { list-style:none; padding:0; margin:12px 0; }
+.near-pairs li { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #edf1f6; font-size:.875rem; }
+.near-pairs strong { color:#895510; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.near-pairs small { display:block; font-size:.8125rem; color:var(--muted); }
+.rt-details > summary { font-weight:700; color:#263f60; }
+.rt-page .table-wrap { overflow:auto; margin-top:10px; }
+.rt-page table { width:100%; min-width:840px; border-collapse:collapse; }
+.rt-page th,.rt-page td { padding:10px 8px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+.rt-page th { background:#f5f8fc; }
+.rt-page td.rt { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rt-page .mobile-card-list { display:none; gap:10px; }
+.mobile-data-card { padding:12px; border:1px solid var(--line); border-radius:7px; font-size:.875rem; }
+.mobile-data-card p { margin:4px 0; }
+.rt-prediction-method p { font-size:.875rem; color:var(--muted); }
+[hidden] { display:none !important; }
+@media (max-width:760px) {
+  .rt-condition-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .filter-search { grid-column:1/-1; }
+  .rt-axis,.rt-bar-row { grid-template-columns:7rem minmax(0,1fr); gap:8px; }
+  .rt-page .table-wrap { display:none; }
+  .rt-page .mobile-card-list { display:grid; }
+  .section-block { padding:12px; }
+  .rt-bar-label,.rt-value { font-size:.875rem; }
 }
-
-.badge-favorite{ background:#e8f0ff; color:#244a9a; margin-left:6px; }
+@media (max-width:360px) {
+  .rt-axis,.rt-bar-row { grid-template-columns:6rem minmax(0,1fr); gap:6px; }
+  .rt-page .rt-presets button { padding:6px; }
+}
+@media print {
+  .rt-extra-filters,.rt-presets,.tool-nav { display:none !important; }
+  .rt-page .table-wrap { display:block; }
+  .rt-page .mobile-card-list { display:none; }
+  .rt-bar { print-color-adjust:exact; }
+}
+@container rt-chart (max-width:17rem) {
+  .rt-axis,.rt-bar-row { grid-template-columns:minmax(0,1fr); gap:0; }
+  .rt-axis > span { display:none; }
+  .rt-bar-row { padding-bottom:5px; }
+  .rt-plot-cell,.rt-axis-plot { padding-right:4.5rem; }
+}

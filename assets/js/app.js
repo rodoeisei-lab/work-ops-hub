@@ -3,10 +3,10 @@
   if (!main) return;
   const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
   const links = [
-    ['gc-calculator.html', 'GC係数・ppm計算'], ['inventory-memo.html', '在庫メモ'],
-    ['gc-day-plan.html', 'GC当日プラン'], ['gc-method-finder.html', 'GC条件提案'],
-    ['gc-factors.html', 'GC係数ライブラリ'], ['gc-rt-library.html', 'GC RTライブラリ'],
-    ['gc-std-master.html', 'GC標準液マスタ'], ['qr-print.html', 'QR印刷'], ['update-guide.html', '更新手順']
+    ['gc-calculator.html', 'GC係数・ppm計算'], ['gc-method-finder.html', 'GC条件提案'],
+    ['gc-rt-library.html', 'GC RTグラフ'], ['gc-day-plan.html', 'GC当日プラン'],
+    ['gc-factors.html', 'GC係数ライブラリ'], ['gc-std-master.html', 'GC標準液マスタ'],
+    ['inventory-memo.html', '在庫メモ'], ['qr-print.html', 'QR印刷'], ['update-guide.html', '更新手順']
   ];
   const todayEl = document.getElementById('todayLabel');
   if (todayEl) todayEl.textContent = new Intl.DateTimeFormat('ja-JP', {year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());

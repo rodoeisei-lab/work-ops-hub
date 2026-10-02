@@ -1,0 +1,9 @@
+{
+  "name": "gc-work-ops-hub",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "update:rt-estimates": "node scripts/update-rt-estimates.mjs",
+    "test": "node scripts/test-gc-rt-library.mjs && node scripts/test-gc-calculator.mjs && node scripts/test-gc-finder.mjs && node scripts/test-gc-day-plan.mjs && node scripts/test-inventory.mjs"
+  }
+}

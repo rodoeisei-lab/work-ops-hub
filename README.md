@@ -44,3 +44,8 @@ GitHub Pagesでそのまま公開できる、モバイルファーストの作�
 - STD値が未設定 (`null`) の物質は選択可能だが、計算不可として扱う。
 - 入力内容は `localStorage` の `gc-calculator-state-v1` に自動保存。
 - 「CSV保存」で `gc-calculation-YYYY-MM-DD.csv` を出力可能。
+# GC RTグラフ（2026-10-02更新）
+
+ホームはGC業務を優先し、在庫・QRは「その他」から開けます。RTは機種・カラム・温度・線速度を合わせた横棒グラフで確認します。実測と予測は別表示で、予測は初期OFFです。
+
+Node.js 22以降で `npm run dev`（依存追加なし）と `npm test` を利用できます。実測追加時の予測更新は `npm run update:rt-estimates`。データの根拠と限界は [RT監査記録](docs/gc-rt-audit-2026-10-02.md)を参照してください。

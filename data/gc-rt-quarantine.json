@@ -1,0 +1,28 @@
+[
+  {
+    "machine_id": "gc2014",
+    "column_id": "cbp",
+    "temp_program_id": "90c_2",
+    "analyte_original": "名称未確定",
+    "analyte_normalized": "未確定",
+    "rt_min": 2.153,
+    "certainty": "low",
+    "source": "manual_scan_pdf",
+    "note": "手書き追記・ブロワではない",
+    "verification_status": "quarantined",
+    "reason": "今回の写真7枚に対応する値がなく、誤転記の可能性。2026-10-02に現行RT一覧と条件提案から除外。"
+  },
+  {
+    "machine_id": "gc2014",
+    "column_id": "cbp",
+    "temp_program_id": "90c_2",
+    "analyte_original": "ブチセロ",
+    "analyte_normalized": "ブチセロ",
+    "rt_min": 2.959,
+    "certainty": "low",
+    "source": "manual_scan_pdf",
+    "note": "手書き追記・名称未確認",
+    "verification_status": "quarantined",
+    "reason": "今回の写真7枚に対応する値がなく、誤転記の可能性。2026-10-02に現行RT一覧と条件提案から除外。"
+  }
+]

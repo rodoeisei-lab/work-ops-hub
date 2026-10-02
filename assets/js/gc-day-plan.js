@@ -56,10 +56,13 @@
     const columnMap = new Map((columns || []).map((x) => [x.id, x]));
     const tempMap = new Map((tempPrograms || []).map((x) => [x.id, x]));
 
-    const rows = (rtLibrary || []).map((row) => ({
+    const rows = window.GcRtModel.planningRows(rtLibrary || []).map((row) => ({
       machine_id: row.machine_id,
       column_id: row.column_id,
       temp_program_id: row.temp_program_id,
+      linear_velocity_cm_s: row.linear_velocity_cm_s ?? null,
+      split_ratio: row.split_ratio || null,
+      measurement_type: row.measurement_type || 'measured',
       analyte_normalized: aliasLookup.get(norm(row.analyte_normalized || row.analyte_original || '')) || row.analyte_normalized,
       analyte_original: row.analyte_original || row.analyte_normalized,
       rt_min: Number(row.rt_min),
@@ -69,7 +72,7 @@
 
     const grouped = new Map();
     rows.forEach((row) => {
-      const key = [row.machine_id, row.column_id, row.temp_program_id].join('__');
+      const key = window.GcRtModel.conditionKey(row);
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(row);
     });
@@ -78,7 +81,7 @@
       id,
       machine: machineMap.get(records[0].machine_id),
       column: columnMap.get(records[0].column_id),
-      tempProgram: tempMap.get(records[0].temp_program_id),
+      tempProgram: window.GcRtModel.methodTempProgram(tempMap.get(records[0].temp_program_id), records[0]),
       records: records.filter((r) => Number.isFinite(r.rt_min)).sort((a, b) => a.rt_min - b.rt_min)
     }));
 

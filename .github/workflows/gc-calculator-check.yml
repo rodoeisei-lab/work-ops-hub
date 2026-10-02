@@ -17,6 +17,12 @@ on:
       - 'assets/js/gc-finder.js'
       - 'scripts/test-gc-finder.mjs'
       - 'data/gc-method-rules.json'
+      - 'data/gc-rt-library.json'
+      - 'data/gc-temp-programs.json'
+      - 'assets/js/gc-rt-model.js'
+      - 'assets/js/gc-rt-library.js'
+      - 'scripts/test-gc-rt-library.mjs'
+      - 'gc-rt-library.html'
       - '.github/workflows/gc-calculator-check.yml'
   push:
     branches: [main]
@@ -35,6 +41,12 @@ on:
       - 'assets/js/gc-finder.js'
       - 'scripts/test-gc-finder.mjs'
       - 'data/gc-method-rules.json'
+      - 'data/gc-rt-library.json'
+      - 'data/gc-temp-programs.json'
+      - 'assets/js/gc-rt-model.js'
+      - 'assets/js/gc-rt-library.js'
+      - 'scripts/test-gc-rt-library.mjs'
+      - 'gc-rt-library.html'
 
 jobs:
   check:
@@ -49,4 +61,5 @@ jobs:
       - run: node scripts/test-gc-day-plan.mjs
       - run: node scripts/test-inventory.mjs
       - run: node scripts/test-gc-finder.mjs
+      - run: node scripts/test-gc-rt-library.mjs
       - run: for file in assets/js/*.js; do node --check "$file"; done

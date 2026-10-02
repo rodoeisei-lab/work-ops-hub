@@ -159,7 +159,7 @@
   }
 
   function normalizeRtLibrary(rtLibrary, aliasLookup) {
-    return (rtLibrary || []).map((row) => {
+    return window.GcRtModel.planningRows(rtLibrary || []).map((row) => {
       const analyteNormalizedRaw = String(row.analyte_normalized || '').trim();
       const resolvedFromAlias = aliasLookup.get(normalizeName(analyteNormalizedRaw || row.analyte_original || ''));
       const analyteNormalized = resolvedFromAlias || analyteNormalizedRaw;
@@ -168,6 +168,9 @@
         machine_id: row.machine_id,
         column_id: row.column_id,
         temp_program_id: row.temp_program_id,
+        linear_velocity_cm_s: row.linear_velocity_cm_s ?? null,
+        split_ratio: row.split_ratio || null,
+        measurement_type: row.measurement_type || 'measured',
         analyte_original: row.analyte_original || analyteNormalized || '-',
         analyte_normalized: analyteNormalized,
         rt_min: Number(row.rt_min),
@@ -190,7 +193,7 @@
       if (!String(row.analyte_normalized || '').trim()) errors.push('line ' + line + ': analyte_normalized が空');
       if (!Number.isFinite(row.rt_min)) errors.push('line ' + line + ': rt_min が数値ではない');
 
-      const dupKey = [row.machine_id, row.column_id, row.temp_program_id, normalizeName(row.analyte_normalized)].join('__');
+      const dupKey = window.GcRtModel.conditionKey(row) + '__' + normalizeName(row.analyte_normalized);
       if (duplicateMap.has(dupKey)) {
         errors.push('line ' + line + ': 重複候補 (' + dupKey + ')');
       } else {
@@ -329,7 +332,7 @@
     const grouped = new Map();
 
     (rtLibrary || []).forEach((row) => {
-      const key = [row.machine_id, row.column_id, row.temp_program_id].join('__');
+      const key = window.GcRtModel.conditionKey(row);
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(row);
     });
@@ -338,7 +341,7 @@
       id,
       machine: machineMap.get(records[0].machine_id),
       column: columnMap.get(records[0].column_id),
-      tempProgram: tempMap.get(records[0].temp_program_id),
+      tempProgram: window.GcRtModel.methodTempProgram(tempMap.get(records[0].temp_program_id), records[0]),
       records: records.slice().sort((a, b) => a.rt_min - b.rt_min)
     }));
   }
@@ -1500,7 +1503,7 @@
     if (item.matches.length < 2) {
       parts.push('分離判定の比較対象なし');
     } else if (item.minGap >= 0.3) {
-      parts.push('分離良好');
+      parts.push('RT差に余裕');
     } else if (item.minGap >= 0.15) {
       parts.push('分離やや接近');
     } else {

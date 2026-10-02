@@ -78,6 +78,11 @@ td,th { font-size:.875rem; line-height:1.5; }
 .menu-list strong { font-size:.9375rem; color:#193b65; }
 .menu-list span { font-size:.8125rem; color:var(--muted); }
 .home-footnote { margin:0; font-size:.8125rem; color:var(--muted); }
+.gc-reference-menu .menu-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.gc-reference-menu .menu-list a { border:0; min-height:62px; }
+.home-utilities { display:flex; flex-wrap:wrap; align-items:center; gap:2px 14px; font-size:.875rem; color:var(--muted); border-top:1px solid var(--line); padding-top:6px; }
+.home-utilities a { display:inline-flex; align-items:center; min-height:44px; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .guide-page { max-width:960px; }
 .guide-content { padding:18px; }
 .guide-content h2 { margin-top:28px; }

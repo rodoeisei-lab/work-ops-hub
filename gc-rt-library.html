@@ -3,46 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>GC RTライブラリ | 作業用ミニハブ</title>
+  <title>GC RTグラフ | GC業務ハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
-  <link rel="stylesheet" href="assets/css/gc-rt-library.css">
-  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-7">
+  <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-8">
+  <link rel="stylesheet" href="assets/css/gc-rt-library.css?v=20261002-8">
 </head>
 <body>
   <main class="wrap rt-page">
-    <header class="card section-block">
-      <h1>GC RTライブラリ</h1>
-      <p>機械・カラム・温度条件を合わせて保持時間（RT）を確認します。RTの単位は分（min）です。</p>
-    </header>
-
-    <section class="card section-block">
-      <div class="filter-heading"><h2>絞り込み</h2><button type="button" class="btn-ghost" data-reset-filters>検索条件を解除</button></div>
-      <div class="filter-grid">
-        <label class="filter-search">物質名検索<input id="searchInput" type="search" placeholder="物質名で検索"></label>
-        <label>機械<select id="machineFilter"><option value="">すべて</option></select></label>
-        <label>カラム<select id="columnFilter"><option value="">すべて</option></select></label>
-        <label>温度条件<select id="tempFilter"><option value="">すべて</option></select></label>
-        <label>信頼度<select id="confidenceFilter"><option value="">すべて</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></label>
-        <label class="filter-favorite">よく使う物質<select id="favoriteFilter"><option value="">すべて</option><option value="common">通常よく使うのみ</option><option value="liquid_standard">液体スタンダードのみ</option><option value="any">よく使う（全体）</option></select></label>
+    <header class="rt-header"><h1>GC RTグラフ</h1><p>分析条件を合わせて、保持時間と溶出順を確認。</p></header>
+    <section class="card section-block" aria-labelledby="conditionTitle">
+      <h2 id="conditionTitle">分析条件</h2>
+      <div class="rt-condition-grid">
+        <label>GC機種<select id="machineFilter" aria-label="GC機種"></select></label>
+        <label>カラム<select id="columnFilter" aria-label="カラム"></select></label>
+        <label>カラム温度<select id="tempFilter" aria-label="カラム温度"></select></label>
+        <label>線速度（cm/s）<select id="velocityFilter" aria-label="線速度（cm/s）"></select></label>
       </div>
-      <label class="toggle"><input id="lowOnly" type="checkbox">要確認または低のみ表示</label>
-      <p id="summaryText" class="hint">読み込み中...</p>
-    </section>
-
-    <section class="card section-block">
-      <h2>RT一覧（RTが短い順）</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th scope="col">機械</th><th scope="col">カラム</th><th scope="col">温度条件</th><th scope="col">物質</th><th scope="col">RT(min)</th><th scope="col">信頼度</th><th scope="col">備考</th></tr></thead>
-          <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">読み込み中...</td></tr></tbody>
-        </table>
+      <div class="rt-presets" aria-label="よく使う分析条件">
+        <button type="button" class="btn-ghost" data-preset="basic">基本 82℃ / 19</button>
+        <button type="button" class="btn-ghost" data-preset="measured82">実測 82℃ / 20</button>
       </div>
-      <div id="mobileCardList" class="mobile-card-list"></div>
+      <p id="conditionMeta" class="hint"></p>
+      <label class="toggle"><input id="showEstimated" type="checkbox">予測値を表示</label>
+      <details class="rt-extra-filters"><summary>物質名・信頼度で絞り込む</summary>
+        <div class="filter-grid">
+          <label class="filter-search">物質名検索<input id="searchInput" type="search" placeholder="物質名・略称で検索"></label>
+          <label>信頼度<select id="confidenceFilter"><option value="">すべて</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></label>
+          <label>よく使う物質<select id="favoriteFilter"><option value="">すべて</option><option value="common">通常よく使うのみ</option><option value="liquid_standard">液体スタンダードのみ</option><option value="any">よく使う（全体）</option></select></label>
+        </div>
+        <label class="toggle"><input id="lowOnly" type="checkbox">要確認または低のみ表示</label>
+        <button type="button" id="clearSearch" class="btn-ghost">物質の絞り込みを解除</button>
+      </details>
     </section>
+    <section class="card section-block rt-chart-section" aria-labelledby="chartTitle">
+      <div class="rt-chart-heading"><h2 id="chartTitle">保持時間 RT（min）</h2><p id="summaryText" role="status" aria-live="polite">読み込み中…</p></div>
+      <p id="selectedCondition" class="rt-selected-condition"></p>
+      <div class="rt-legend"><span class="legend-measured">実測</span><span class="legend-estimated">予測</span><span class="legend-near">近接</span><span>短いRTから順に表示</span></div>
+      <p id="predictionNotice" class="data-note" hidden></p>
+      <div id="rtChart" class="rt-chart" aria-label="物質ごとの保持時間"></div>
+    </section>
+    <section class="card section-block" aria-labelledby="nearTitle">
+      <h2 id="nearTitle">近接ピーク・注意</h2>
+      <p class="hint">表示物質のRT差が0.150 min以下の組を表示。RT差だけでは分離の可否は判断できません。</p>
+      <div id="nearPeakList"></div><p id="dataNotice" class="hint"></p>
+    </section>
+    <details class="card section-block rt-details"><summary>詳細表・出典を見る</summary>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">物質</th><th scope="col">RT（min）</th><th scope="col">種別</th><th scope="col">信頼度</th><th scope="col">線速度</th><th scope="col">split</th><th scope="col">測定日／出典／備考</th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="7">読み込み中…</td></tr></tbody>
+      </table></div><div id="mobileCardList" class="mobile-card-list"></div>
+      <details class="rt-prediction-method"><summary>予測の計算方法と限界</summary>
+        <p>82℃・19 cm/sのみを予測します。同一物質の82℃・20 cm/s実測がある場合は20/19倍で換算。それ以外は同一GC・カラムの80℃と90℃（ともに30 cm/s）のRTの対数を補間し、30/19倍で換算します。82℃・20 cm/sの2実測との比の幾何平均で補正します。</p>
+        <p>これは局所的な経験モデルです。カラム寸法・ホールドアップ時間は未確認で、予測精度は未検証です。split変更の影響は計算していません。名称不明・根拠不足の物質は予測せず、実測が登録された物質は実測を優先します。</p>
+      </details>
+    </details>
+    <noscript><p class="data-note">RTグラフにはJavaScriptが必要です。</p></noscript>
   </main>
-
-  <script src="assets/js/app.js?v=20261002-7"></script>
-  <script src="assets/js/gc-favorites.js?v=20261002-7" defer></script>
-  <script src="assets/js/gc-rt-library.js?v=20261002-7" defer></script>
+  <script src="assets/js/app.js?v=20261002-8"></script>
+  <script src="assets/js/gc-rt-model.js?v=20261002-8" defer></script>
+  <script src="assets/js/gc-rt-library.js?v=20261002-8" defer></script>
 </body>
 </html>
