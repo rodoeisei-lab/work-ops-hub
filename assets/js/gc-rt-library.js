@@ -120,9 +120,10 @@
     el.nearPeakList.innerHTML = render(pairs.slice(0,6)) + (pairs.length > 6 ? `<details><summary>残り${pairs.length - 6}組を見る</summary>${render(pairs.slice(6))}</details>` : '');
   }
   function detailText(r) {
+    const original = r.analyte_original && r.analyte_original !== label(r) ? `原表記 ${r.analyte_original} / ` : '';
     const source = r.source?.startsWith('photo:') ? r.source.replace('photo:', '写真 ') : r.source === 'user_confirmed_2026-10-02' ? 'ユーザー確認' : r.source === 'local_rt_model_v1' ? '局所RT予測 v1' : r.source || '未記録';
     const formula = r.prediction?.formula ? ' / ' + r.prediction.formula : '';
-    return `${r.measured_date || '測定日未記録'} / ${source} / ${r.note || ''}${formula}`;
+    return `${original}${r.measured_date || '測定日未記録'} / ${source} / ${r.note || ''}${formula}`;
   }
   function renderTable(filtered) {
     el.tableBody.innerHTML = filtered.length ? filtered.map(r => `<tr><td>${html(label(r))}</td><td class="rt">${fmt(r.rt_min)}</td><td>${badge(r)}</td><td>${confidence(r)}</td><td>${html(r.linear_velocity_cm_s ?? '未記録')}</td><td>${html(r.split_ratio || '未記録')}</td><td>${html(detailText(r))}</td></tr>`).join('') : '<tr><td colspan="7">表示データがありません。</td></tr>';
