@@ -7,11 +7,17 @@ const measured = rows.filter(r => r.measurement_type === 'measured');
 const predictions = rows.filter(r => r.measurement_type === 'estimated');
 const round = x => Math.round(x*1000)/1000;
 const pick = (temp,velocity,id) => predictions.find(r => r.temperature_c === temp && r.linear_velocity_cm_s === velocity && r.analyte_normalized === id);
-const expectedCounts = [[50,25,2],[60,30,9],[70,30,2],[80,30,4],[82,20,15],[82,19,17],[90,30,1],[90,15,8],[120,30,0]];
+const expectedCounts = [[50,25,2],[60,30,9],[70,30,2],[80,30,3],[82,20,15],[82,19,17],[90,30,1],[90,15,8],[120,30,0]];
 for (const [temp,velocity,count] of expectedCounts) assert.equal(predictions.filter(r => r.temperature_c === temp && r.linear_velocity_cm_s === velocity).length,count,`${temp}/${velocity}`);
 
 // Independent calculations from the photo fixtures, not the model's helpers.
-assert.equal(pick(80,30,'butyl_acetate').rt_min,round(Math.sqrt(4.618*3.119)));
+assert.equal(pick(80,30,'butyl_acetate'),undefined);
+assert.equal(measured.find(r => r.temperature_c === 80 && r.linear_velocity_cm_s === 30 && r.analyte_normalized === 'butyl_acetate').rt_min,3.713);
+assert.equal(pick(60,30,'butyl_acetate').rt_min,round(4.618**2/3.713));
+const correction82 = Math.sqrt(2.501/(Math.exp(0.8*Math.log(1.705)+0.2*Math.log(1.695))*1.5) * 3.272/(Math.exp(0.8*Math.log(2.247)+0.2*Math.log(2.101))*1.5));
+assert.equal(pick(82,19,'butyl_acetate').rt_min,round(Math.exp(0.8*Math.log(3.713)+0.2*Math.log(3.119))*30/19*correction82));
+assert.equal(pick(82,20,'butyl_acetate').rt_min,round(Math.exp(0.8*Math.log(3.713)+0.2*Math.log(3.119))*30/20*correction82));
+assert.ok(pick(82,19,'butyl_acetate').prediction.source_row_ids.includes('gc2014_cbp_80c_30_SBT'));
 assert.equal(pick(80,30,'isobutyl_acetate').rt_min,round(Math.sqrt(3.602*2.982)));
 assert.equal(pick(80,30,'dcm').rt_min,round(Math.exp(0.8*Math.log(2.809)+0.2*Math.log(1.906))));
 assert.equal(pick(90,30,'dcm').rt_min,round(Math.exp(0.6*Math.log(2.809)+0.4*Math.log(1.906))));

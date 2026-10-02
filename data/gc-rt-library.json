@@ -806,15 +806,17 @@
     "linear_velocity_cm_s": 30,
     "split_ratio": null,
     "analyte_original": "SBT",
-    "analyte_normalized": "SBT",
+    "analyte_normalized": "butyl_acetate",
     "rt_min": 3.713,
     "measurement_type": "measured",
     "measured_date": null,
     "source": "photo:IMG_1917.jpeg",
-    "certainty": "low",
+    "certainty": "high",
     "verification_status": "verified_photo",
-    "name_status": "unresolved",
-    "note": "写真7枚と照合済み。名称要確認・略称を展開しない。"
+    "name_status": "confirmed",
+    "note": "写真7枚と照合済み。原表記SBT。2026-10-02にユーザーが酢酸ブチルと確認。",
+    "identity_confirmed_date": "2026-10-02",
+    "identity_source": "user_confirmation"
   },
   {
     "row_id": "gc2014_cbp_80c_30_isobutanol",
@@ -3738,44 +3740,6 @@
     }
   },
   {
-    "row_id": "gc2014_cbp_80c_30_butyl_acetate",
-    "machine_id": "gc2014",
-    "column_id": "cbp",
-    "temp_program_id": "80c",
-    "temperature_c": 80,
-    "linear_velocity_cm_s": 30,
-    "split_ratio": null,
-    "analyte_original": "酢酸ブチル",
-    "analyte_normalized": "butyl_acetate",
-    "rt_min": 3.795,
-    "measurement_type": "estimated",
-    "certainty": "low",
-    "measured_date": null,
-    "source": "local_rt_model_v2",
-    "verification_status": "unvalidated_estimate",
-    "name_status": "confirmed",
-    "note": "予測・精度未検証。温度補間。標準試料で確認。",
-    "prediction": {
-      "method": "local_log_rt_interpolation_inverse_velocity",
-      "temperature_mode": "interpolation",
-      "temperature_range_c": [
-        70,
-        90
-      ],
-      "extrapolation_c": 0,
-      "temperature_weight": 0.5,
-      "base_velocity_cm_s": 30,
-      "velocity_factor": 1,
-      "calibration_factor": null,
-      "source_row_ids": [
-        "gc2014_cbp_70c_isothermal_30_butyl_acetate",
-        "gc2014_cbp_90c_2_30_butyl_acetate"
-      ],
-      "formula": "RT(80,30) = exp((1-0.5)*ln(RT70,30)+0.5*ln(RT90,30)) * 30/30",
-      "limitation": "局所経験モデル。カラム寸法・ホールドアップ時間・キャリアガスは未確認。予測精度は未検証。温度外挿は補間より根拠が弱い。split変更はモデル化しない。"
-    }
-  },
-  {
     "row_id": "gc2014_cbp_80c_30_dcm",
     "machine_id": "gc2014",
     "column_id": "cbp",
@@ -4089,7 +4053,7 @@
     "split_ratio": null,
     "analyte_original": "酢酸ブチル",
     "analyte_normalized": "butyl_acetate",
-    "rt_min": 5.619,
+    "rt_min": 5.744,
     "measurement_type": "estimated",
     "certainty": "low",
     "measured_date": null,
@@ -4102,18 +4066,18 @@
       "temperature_mode": "extrapolation",
       "temperature_range_c": [
         70,
-        90
+        80
       ],
       "extrapolation_c": 10,
-      "temperature_weight": -0.5,
+      "temperature_weight": -1,
       "base_velocity_cm_s": 30,
       "velocity_factor": 1,
       "calibration_factor": null,
       "source_row_ids": [
         "gc2014_cbp_70c_isothermal_30_butyl_acetate",
-        "gc2014_cbp_90c_2_30_butyl_acetate"
+        "gc2014_cbp_80c_30_SBT"
       ],
-      "formula": "RT(60,30) = exp((1--0.5)*ln(RT70,30)+-0.5*ln(RT90,30)) * 30/30",
+      "formula": "RT(60,30) = exp((1--1)*ln(RT70,30)+-1*ln(RT80,30)) * 30/30",
       "limitation": "局所経験モデル。カラム寸法・ホールドアップ時間・キャリアガスは未確認。予測精度は未検証。温度外挿は補間より根拠が弱い。split変更はモデル化しない。"
     }
   },
@@ -4629,9 +4593,9 @@
     "temperature_c": 82,
     "linear_velocity_cm_s": 20,
     "split_ratio": null,
-    "analyte_original": "酢酸ブチル",
+    "analyte_original": "SBT",
     "analyte_normalized": "butyl_acetate",
-    "rt_min": 5.372,
+    "rt_min": 5.279,
     "measurement_type": "estimated",
     "certainty": "low",
     "measured_date": null,
@@ -4643,16 +4607,16 @@
       "method": "local_log_rt_interpolation_inverse_velocity",
       "temperature_mode": "interpolation",
       "temperature_range_c": [
-        70,
+        80,
         90
       ],
       "extrapolation_c": 0,
-      "temperature_weight": 0.6,
+      "temperature_weight": 0.2,
       "base_velocity_cm_s": 30,
       "velocity_factor": 1.5,
       "calibration_factor": 0.9814805023334531,
       "source_row_ids": [
-        "gc2014_cbp_70c_isothermal_30_butyl_acetate",
+        "gc2014_cbp_80c_30_SBT",
         "gc2014_cbp_90c_2_30_butyl_acetate",
         "gc2014_cbp_82c_20_n-ヘキサン",
         "gc2014_cbp_80c_30_n-ヘキサン",
@@ -4661,7 +4625,7 @@
         "gc2014_cbp_80c_30_ethyl_acetate",
         "gc2014_cbp_90c_2_30_ethyl_acetate"
       ],
-      "formula": "RT(82,20) = exp((1-0.6)*ln(RT70,30)+0.6*ln(RT90,30)) * 30/20 * calibration",
+      "formula": "RT(82,20) = exp((1-0.2)*ln(RT80,30)+0.2*ln(RT90,30)) * 30/20 * calibration",
       "limitation": "局所経験モデル。カラム寸法・ホールドアップ時間・キャリアガスは未確認。予測精度は未検証。温度外挿は補間より根拠が弱い。split変更はモデル化しない。"
     }
   },
@@ -5746,9 +5710,9 @@
     "temperature_c": 82,
     "linear_velocity_cm_s": 19,
     "split_ratio": "2:1",
-    "analyte_original": "酢酸ブチル",
+    "analyte_original": "SBT",
     "analyte_normalized": "butyl_acetate",
-    "rt_min": 5.655,
+    "rt_min": 5.557,
     "measurement_type": "estimated",
     "certainty": "low",
     "measured_date": null,
@@ -5760,16 +5724,16 @@
       "method": "local_log_rt_interpolation_inverse_velocity",
       "temperature_mode": "interpolation",
       "temperature_range_c": [
-        70,
+        80,
         90
       ],
       "extrapolation_c": 0,
-      "temperature_weight": 0.6,
+      "temperature_weight": 0.2,
       "base_velocity_cm_s": 30,
       "velocity_factor": 1.5789473684210527,
       "calibration_factor": 0.9814805023334531,
       "source_row_ids": [
-        "gc2014_cbp_70c_isothermal_30_butyl_acetate",
+        "gc2014_cbp_80c_30_SBT",
         "gc2014_cbp_90c_2_30_butyl_acetate",
         "gc2014_cbp_82c_20_n-ヘキサン",
         "gc2014_cbp_80c_30_n-ヘキサン",
@@ -5778,7 +5742,7 @@
         "gc2014_cbp_80c_30_ethyl_acetate",
         "gc2014_cbp_90c_2_30_ethyl_acetate"
       ],
-      "formula": "RT(82,19) = exp((1-0.6)*ln(RT70,30)+0.6*ln(RT90,30)) * 30/19 * calibration",
+      "formula": "RT(82,19) = exp((1-0.2)*ln(RT80,30)+0.2*ln(RT90,30)) * 30/19 * calibration",
       "limitation": "局所経験モデル。カラム寸法・ホールドアップ時間・キャリアガスは未確認。予測精度は未検証。温度外挿は補間より根拠が弱い。split変更はモデル化しない。"
     }
   },

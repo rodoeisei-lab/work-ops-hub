@@ -32,7 +32,7 @@
   async function init() {
     const names = ['gc-machines', 'gc-columns', 'gc-temp-programs', 'gc-rt-library', 'gc-analyte-display', 'gc-analyte-aliases', 'gc-favorite-analytes'];
     [machines, columns, temps, rows, display, aliases, favorites] = await Promise.all(names.map(async name => {
-      const res = await fetch(`data/${name}.json?v=20261002-11`, { cache: 'no-store' });
+      const res = await fetch(`data/${name}.json?v=20261002-12`, { cache: 'no-store' });
       if (!res.ok) throw new Error(name);
       return res.json();
     }));

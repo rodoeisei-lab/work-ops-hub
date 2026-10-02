@@ -115,16 +115,23 @@
   },
   {
     "raw_label": "SBT",
-    "normalized_name": "SBT",
-    "display_name": "SBT",
+    "normalized_name": "酢酸ブチル",
+    "display_name": "酢酸ブチル",
     "std_value": 15,
     "rt": null,
     "area": null,
     "coefficient": null,
     "nd_line": null,
-    "confidence": "low",
-    "status": "needs_review",
-    "note": "略号未確定。無理に正式名称化しない"
+    "confidence": "high",
+    "status": "confirmed",
+    "note": "2026-10-02にユーザーがSBTは酢酸ブチルと確認。既存酢酸ブチルマスタとSTD 15は一致。原表記・数値は保持。",
+    "aliases": [
+      "SBT",
+      "酢酸ブチル",
+      "butyl acetate"
+    ],
+    "identity_confirmed_date": "2026-10-02",
+    "identity_source": "user_confirmation"
   },
   {
     "raw_label": "DCLM",

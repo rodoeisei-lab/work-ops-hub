@@ -39,7 +39,7 @@
   // No t0, column dimensions or gas identity were supplied. The 10 C extrapolation
   // and 50 C source-span caps are software bounds, not validated accuracy
   // guarantees. Wider interpolation (>30 C) is marked separately in the UI.
-  // Never chain estimates, assume unknown speed, infer SBT,
+  // Never chain estimates, assume unknown speed, infer unresolved identities,
   // mix instruments/columns, or use a single temperature to infer another.
   const predictionLimits = Object.freeze({ max_extrapolation_c: 10, max_source_span_c: 50 });
   const plannedCondition = { machine_id: 'gc2014', column_id: 'cbp', temp_program_id: '82c', temperature_c: 82, linear_velocity_cm_s: 19, split_ratio: '2:1' };

@@ -45,7 +45,8 @@
   ],
   "butyl_acetate": [
     "butyl_acetate",
-    "酢酸ブチル"
+    "酢酸ブチル",
+    "SBT"
   ],
   "isobutanol": [
     "isobutanol",
@@ -131,8 +132,5 @@
   "セロアセ": [
     "セロアセ",
     "セロアセ(液)"
-  ],
-  "SBT": [
-    "SBT"
   ]
 }

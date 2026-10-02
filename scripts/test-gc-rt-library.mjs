@@ -7,7 +7,7 @@ const temps = JSON.parse(fs.readFileSync('data/gc-temp-programs.json','utf8'));
 const fixtures = [
   ['120c',30,'acetone:1.787 methanol:1.844 ethyl_acetate:1.845 IPA:1.861 MEK:1.887 dcm:1.906 toluene:2.228 butyl_acetate:2.237 isobutanol:2.244 1-butanol:2.448 ethylbenzene:2.565 p-xylene:2.605 o-xylene:2.910 styrene:3.436 cyclohexanone:3.935 ブチセロ:5.074'],
   ['90c_2',30,'n-ヘキサン:1.695 acetone:1.960 ethyl_acetate:2.101 methanol:2.128 MEK:2.169 IPA:2.181 MIBK:2.667 toluene:2.961 isobutyl_acetate:2.982 butyl_acetate:3.119 isobutanol:3.219 1-butanol:3.862 ethylbenzene:3.878 p-xylene:3.990 o-xylene:4.809 セロアセ:7.155 ブチセロ:12.299'],
-  ['80c',30,'n-ヘキサン:1.705 acetone:2.033 ethyl_acetate:2.247 methanol:2.288 MEK:2.340 IPA:2.378 cyclohexane:2.474 MIBK:3.012 toluene:3.443 SBT:3.713 isobutanol:3.847 ethylbenzene:4.718 1-butanol:4.801 p-xylene:4.877 o-xylene:6.070'],
+  ['80c',30,'n-ヘキサン:1.705 acetone:2.033 ethyl_acetate:2.247 methanol:2.288 MEK:2.340 IPA:2.378 cyclohexane:2.474 MIBK:3.012 toluene:3.443 butyl_acetate:3.713 isobutanol:3.847 ethylbenzene:4.718 1-butanol:4.801 p-xylene:4.877 o-xylene:6.070'],
   ['70c_isothermal',30,'n-ヘキサン:1.705 acetone:2.171 ethyl_acetate:2.458 methanol:2.552 MEK:2.575 IPA:2.689 dcm:2.809 isobutyl_acetate:3.602 toluene:4.149 butyl_acetate:4.618 ethylbenzene:6.061 p-xylene:6.282 1-butanol:6.421 o-xylene:8.077'],
   ['60c',30,'n-ヘキサン:1.750 ethyl_acetate:2.812 MEK:2.966 methanol:2.973 toluene:5.260'],
   ['50c_gc2014',25,'n-ヘキサン:2.121 MEK:4.085 methanol:4.165'],
@@ -37,11 +37,27 @@ for (const r of rows) {
   if (r.source.startsWith('photo:')) assert.equal(r.measured_date, null);
 }
 assert.ok(rows.filter(r => r.verification_status === 'legacy_unreviewed').every(r => r.linear_velocity_cm_s === null && r.split_ratio === null));
-assert.equal(rows.find(r => r.analyte_normalized === 'SBT').name_status, 'unresolved');
+const sbt = rows.find(r => r.row_id === 'gc2014_cbp_80c_30_SBT');
+assert.equal(sbt.analyte_original,'SBT');
+assert.equal(sbt.analyte_normalized,'butyl_acetate');
+assert.equal(sbt.name_status,'confirmed');
+assert.equal(sbt.measurement_type,'measured');
+assert.equal(sbt.rt_min,3.713);
+assert.equal(sbt.source,'photo:IMG_1917.jpeg');
+assert.equal(sbt.measured_date,null);
+assert.equal(sbt.identity_confirmed_date,'2026-10-02');
+assert.equal(sbt.identity_source,'user_confirmation');
+assert.ok(!rows.some(r => r.analyte_normalized === 'SBT'));
+const aliases = JSON.parse(fs.readFileSync('data/gc-analyte-aliases.json'));
+assert.ok(aliases.butyl_acetate.includes('SBT'));
+assert.ok(!aliases.SBT);
+const std = JSON.parse(fs.readFileSync('data/gc-std-master.json')).find(r => r.raw_label === 'SBT');
+assert.equal(std.display_name,'酢酸ブチル');
+assert.equal(std.std_value,15);
 assert.ok(!rows.some(r => r.machine_id === 'gc2014' && r.temp_program_id === '90c_2' && [2.153,2.959].includes(r.rt_min)));
 assert.equal(JSON.parse(fs.readFileSync('data/gc-rt-quarantine.json')).length, 2);
 const predictions = rows.filter(r => r.measurement_type === 'estimated');
-assert.equal(predictions.length, 58);
+assert.equal(predictions.length, 57);
 assert.deepEqual(predictions.map(({row_id,...r}) => r), model.estimateMissingRts(rows));
 const atBasic = predictions.filter(r => r.temp_program_id === '82c' && r.linear_velocity_cm_s === 19);
 assert.equal(atBasic.length,17);
@@ -72,6 +88,10 @@ const methodsFn = finder.slice(finder.indexOf('  function buildMethods('),finder
 const funcs = vm.runInNewContext(normalizeFn + methodsFn + '\n({normalizeRtLibrary,buildMethods})',{window:{GcRtModel:model},normalizeName:s=>String(s).toLowerCase()});
 const normalized = funcs.normalizeRtLibrary(rows,new Map());
 assert.ok(normalized.every(r => r.measurement_type === 'measured' && r.analyte_normalized !== 'SBT'));
+const normalizedSbt = normalized.filter(r => r.machine_id === 'gc2014' && r.temp_program_id === '80c' && r.linear_velocity_cm_s === 30 && r.analyte_normalized === 'butyl_acetate');
+assert.equal(normalizedSbt.length,1);
+assert.equal(normalizedSbt[0].rt_min,3.713);
+assert.equal(model.planningRows(rows).find(r => r.row_id === sbt.row_id).rt_min,3.713);
 const methods = funcs.buildMethods([],[],temps,normalized);
 const at90 = methods.filter(m => m.machine === undefined && m.records[0].machine_id === 'gc2014' && m.records[0].temperature_c !== 82 && ['90c_2','90c_15'].includes(m.records[0].temp_program_id));
 assert.equal(at90.length,2);
