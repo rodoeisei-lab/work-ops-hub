@@ -20,6 +20,10 @@
 .rt-page .toggle { display:flex; align-items:center; gap:8px; margin:0; min-height:44px; font-size:.875rem; }
 .rt-page input[type="checkbox"] { width:18px; height:18px; }
 .rt-control-tools { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 12px; border-top:1px solid var(--line); margin-top:10px; }
+.rt-count { display:inline-flex; align-items:center; font-size:.75rem; font-variant-numeric:tabular-nums; color:#47637f; background:#edf2f7; border-radius:4px; padding:1px 5px; white-space:nowrap; }
+.rt-missing-list { list-style:none; margin:8px 0; padding:0; }
+.rt-missing-list li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 10px; padding:6px 0; border-bottom:1px solid #edf1f6; font-size:.875rem; }
+.rt-missing-list small { color:var(--muted); }
 .rt-extra-filters[open] { grid-column:1/-1; }
 .rt-extra-filters .ui-icon,.rt-reading .ui-icon,.rt-details > summary .ui-icon { width:18px; height:18px; margin-right:6px; }
 .rt-extra-filters > summary { font-weight:400; color:#344963; }

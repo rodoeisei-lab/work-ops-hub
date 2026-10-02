@@ -16,7 +16,7 @@ const fixtures = [
 ];
 let numericChecks = 0;
 for (const [temp, velocity, expected] of fixtures) {
-  const actual = rows.filter(r => r.machine_id === 'gc2014' && r.column_id === 'cbp' && r.temp_program_id === temp && r.linear_velocity_cm_s === velocity);
+  const actual = rows.filter(r => r.measurement_type === 'measured' && r.machine_id === 'gc2014' && r.column_id === 'cbp' && r.temp_program_id === temp && r.linear_velocity_cm_s === velocity);
   assert.equal(actual.length, expected.split(' ').length, temp);
   for (const entry of expected.split(' ')) {
     const [id,value] = entry.split(':');
@@ -41,17 +41,19 @@ assert.equal(rows.find(r => r.analyte_normalized === 'SBT').name_status, 'unreso
 assert.ok(!rows.some(r => r.machine_id === 'gc2014' && r.temp_program_id === '90c_2' && [2.153,2.959].includes(r.rt_min)));
 assert.equal(JSON.parse(fs.readFileSync('data/gc-rt-quarantine.json')).length, 2);
 const predictions = rows.filter(r => r.measurement_type === 'estimated');
-assert.equal(predictions.length, 13);
-assert.deepEqual(predictions.map(({row_id,...r}) => r), model.estimate82At19(rows).map(({row_id,...r}) => r));
-assert.equal(predictions.find(r => r.analyte_normalized === 'n-ヘキサン').rt_min, 2.633);
-assert.equal(predictions.find(r => r.analyte_normalized === 'ethyl_acetate').rt_min, 3.444);
+assert.equal(predictions.length, 58);
+assert.deepEqual(predictions.map(({row_id,...r}) => r), model.estimateMissingRts(rows));
+const atBasic = predictions.filter(r => r.temp_program_id === '82c' && r.linear_velocity_cm_s === 19);
+assert.equal(atBasic.length,17);
+assert.equal(atBasic.find(r => r.analyte_normalized === 'n-ヘキサン').rt_min, 2.633);
+assert.equal(atBasic.find(r => r.analyte_normalized === 'ethyl_acetate').rt_min, 3.444);
 for (const r of predictions) {
-  assert.equal(r.linear_velocity_cm_s,19); assert.equal(r.temperature_c,82);
   assert.equal(r.measured_date,null); assert.equal(r.certainty,'low');
-  assert.ok(r.prediction.source_row_ids.length && r.prediction.source_row_ids.every(id => rows.some(s => s.row_id === id && s.measurement_type === 'measured')));
-  assert.ok(!['SBT','cyclohexane'].includes(r.analyte_normalized));
+  assert.ok(Number.isFinite(r.temperature_c) && Number.isFinite(r.linear_velocity_cm_s));
+  assert.ok(r.prediction.source_row_ids.length && r.prediction.source_row_ids.every(id => rows.some(s => s.row_id === id && s.measurement_type === 'measured' && s.machine_id === r.machine_id && s.column_id === r.column_id && ['verified_photo','user_confirmed'].includes(s.verification_status))));
+  assert.ok(!['SBT','cyclohexane','styrene','cyclohexanone'].includes(r.analyte_normalized));
 }
-const p = predictions[0];
+const p = atBasic[0];
 const measured = {...p,measurement_type:'measured',rt_min:2.7};
 assert.equal(model.preferMeasured([p,measured], true)[0].rt_min,2.7);
 assert.equal(model.preferMeasured([measured,p], true)[0].rt_min,2.7);
@@ -80,4 +82,4 @@ assert.ok(at82[0].tempProgram.display_name.includes('20 cm/s'));
 const day = fs.readFileSync('assets/js/gc-day-plan.js','utf8');
 assert.ok(day.includes('window.GcRtModel.planningRows'));
 assert.ok(day.includes('window.GcRtModel.conditionKey'));
-console.log(`RT library: ${numericChecks} exact measured values, 13 reproducible predictions, condition isolation, real-measurement priority, near pairs, quarantine and production finder/day-plan guards passed.`);
+console.log(`RT library: ${numericChecks} exact measured values, ${predictions.length} reproducible predictions, condition isolation, real-measurement priority, near pairs, quarantine and production finder/day-plan guards passed.`);

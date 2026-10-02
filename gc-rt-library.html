@@ -6,7 +6,7 @@
   <title>GC RTグラフ | GC業務ハブ</title>
   <link rel="stylesheet" href="assets/css/common.css">
   <link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-10">
-  <link rel="stylesheet" href="assets/css/gc-rt-library.css?v=20261002-10">
+  <link rel="stylesheet" href="assets/css/gc-rt-library.css?v=20261002-11">
 </head>
 <body>
   <main class="wrap rt-page">
@@ -24,7 +24,7 @@
         <button type="button" class="btn-ghost" data-preset="measured82">実測 82℃ / 20</button>
       </div>
       <div class="rt-control-tools">
-      <label class="toggle"><input id="showEstimated" type="checkbox" aria-label="予測値を表示">予測を表示</label>
+      <label class="toggle"><input id="showEstimated" type="checkbox" aria-label="予測値を表示">予測で補う <span id="predictionCount" class="rt-count"></span></label>
       <details class="rt-extra-filters"><summary><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#search"></use></svg>絞り込み</summary>
         <div class="filter-grid">
           <label class="filter-search">物質名検索<input id="searchInput" type="search" placeholder="物質名・略称で検索"></label>
@@ -40,13 +40,15 @@
       <p id="selectedCondition" class="rt-selected-condition"></p>
       <div class="rt-legend"><span class="legend-measured">実測</span><span class="legend-estimated">予測</span><span class="legend-near">近接</span></div>
       <p id="predictionNotice" class="data-note" hidden></p>
+      <p id="runtimeNotice" class="data-note" hidden></p>
       <div id="rtChart" class="rt-chart" aria-label="物質ごとの保持時間"></div>
     </section>
     <section class="card section-block" aria-labelledby="nearTitle">
       <h2 id="nearTitle">近接ピーク</h2>
       <p class="hint">RT差0.150 min以下。RT差だけでは分離の可否は判断できません。</p>
       <div id="nearPeakList"></div>
-      <details class="rt-reading"><summary><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#info"></use></svg>読み方・注意</summary><p class="hint">短いRTから順に表示。色は物質を見分ける補助で、同じ物質には同じ色を使います。オレンジの線は近接、斜線と破線は予測です。</p><p id="dataNotice" class="hint"></p></details>
+      <details id="predictionGaps" class="rt-reading" hidden><summary>予測できない物質 <span id="missingCount" class="rt-count"></span></summary><p class="hint">根拠が足りないため、数値は未登録です。</p><ul id="missingList" class="rt-missing-list"></ul></details>
+      <details class="rt-reading"><summary><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#info"></use></svg>読み方・注意</summary><p class="hint">短いRTから順に表示。色は物質を見分ける補助で、同じ物質には同じ色を使います。オレンジの線は近接、斜線と破線は予測です。</p><p class="hint">外挿は実測範囲外、広域補間は参照温度の間隔が30℃を超える目安です。予測精度は未検証なので、標準試料の実測RTで確認してください。</p><p id="dataNotice" class="hint"></p></details>
     </section>
     <details class="card section-block rt-details"><summary><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#library-big"></use></svg>詳細・出典</summary>
       <div class="table-wrap"><table>
@@ -54,14 +56,15 @@
         <tbody id="tableBody"><tr><td colspan="7">読み込み中…</td></tr></tbody>
       </table></div><div id="mobileCardList" class="mobile-card-list"></div>
       <details class="rt-prediction-method"><summary>予測の計算方法と限界</summary>
-        <p>82℃・19 cm/sのみを予測します。同一物質の82℃・20 cm/s実測がある場合は20/19倍で換算。それ以外は同一GC・カラムの80℃と90℃（ともに30 cm/s）のRTの対数を補間し、30/19倍で換算します。82℃・20 cm/sの2実測との比の幾何平均で補正します。</p>
-        <p>これは局所的な経験モデルです。カラム寸法・ホールドアップ時間は未確認で、予測精度は未検証です。split変更の影響は計算していません。名称不明・根拠不足の物質は予測せず、実測が登録された物質は実測を優先します。</p>
+        <p>同じGC・カラム・物質の照合済み実測だけを使います。同温度の実測があれば線速度の比で換算。なければ同じ線速度の近い2温度のRTの対数を補間し、速度比で換算します。別速度の同温度実測が2物質以上あれば、実測と換算値の比の幾何平均で補正します。</p>
+        <p>実測範囲外は「予測・外挿」と表示し、境界から10℃以内に制限します。参照2温度の間隔は50℃以内とし、30℃を超える補間は「予測・広域補間」と表示します。これは計算範囲の制限で、精度の保証ではありません。各物質の詳細に参照温度・線速度・式・補正係数を表示します。</p>
+        <p>局所的な経験モデルで、予測精度は未検証です。カラム寸法・ホールドアップ時間・キャリアガスは未確認、split変更の影響は計算していません。名称不明や別温度の実測が1点だけの物質、線速度不明の条件は補いません。予測を予測の根拠に使わず、実測があれば実測を優先。ピーク位置の参考として標準試料で確認してください。</p>
       </details>
     </details>
     <noscript><p class="data-note">RTグラフにはJavaScriptが必要です。</p></noscript>
   </main>
   <script src="assets/js/app.js?v=20261002-10"></script>
-  <script src="assets/js/gc-rt-model.js?v=20261002-8" defer></script>
-  <script src="assets/js/gc-rt-library.js?v=20261002-10" defer></script>
+  <script src="assets/js/gc-rt-model.js?v=20261002-11" defer></script>
+  <script src="assets/js/gc-rt-library.js?v=20261002-11" defer></script>
 </body>
 </html>

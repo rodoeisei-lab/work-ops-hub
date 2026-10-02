@@ -22,6 +22,9 @@ on:
       - 'assets/js/gc-rt-model.js'
       - 'assets/js/gc-rt-library.js'
       - 'scripts/test-gc-rt-library.mjs'
+      - 'scripts/test-gc-rt-predictions.mjs'
+      - 'scripts/update-rt-estimates.mjs'
+      - 'package.json'
       - 'gc-rt-library.html'
       - '.github/workflows/gc-calculator-check.yml'
   push:
@@ -46,6 +49,9 @@ on:
       - 'assets/js/gc-rt-model.js'
       - 'assets/js/gc-rt-library.js'
       - 'scripts/test-gc-rt-library.mjs'
+      - 'scripts/test-gc-rt-predictions.mjs'
+      - 'scripts/update-rt-estimates.mjs'
+      - 'package.json'
       - 'gc-rt-library.html'
 
 jobs:
@@ -62,4 +68,5 @@ jobs:
       - run: node scripts/test-inventory.mjs
       - run: node scripts/test-gc-finder.mjs
       - run: node scripts/test-gc-rt-library.mjs
+      - run: node scripts/test-gc-rt-predictions.mjs
       - run: for file in assets/js/*.js; do node --check "$file"; done
