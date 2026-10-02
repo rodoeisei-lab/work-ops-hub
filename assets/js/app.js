@@ -3,11 +3,12 @@
   if (!main) return;
   const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
   const links = [
-    ['gc-calculator.html', 'GC係数・ppm計算'], ['gc-method-finder.html', 'GC条件提案'],
-    ['gc-rt-library.html', 'GC RTグラフ'], ['gc-day-plan.html', 'GC当日プラン'],
-    ['gc-factors.html', 'GC係数ライブラリ'], ['gc-std-master.html', 'GC標準液マスタ'],
-    ['inventory-memo.html', '在庫メモ'], ['qr-print.html', 'QR印刷'], ['update-guide.html', '更新手順']
+    ['gc-calculator.html', 'GC係数・ppm計算', 'calculator'], ['gc-method-finder.html', 'GC条件提案', 'sliders-horizontal'],
+    ['gc-rt-library.html', 'GC RTグラフ', 'chart-no-axes-gantt'], ['gc-day-plan.html', 'GC当日プラン', 'calendar-days'],
+    ['gc-factors.html', 'GC係数ライブラリ', 'library-big'], ['gc-std-master.html', 'GC標準液マスタ', 'flask-conical'],
+    ['inventory-memo.html', '在庫メモ', 'box'], ['qr-print.html', 'QR印刷', 'qr-code'], ['update-guide.html', '更新手順', 'book-open']
   ];
+  const icon = name => `<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#${name}"></use></svg>`;
   const todayEl = document.getElementById('todayLabel');
   if (todayEl) todayEl.textContent = new Intl.DateTimeFormat('ja-JP', {year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const skip = document.createElement('a');
@@ -16,12 +17,12 @@
   if (page !== 'index.html') {
     document.querySelectorAll('.back-home-link, .factor-back').forEach(el => el.remove());
     const nav = document.createElement('div'); nav.className = 'tool-nav no-print';
-    const home = document.createElement('a'); home.href = 'index.html'; home.className = 'back-home-link'; home.textContent = 'ホーム';
+    const home = document.createElement('a'); home.href = 'index.html'; home.className = 'back-home-link'; home.innerHTML = icon('house') + '<span>ホーム</span>';
     const details = document.createElement('details'); details.className = 'tool-menu';
-    const summary = document.createElement('summary'); summary.textContent = '他の機能';
+    const summary = document.createElement('summary'); summary.innerHTML = icon('layout-grid') + '<span>他の機能</span>';
     const menu = document.createElement('nav'); menu.setAttribute('aria-label', '他の業務ツール');
-    links.filter(([href]) => href !== page).forEach(([href, title]) => {
-      const a = document.createElement('a'); a.href = href; a.textContent = title; menu.appendChild(a);
+    links.filter(([href]) => href !== page).forEach(([href, title, name]) => {
+      const a = document.createElement('a'); a.href = href; a.innerHTML = icon(name) + `<span>${title}</span>`; menu.appendChild(a);
     });
     details.append(summary, menu);
     details.addEventListener('keydown', event => { if (event.key === 'Escape') { details.open = false; summary.focus(); } });

@@ -2,20 +2,20 @@
 <html lang="ja"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GC業務ハブ</title>
-<link rel="stylesheet" href="assets/css/common.css"><link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-8">
+<link rel="stylesheet" href="assets/css/common.css"><link rel="stylesheet" href="assets/css/work-ui.css?v=20261002-10">
 </head><body><main class="wrap home-page">
-<header class="home-header"><h1>GC業務ハブ</h1><p class="home-date">本日 <span id="todayLabel"></span></p></header>
-<section aria-labelledby="frequentTitle"><h2 id="frequentTitle">GC作業を始める</h2>
+<header class="home-header"><h1>GC業務ハブ</h1><p class="home-date" aria-label="今日の日付"><span id="todayLabel"></span></p></header>
+<section aria-labelledby="frequentTitle"><h2 id="frequentTitle">今日の作業</h2>
 <nav class="frequent-grid" aria-label="GC主要機能">
-<a class="tool-link tool-link--primary" href="gc-calculator.html"><strong>GC係数・ppm計算</strong><span>当日STD・検体の面積を入力</span></a>
-<a class="tool-link" href="gc-method-finder.html"><strong>GC条件提案</strong><span>溶剤から分析条件を探す</span></a>
-<a class="tool-link" href="gc-rt-library.html"><strong>GC RTグラフ</strong><span>条件ごとの保持時間・溶出順</span></a>
-<a class="tool-link" href="gc-day-plan.html"><strong>GC当日プラン</strong><span>作業場ごとにGCを割り振る</span></a>
+<a class="tool-link tool-link--primary" href="gc-calculator.html"><span class="tool-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#calculator"></use></svg></span><strong>係数・ppm計算</strong></a>
+<a class="tool-link" href="gc-method-finder.html"><span class="tool-icon tool-icon--teal"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#sliders-horizontal"></use></svg></span><strong>条件提案</strong></a>
+<a class="tool-link" href="gc-rt-library.html"><span class="tool-icon tool-icon--violet"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#chart-no-axes-gantt"></use></svg></span><strong>RTグラフ</strong></a>
+<a class="tool-link" href="gc-day-plan.html"><span class="tool-icon tool-icon--blue"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#calendar-days"></use></svg></span><strong>当日プラン</strong></a>
 </nav></section>
-<section class="card menu-group gc-reference-menu" aria-labelledby="referenceTitle"><h2 id="referenceTitle">GCデータを確認</h2><nav class="menu-list" aria-label="GCライブラリ">
-<a href="gc-factors.html"><strong>GC係数ライブラリ</strong><span>過去の係数・実測履歴</span></a>
-<a href="gc-std-master.html"><strong>GC標準液マスタ</strong><span>STD値・登録状態</span></a>
+<section class="card menu-group gc-reference-menu" aria-labelledby="referenceTitle"><h2 id="referenceTitle">データ</h2><nav class="menu-list" aria-label="GCライブラリ">
+<a href="gc-factors.html"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#library-big"></use></svg><strong>係数ライブラリ</strong></a>
+<a href="gc-std-master.html"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#flask-conical"></use></svg><strong>標準液マスタ</strong></a>
 </nav></section>
-<nav class="home-utilities" aria-label="その他・補助機能"><span>その他</span><a href="inventory-memo.html">在庫メモ</a><a href="qr-print.html">QR印刷</a><a href="update-guide.html">更新手順</a></nav>
-<p class="home-footnote">GC計算・在庫の入力は、この端末・ブラウザに保存されます。</p>
-</main><script src="assets/js/app.js?v=20261002-8"></script></body></html>
+<nav class="home-utilities" aria-label="その他・補助機能"><span>その他</span><a href="inventory-memo.html" aria-label="在庫メモ"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#box"></use></svg>在庫</a><a href="qr-print.html"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#qr-code"></use></svg>QR印刷</a><a href="update-guide.html"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#book-open"></use></svg>更新手順</a></nav>
+<p class="home-footnote"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons/ui.svg#info"></use></svg>入力はこのブラウザに保存</p>
+</main><script src="assets/js/app.js?v=20261002-10"></script></body></html>

@@ -83,6 +83,27 @@ td,th { font-size:.875rem; line-height:1.5; }
 .home-utilities { display:flex; flex-wrap:wrap; align-items:center; gap:2px 14px; font-size:.875rem; color:var(--muted); border-top:1px solid var(--line); padding-top:6px; }
 .home-utilities a { display:inline-flex; align-items:center; min-height:44px; }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.ui-icon { width:24px; height:24px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; vertical-align:middle; }
+.tool-nav .ui-icon,.tool-menu nav .ui-icon { width:18px; height:18px; }
+.tool-menu nav a { gap:10px; }
+.tool-menu > summary { gap:6px; }
+.home-page .home-header { display:flex; align-items:center; }
+.home-page .home-header h1 { margin:0; }
+.home-page .tool-link { align-items:center; justify-content:center; gap:10px; min-height:122px; padding:14px 10px; text-align:center; }
+.home-page .tool-link:hover { text-decoration:none; border-color:#477cad; }
+.home-page .tool-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:13px; background:#eaf1fa; color:#285e94; }
+.home-page .tool-icon .ui-icon { width:27px; height:27px; }
+.home-page .tool-icon--teal { background:#e5f3f1; color:#147678; }
+.home-page .tool-icon--violet { background:#efeaf8; color:#72539f; }
+.home-page .tool-icon--blue { background:#eaf1fa; color:#285e94; }
+.home-page .tool-link--primary .tool-icon { background:#ffffff1c; color:white; }
+.home-page .gc-reference-menu .menu-list a { display:flex; align-items:center; gap:10px; padding:6px 0; }
+.home-page .gc-reference-menu .ui-icon { color:#436282; }
+.home-page .home-utilities { gap:0 18px; }
+.home-page .home-utilities > span { width:100%; font-size:.8125rem; }
+.home-page .home-utilities a { gap:6px; color:#385574; }
+.home-page .home-utilities .ui-icon,.home-page .home-footnote .ui-icon { width:18px; height:18px; }
+.home-page .home-footnote { display:flex; align-items:center; gap:6px; }
 .guide-page { max-width:960px; }
 .guide-content { padding:18px; }
 .guide-content h2 { margin-top:28px; }

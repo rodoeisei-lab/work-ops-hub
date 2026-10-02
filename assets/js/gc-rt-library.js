@@ -6,6 +6,15 @@
   const presets = { basic: ['gc2014', 'cbp', '82c', '19'], measured82: ['gc2014', 'cbp', '82c', '20'], paper80: ['gc2014', 'cbp', '80c', '30'] };
   const normalize = v => String(v || '').normalize('NFKC').toLowerCase().replace(/[\s_-]/g, '');
   const label = r => display[r.analyte_normalized] || r.analyte_original || r.analyte_normalized;
+  // Identification colors only: no chemical class, certainty or RT meaning.
+  // Hash the canonical name so a substance keeps its color across conditions/filters.
+  const palette = ['#265b8e','#117a7c','#7755a3','#987120','#527c4f','#9f5467','#357d9a','#626e88','#946649'];
+  const colorFor = r => {
+    if (r.name_status === 'unresolved') return '#6e7986';
+    let hash = 0;
+    for (const c of r.analyte_normalized || r.analyte_original || '') hash = (Math.imul(hash,31) + c.charCodeAt(0)) >>> 0;
+    return palette[hash % palette.length];
+  };
   const fmt = n => Number(n).toFixed(3);
   const html = v => String(v ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
   const confidence = r => r.certainty === 'high' ? '高' : r.certainty === 'low' ? '低' : '中';
@@ -76,7 +85,7 @@
     const selected = `${metaLabel(machines, el.machineFilter.value)} / ${metaLabel(columns, el.columnFilter.value)} / ${temperature} / ${el.velocityFilter.value === 'unknown' ? '線速度 未記録' : el.velocityFilter.value + ' cm/s'}`;
     el.selectedCondition.textContent = selected;
     const splits = [...new Set(conditionRows.map(r => r.split_ratio || '未記録'))];
-    el.conditionMeta.textContent = `split ${splits.join(' / ')}${conditionRows.every(r => r.measurement_type === 'estimated') ? '（次回の設定案）' : ''}`;
+    el.conditionMeta.textContent = `split ${splits.join(' / ')}${conditionRows.every(r => r.measurement_type === 'estimated') ? '（予定）' : ''}`;
     const allPreferred = model.preferMeasured(conditionRows, true);
     const predictionCount = allPreferred.filter(r => r.measurement_type === 'estimated').length;
     const measuredCount = allPreferred.length - predictionCount;
@@ -95,7 +104,7 @@
       button.setAttribute('aria-pressed', String(presets[button.dataset.preset].every((v,i) => v === key[i])));
     });
     el.predictionNotice.hidden = !filtered.some(r => r.measurement_type === 'estimated');
-    el.predictionNotice.textContent = '予測・精度未検証。n-ヘキサンと酢酸エチルは82℃・20 cm/s実測から換算。その他は80〜90℃資料から推定しています。標準試料の実測RTで確認してください。';
+    el.predictionNotice.textContent = '予測・精度未検証。標準試料の実測RTで確認してください。';
     const pairs = model.nearPairs(filtered); renderGraph(filtered, pairs, { predictionCount, measuredCount }); renderPairs(pairs);
     el.dataNotice.textContent = measuredCount === 0 ? 'この条件の値はすべて予測です。実測RTは未登録です。' : conditionRows.some(r => r.verification_status === 'legacy_unreviewed') ? '既存資料のRTです。今回の写真照合対象外で、線速度・splitは未記録です。分析条件を確認してください。' : '写真の印字・手書き値、またはユーザー指定の実測を使用。RTだけで物質を確定せず、標準試料と照合してください。';
     renderTable(filtered);
@@ -111,13 +120,13 @@
     const nearIds = new Set(pairs.flatMap(p => [p.first.analyte_normalized, p.second.analyte_normalized]));
     el.rtChart.innerHTML = `<div class="rt-axis"><span>物質名</span><div class="rt-axis-plot"><div class="rt-axis-ticks"><span>0</span><span>${max / 2}</span><span>${max} min</span></div></div></div><ol class="rt-bars">${filtered.map(r => {
       const estimated = r.measurement_type === 'estimated', width = (r.rt_min / max * 100).toFixed(5);
-      return `<li class="rt-bar-row ${estimated ? 'is-estimated' : 'is-measured'} ${nearIds.has(r.analyte_normalized) ? 'is-near' : ''}" data-analyte="${html(r.analyte_normalized)}" data-rt="${r.rt_min}" data-measurement-type="${html(r.measurement_type || 'measured')}"><div class="rt-bar-label">${html(label(r))}${estimated ? '<br><span class="badge badge-estimated">予測</span>' : ''}</div><div class="rt-plot-cell"><div class="rt-track" style="--bar-width:${width}%"><span class="rt-bar" aria-hidden="true"></span><span class="rt-value">${fmt(r.rt_min)}<span class="sr-only"> min ${kind(r)}</span></span></div></div></li>`;
+      return `<li class="rt-bar-row ${estimated ? 'is-estimated' : 'is-measured'} ${nearIds.has(r.analyte_normalized) ? 'is-near' : ''}" style="--analyte-color:${colorFor(r)}" data-analyte="${html(r.analyte_normalized)}" data-rt="${r.rt_min}" data-measurement-type="${html(r.measurement_type || 'measured')}"><div class="rt-bar-label">${html(label(r))}${estimated ? '<br><span class="badge badge-estimated">予測</span>' : ''}</div><div class="rt-plot-cell"><div class="rt-track" style="--bar-width:${width}%"><span class="rt-bar" aria-hidden="true"></span><span class="rt-value">${fmt(r.rt_min)}<span class="sr-only"> min ${kind(r)}</span></span></div></div></li>`;
     }).join('')}</ol>`;
   }
   function renderPairs(pairs) {
     if (!pairs.length) { el.nearPeakList.innerHTML = '<p class="hint">表示範囲に近接する組はありません。</p>'; return; }
-    const render = items => `<ul class="near-pairs">${items.map(p => `<li><span>${html(label(p.first))} / ${html(label(p.second))}<small>${fmt(p.first.rt_min)} / ${fmt(p.second.rt_min)} min${p.estimated ? '・予測を含む' : ''}</small></span><strong>RT差 ${fmt(p.gap)} min</strong></li>`).join('')}</ul>`;
-    el.nearPeakList.innerHTML = render(pairs.slice(0,6)) + (pairs.length > 6 ? `<details><summary>残り${pairs.length - 6}組を見る</summary>${render(pairs.slice(6))}</details>` : '');
+    const render = items => `<ul class="near-pairs">${items.map(p => `<li><span>${html(label(p.first))} / ${html(label(p.second))}${p.estimated ? '<small>予測を含む</small>' : ''}</span><strong>RT差 ${fmt(p.gap)} min</strong></li>`).join('')}</ul>`;
+    el.nearPeakList.innerHTML = render(pairs.slice(0,3)) + (pairs.length > 3 ? `<details><summary>ほか${pairs.length - 3}組</summary>${render(pairs.slice(3))}</details>` : '');
   }
   function detailText(r) {
     const original = r.analyte_original && r.analyte_original !== label(r) ? `原表記 ${r.analyte_original} / ` : '';
